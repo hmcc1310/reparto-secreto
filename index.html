@@ -417,7 +417,7 @@ catch (e) { console.error(e); api = localApi(); }
 let unsubs = [];
 // ---------- temporizador de rondas ----------
 // game.timer = { n: rondas, mins: [min por ronda], r: ronda actual, state: "idle"|"run"|"pause", endsAt: ms, left: s }
-const TIMER_MODES = { 3: [3, 2, 1], 5: [5, 4, 3, 2, 1] };
+const TIMER_MODES = { 3: [2, 1, 1], 5: [5, 4, 3, 2, 1] };
 const newTimer = n => ({ n, mins: TIMER_MODES[n], r: 1, state: "idle", endsAt: null, left: TIMER_MODES[n][0] * 60 });
 const tLeft = t => t.state === "run" ? Math.max(0, Math.ceil((t.endsAt - Date.now()) / 1000)) : t.left;
 const tOver = t => t.state === "run" && tLeft(t) === 0;
@@ -903,8 +903,8 @@ function hostLobby() {
         </div>
         <label for="tMode" class="small">Rondas
           <select id="tMode">
-            <option value="3" ${T.n === 3 ? "selected" : ""}>3 rondas: 3, 2 y 1 minutos</option>
-            <option value="5" ${T.n === 5 ? "selected" : ""}>5 rondas: 5, 4, 3, 2 y 1 minutos</option>
+            <option value="3" ${T.n === 3 ? "selected" : ""}>3 rondas: 2, 1 y 1 minutos (menos de 11 jugadores)</option>
+            <option value="5" ${T.n === 5 ? "selected" : ""}>5 rondas: 5, 4, 3, 2 y 1 minutos (11 jugadores o más)</option>
           </select></label>
         <p class="muted small">El reloj aparece arriba en el celular de todos. Al llegar a cero, a todos les sale el aviso de fin de ronda.</p>
       </section>` : ""}
@@ -953,7 +953,7 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, timer: newTimer(game.timer?.n || 3) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, timer: newTimer(ids.length >= 11 ? 5 : 3) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
