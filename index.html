@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reparto Secreto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@600;800&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>
+/* =====================================================================
+   CONFIGURACIÓN DE FIREBASE
+   Pega aquí lo que te da Firebase (Configuración del proyecto > Tus apps).
+   Mientras esté en null, la página funciona en MODO DE PRUEBA: solo en
+   este navegador (puedes abrir varias pestañas para simular jugadores).
+   ===================================================================== */
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBSmWApUHNa28tAqxZ5pS3XlkRoJ0sI9CY",
+  authDomain: "r1b-94a8f.firebaseapp.com",
+  projectId: "r1b-94a8f",
+  storageBucket: "r1b-94a8f.firebasestorage.app",
+  messagingSenderId: "840536177555",
+  appId: "1:840536177555:web:f334ed0ec2269f4e0e8666"
+};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root {
+  --bg: #eef0f4; --surface: #ffffff; --line: #d5d9e2; --fg: #151a24; --muted: #5d6576; --ink-soft: #e3e7ef;
+  --blue: #2350d8; --red: #d2342a; --gray: #6f7684; --green: #1d8a4c; --mystery: #6b3fc4; --ok: #1d8a52; --warn: #b26a00; --neutral: #1d222d;
+  --display: "Big Shoulders Stencil Display", "Arial Narrow", Impact, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #10131a; --surface: #181c25; --line: #2b313e; --fg: #e8ebf2; --muted: #9aa2b3; --ink-soft: #222836;
+    --blue: #3f6cf0; --red: #e04a3f; --gray: #7d8493; --green: #2fae66; --mystery: #8a5fe6; --ok: #3cb97a; --warn: #e3a23b; --neutral: #0b0d12; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+[hidden] { display: none !important; }
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 20px; }
+.narrow { max-width: 460px; margin: 0 auto; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: .02em; margin: 0; line-height: 1.05; text-transform: uppercase; text-wrap: balance; }
+h1 { font-size: clamp(2.2rem, 8vw, 3.2rem); }
+h2 { font-size: 1.55rem; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: .88rem; }
+.eyebrow { font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.stripe { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--blue) 0 50%, var(--red) 50% 100%); }
+.demo { background: var(--ink-soft); border-radius: 8px; padding: 10px 12px; font-size: .86rem; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.count { font-family: var(--mono); color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+input[type=text], input[type=tel], input[type=search], select { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; min-width: 0; }
+input.code { font-family: var(--mono); font-size: 2rem; letter-spacing: .3em; text-align: center; text-transform: uppercase; padding: 12px; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+label { font-weight: 500; display: grid; gap: 6px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row > input, .row > select { flex: 1 1 160px; }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 10px 14px; font-weight: 500; }
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 600; }
+button.big { font-family: var(--display); font-size: 1.35rem; letter-spacing: .06em; text-transform: uppercase; padding: 12px 26px; }
+button.wide { width: 100%; }
+button.ghost { background: transparent; border-color: transparent; color: var(--muted); padding: 6px 8px; }
+button.ghost:hover { color: var(--fg); }
+.err { color: var(--red); font-size: .9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: var(--ink-soft); border-radius: 999px; padding: 4px 12px; font-weight: 500; max-width: 100%; font-size: .9rem; }
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.tpl { padding: 0; gap: 0; }
+.chip.tpl > button { border: 0; background: transparent; color: var(--fg); padding: 6px 12px; font-weight: 500; border-radius: 999px; font-size: .9rem; }
+.chip.tpl > button + button { padding: 6px 10px 6px 2px; color: var(--muted); }
+.chip.tpl > button + button:hover { color: var(--red); }
+.team-label { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; background: var(--line); }
+.a { --tc: var(--blue); } .r { --tc: var(--red); } .g { --tc: var(--gray); } .v { --tc: var(--green); } .x { --tc: var(--mystery); }
+.dot.a, .dot.r, .dot.g, .dot.v, .dot.x { background: var(--tc); }
+.deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 8px; }
+.role { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 8px 8px 0; overflow: hidden; }
+.role.on { border-color: var(--muted); background: var(--ink-soft); }
+.role .bar { align-self: stretch; background: var(--tc); }
+.role .name { font-weight: 600; line-height: 1.2; }
+.role .tag { font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-left: 4px; }
+.role .note { font-size: .78rem; color: var(--muted); line-height: 1.3; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.stepper { display: flex; align-items: center; gap: 2px; }
+.stepper button { width: 32px; height: 32px; padding: 0; border-radius: 6px; font-weight: 600; }
+.stepper output { min-width: 22px; text-align: center; font-family: var(--mono); }
+.teamsec { border-top: 1px solid var(--line); padding-top: 12px; }
+.teamsec > summary { list-style: none; display: flex; align-items: center; gap: 8px; }
+.teamsec > summary::-webkit-details-marker { display: none; }
+.teamsec > summary::after { content: "+"; margin-left: auto; font-family: var(--mono); color: var(--muted); }
+.teamsec[open] > summary::after { content: "−"; }
+.opts { display: grid; gap: 10px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; }
+.check input { width: 18px; height: 18px; margin-top: 2px; flex: none; }
+.custom-form { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 8px; }
+.custom-form .full { grid-column: 1 / -1; }
+@media (max-width: 520px) { .custom-form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .custom-form .n { grid-column: 1 / -1; } }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: 10px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: .8rem; padding: 4px 10px; border-radius: 999px; background: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.pill.ok { color: var(--ok); } .pill.warn { color: var(--warn); }
+.notes { display: grid; gap: 4px; font-size: .88rem; }
+.notes .w { color: var(--warn); } .notes .i { color: var(--muted); }
+.bigcode { font-family: var(--mono); font-size: clamp(3rem, 16vw, 5.5rem); letter-spacing: .18em; line-height: 1; font-weight: 500; }
+.lobby-head { display: grid; gap: 8px; justify-items: start; }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 6px; }
+.plist li { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 6px 6px 12px; min-width: 0; }
+.plist li .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plist li .rl { font-size: .8rem; color: var(--muted); }
+.plist li .x2 { margin-left: auto; border: 0; background: transparent; color: var(--muted); padding: 4px 8px; }
+.plist li .x2:hover { color: var(--red); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom)); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 500; z-index: 60; }
+.confirm { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 12px; border-radius: 8px; background: var(--ink-soft); }
+
+/* carta */
+.stage { max-width: 440px; margin: 0 auto; display: grid; gap: 16px; justify-items: center; text-align: center; }
+.card { width: min(100%, 320px); aspect-ratio: 5 / 7; border-radius: 18px; position: relative; perspective: 1200px; cursor: pointer; border: 0; padding: 0; background: transparent; }
+.card .inner { position: absolute; inset: 0; transition: transform .55s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
+.card.flipped .inner { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; border-radius: 18px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: grid; padding: 22px; overflow: hidden; }
+.back { background: repeating-linear-gradient(135deg, var(--blue) 0 22px, var(--red) 22px 44px); color: #fff; place-items: center; }
+.back .seal { background: rgba(10,12,18,.82); padding: 18px 22px; border-radius: 12px; display: grid; gap: 4px; }
+.back .seal b { font-family: var(--display); font-size: 1.9rem; letter-spacing: .06em; text-transform: uppercase; }
+.front { transform: rotateY(180deg); color: #fff; grid-template-rows: auto 1fr auto; text-align: left; background: var(--tc); gap: 10px; }
+.front .team { font-family: var(--mono); font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; opacity: .92; }
+.front .rname { font-family: var(--display); font-weight: 800; font-size: clamp(2.2rem, 11vw, 3.2rem); line-height: .95; text-transform: uppercase; align-self: center; overflow-wrap: anywhere; }
+.front .rnote { font-size: .84rem; line-height: 1.35; background: rgba(0,0,0,.2); padding: 10px 12px; border-radius: 10px; max-height: 13.5em; overflow-y: auto; }
+.front .emblem { position: absolute; right: -40px; top: 40%; width: 200px; height: 200px; border-radius: 50%; border: 18px solid rgba(255,255,255,.12); transform: translateY(-50%); pointer-events: none; }
+.reveal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.reveal.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.reveal button { padding: 12px 6px; font-weight: 600; font-size: .9rem; }
+.inplay, .conds { width: 100%; text-align: left; display: grid; gap: 10px; }
+.inplay ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.inplay li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
+.inplay li .n { margin-left: auto; font-family: var(--mono); color: var(--muted); }
+.conds .chip button { border: 0; background: transparent; color: var(--muted); padding: 0 0 0 4px; }
+.full { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; color: #fff; text-align: center; cursor: pointer; background: var(--tc, var(--neutral));
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
+.full.n { background: var(--neutral); }
+.full b { font-family: var(--display); font-size: clamp(3rem, 15vw, 7rem); text-transform: uppercase; line-height: .9; display: block; overflow-wrap: anywhere; }
+.full .lbl { font-family: var(--mono); letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
+.full p { max-width: 36ch; margin: 18px auto 0; font-size: 1rem; opacity: .95; }
+.full small { display: block; margin-top: 22px; opacity: .75; }
+.wait { display: grid; gap: 10px; justify-items: center; padding: 30px 0; }
+.pulse { width: 14px; height: 14px; border-radius: 50%; background: var(--ok); animation: p 1.4s ease-in-out infinite; }
+@keyframes p { 50% { opacity: .25; transform: scale(.7); } }
+@media (prefers-reduced-motion: reduce) { .card .inner { transition: none; } .pulse { animation: none; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(() => {
+"use strict";
+const TEAM = { a: "Equipo Azul", r: "Equipo Rojo", g: "Gris", v: "Verde", x: "¿¿??" };
+const COLOR = { a: "Azul", r: "Rojo", g: "Gris", v: "Verde", x: "¿¿??" };
+const TEAM_ORDER = ["a", "r", "g", "v", "x"];
+// Cartas tomadas de la guía de las 110 cartas. color = color impreso; team = lealtad.
+const CATALOG = [{"id":"agente-a","name":"Agente","color":"a","team":"a","note":"Una vez por ronda, muestra tu carta en privado a otro jugador y dile que usas tu poder. Esa persona debe hacer una co-revelación contigo.","max":1},
+{"id":"agente-r","name":"Agente","color":"r","team":"r","note":"Una vez por ronda, muestra tu carta en privado a otro jugador y dile que usas tu poder. Esa persona debe hacer una co-revelación contigo.","max":1},
+{"id":"agorafobico","name":"Agorafóbico","color":"g","team":"g","note":"Ganas si nunca sales de la habitación en la que empezaste. Pierdes si alguna vez cambias de habitación, ya sea como rehén o por un poder, aunque luego regreses.","max":1},
+{"id":"ahab","name":"Ahab","color":"g","team":"g","note":"Ganas si Moby termina en la habitación de Bomba y tú terminas en la otra. Juega con Moby.","max":1,"link":"ahab"},
+{"id":"embajador-a","name":"Embajador","color":"a","team":"a","note":"Al recibir tu carta, anuncia que eres Embajador y déjala visible toda la partida. Puedes caminar entre las habitaciones. Eres inmune a poderes y condiciones, no votas, no puedes liderar ni ser rehén y no cuentas para el tamaño de la sala ni para Zombi. Usa las dos cartas de Embajador.","max":1,"conds":["inmune"]},
+{"id":"embajador-r","name":"Embajador","color":"r","team":"r","note":"Al recibir tu carta, anuncia que eres Embajador y déjala visible toda la partida. Puedes caminar entre las habitaciones. Eres inmune a poderes y condiciones, no votas, no puedes liderar ni ser rehén y no cuentas para el tamaño de la sala ni para Zombi. Usa las dos cartas de Embajador.","max":1,"conds":["inmune"]},
+{"id":"anarquista","name":"Anarquista","color":"g","team":"g","note":"Ganas si tu voto contribuye a destituir con éxito a un líder en la mayoría de las rondas. Necesitas 2 rondas de 3 o 3 de 5. Cada ronda cuenta una sola vez.","max":1},
+{"id":"angel-a","name":"Ángel","color":"a","team":"a","note":"Empiezas con la condición «honesto». Cuando hables, debes decir la verdad. Puedes despistar sin hablar. Si también adquieres la condición «mentiroso», ambas se cancelan.","max":1,"conds":["honesto"]},
+{"id":"angel-r","name":"Ángel","color":"r","team":"r","note":"Empiezas con la condición «honesto». Cuando hables, debes decir la verdad. Puedes despistar sin hablar. Si también adquieres la condición «mentiroso», ambas se cancelan.","max":1,"conds":["honesto"]},
+{"id":"ciego-a","name":"Ciego","color":"a","team":"a","note":"Haz lo posible por mantener los ojos cerrados toda la partida. Puedes seguir hablando, recibir condiciones y ser objetivo de poderes. Si te aplican un poder o una condición, deben informarte con honestidad.","max":1},
+{"id":"ciego-r","name":"Ciego","color":"r","team":"r","note":"Haz lo posible por mantener los ojos cerrados toda la partida. Puedes seguir hablando, recibir condiciones y ser objetivo de poderes. Si te aplican un poder o una condición, deben informarte con honestidad.","max":1},
+{"id":"azul","name":"Equipo Azul","color":"a","team":"a","note":"Carta básica sin poder especial. Ganas con el Equipo Azul si el Presidente sobrevive. En la partida básica, ayúdalo a terminar en una habitación distinta de Bomba.","max":7},
+{"id":"bomba-bot","name":"Bomba-bot","color":"g","team":"g","note":"Ganas si terminas en la habitación de Bomba y el Presidente está en la otra. Comprueba la ubicación de los tres tras el último intercambio. Tu objetivo es personal y la Bomba es otra carta.","max":1},
+{"id":"bomba","name":"Bomba","color":"r","team":"r","note":"Eres el personaje principal rojo. Al final de la partida, todos los jugadores de tu habitación adquieren la condición «muerto». En la partida básica, el Equipo Rojo gana si el Presidente muere. Si mueres antes de la detonación, tu bomba no explota.","max":1},
+{"id":"puerta-a","name":"Puerta","color":"a","team":"a","note":"Si tu habitación tiene más jugadores que la otra, puedes mostrar en privado tu carta a un jugador y ordenarle que salga. Cambia inmediatamente de habitación. Puedes repetir el poder mientras haya diferencia de tamaño. No se usa en la última ronda ni entre rondas.","max":1},
+{"id":"puerta-r","name":"Puerta","color":"r","team":"r","note":"Si tu habitación tiene más jugadores que la otra, puedes mostrar en privado tu carta a un jugador y ordenarle que salga. Cambia inmediatamente de habitación. Puedes repetir el poder mientras haya diferencia de tamaño. No se usa en la última ronda ni entre rondas.","max":1},
+{"id":"mayordomo","name":"Mayordomo","color":"g","team":"g","note":"Ganas si al final compartes habitación con la Criada y el Presidente. Incluye a la Criada al preparar la partida, pues necesitas que los tres terminen juntos.","max":1,"link":"mayordomo"},
+{"id":"clon","name":"Clon","color":"g","team":"g","note":"Tu resultado depende del primer jugador con quien hagas una co-revelación de cartas o un intercambio de color. Ganas si esa persona gana. Si nunca compartes con nadie, pierdes. Si tú y Robot comparten primero entre ustedes, ambos pierden.","max":1},
+{"id":"payaso-a","name":"Payaso","color":"a","team":"a","note":"Es un papel de actuación. Haz lo posible por sonreír todo el tiempo. Conservas el objetivo de tu equipo.","max":1},
+{"id":"payaso-r","name":"Payaso","color":"r","team":"r","note":"Es un papel de actuación. Haz lo posible por sonreír todo el tiempo. Conservas el objetivo de tu equipo.","max":1},
+{"id":"estafador-a","name":"Estafador","color":"a","team":"a","note":"Cuando alguien acepta intercambiar colores contigo, muestra tu carta completa en privado y exige que esa persona también haga una revelación privada. El poder convierte el acuerdo de color en dos revelaciones privadas. No se trata de una co-revelación a efectos de otros poderes.","max":1},
+{"id":"estafador-r","name":"Estafador","color":"r","team":"r","note":"Cuando alguien acepta intercambiar colores contigo, muestra tu carta completa en privado y exige que esa persona también haga una revelación privada. El poder convierte el acuerdo de color en dos revelaciones privadas. No se trata de una co-revelación a efectos de otros poderes.","max":1},
+{"id":"discreto-a","name":"Discreto","color":"a","team":"a","note":"Empiezas con la condición «discreto». Solo puedes intercambiar colores voluntariamente. Psicólogo puede quitarte la condición. «Imprudente» y «discreto» se cancelan entre sí.","max":1,"conds":["discreto"]},
+{"id":"discreto-r","name":"Discreto","color":"r","team":"r","note":"Empiezas con la condición «discreto». Solo puedes intercambiar colores voluntariamente. Psicólogo puede quitarte la condición. «Imprudente» y «discreto» se cancelan entre sí.","max":1,"conds":["discreto"]},
+{"id":"criminal-a","name":"Criminal","color":"a","team":"a","note":"Quien hace una co-revelación contigo adquiere la condición «tímido» y desde entonces no puede mostrar ninguna parte de su carta por voluntad propia. Psicólogo puede quitar la condición. «Tímido» e «imprudente» se cancelan entre sí.","max":1},
+{"id":"criminal-r","name":"Criminal","color":"r","team":"r","note":"Quien hace una co-revelación contigo adquiere la condición «tímido» y desde entonces no puede mostrar ninguna parte de su carta por voluntad propia. Psicólogo puede quitar la condición. «Tímido» e «imprudente» se cancelan entre sí.","max":1},
+{"id":"cupido","name":"Cupido","color":"r","team":"r","note":"Una vez por partida, muestra tu carta en privado a dos jugadores distintos de ti y diles que están enamorados entre sí. Su objetivo pasa a ser terminar en la misma habitación. Si uno de ellos adquiere también «odio», en ese jugador se cancelan las dos condiciones.","max":1},
+{"id":"camello-a","name":"Camello","color":"a","team":"a","note":"Quien hace una co-revelación contigo adquiere la condición «imprudente». Desde entonces debe aceptar las propuestas de co-revelación y de intercambio de color permitidas en la partida. «Imprudente» se cancela si entra en conflicto con «tímido» o «discreto».","max":1},
+{"id":"camello-r","name":"Camello","color":"r","team":"r","note":"Quien hace una co-revelación contigo adquiere la condición «imprudente». Desde entonces debe aceptar las propuestas de co-revelación y de intercambio de color permitidas en la partida. «Imprudente» se cancela si entra en conflicto con «tímido» o «discreto».","max":1},
+{"id":"senuelo","name":"Señuelo","color":"g","team":"g","note":"Ganas si Francotirador te elige como su disparo final. Incluye a Francotirador y Objetivo en la misma partida. Tu objetivo es atraer la elección hacia ti.","max":1,"link":"sniper"},
+{"id":"demonio-a","name":"Demonio","color":"a","team":"a","note":"Empiezas con la condición «mentiroso». Cuando hables, debes mentir. Puedes transmitir información verdadera sin hablar. Si también adquieres la condición «honesto», ambas se cancelan.","max":1,"conds":["mentiroso"]},
+{"id":"demonio-r","name":"Demonio","color":"r","team":"r","note":"Empiezas con la condición «mentiroso». Cuando hables, debes mentir. Puedes transmitir información verdadera sin hablar. Si también adquieres la condición «honesto», ambas se cancelan.","max":1,"conds":["mentiroso"]},
+{"id":"doctor","name":"Doctor","color":"a","team":"a","note":"El Equipo Azul solo puede ganar si el Presidente hace una co-revelación contigo antes del final, además de cumplir su objetivo habitual. Si la carta Presidente cambia de dueño, el nuevo Presidente debe volver a compartir. Al cierre, ambos confirman si lo hicieron.","max":1},
+{"id":"dr-boom","name":"Dr. Boom","color":"r","team":"r","note":"Si haces una co-revelación con el Presidente original, detonas de inmediato, mueren los jugadores de tu habitación y termina la partida. La carta indica victoria inmediata roja. El poder no se activa con Hija del presidente ni si el Presidente quedó enterrado.","max":1},
+{"id":"borracho","name":"Borracho","color":"x","team":"x","note":"Antes de repartir, separen al azar una carta boca abajo y coloquen Borracho en el mazo. Al inicio de la última ronda, cambia Borracho por esa carta «sobria» y adopta su equipo, poder y objetivo. La carta sobria entra limpia.","max":1},
+{"id":"sicario-a","name":"Sicario","color":"a","team":"a","note":"Una vez por ronda, muestra en privado tu carta a dos jugadores y ordénales hacer una co-revelación entre ellos. Ninguno debe revelarte su carta a ti. No puedes elegirte a ti mismo.","max":1},
+{"id":"sicario-r","name":"Sicario","color":"r","team":"r","note":"Una vez por ronda, muestra en privado tu carta a dos jugadores y ordénales hacer una co-revelación entre ellos. Ninguno debe revelarte su carta a ti. No puedes elegirte a ti mismo.","max":1},
+{"id":"ingeniero","name":"Ingeniero","color":"r","team":"r","note":"El Equipo Rojo solo puede ganar si Bomba hace una co-revelación contigo antes del final, además de cumplir su objetivo habitual. Si la carta Bomba cambia de dueño, su nuevo jugador debe volver a compartir. Al cierre, ambos confirman si lo hicieron.","max":1},
+{"id":"eris","name":"Eris","color":"a","team":"a","note":"Una vez por partida, muestra tu carta en privado a dos jugadores distintos de ti y diles que se odian entre sí. Su objetivo pasa a ser terminar en habitaciones distintas. Si uno de ellos adquiere también «enamorado», en ese jugador se cancelan las dos condiciones.","max":1},
+{"id":"jugador","name":"Jugador","color":"g","team":"g","note":"Después del último intercambio y antes de revelar las cartas, anuncia si crees que ganó el Equipo Azul, el Equipo Rojo o ninguno de los dos. Ganas si aciertas.","max":1},
+{"id":"patata-caliente","name":"Patata caliente","color":"g","team":"g","note":"En cuanto alguien hace una co-revelación o intercambia colores contigo, ambos intercambian sus cartas físicamente, de forma permanente. Cada quien adopta el nuevo personaje, su equipo y sus poderes, y pierde sus condiciones adquiridas. Quien conserva Patata caliente al final pierde.","max":1},
+{"id":"invencible","name":"Invencible","color":"a","team":"a","note":"Empiezas inmune a todos los poderes y condiciones. Conservas el objetivo del Equipo Azul.","max":1,"conds":["inmune"]},
+{"id":"inmunologo","name":"Inmunólogo","color":"r","team":"r","note":"Empiezas inmune a todos los poderes y condiciones. Conservas el objetivo del Equipo Rojo. Si un poder intenta aplicarte una condición, tu inmunidad impide el efecto.","max":1,"conds":["inmune"]},
+{"id":"becaria","name":"Becaria","color":"g","team":"g","note":"Ganas si terminas en la misma habitación que el Presidente. Comprueba dónde quedaron ambos tras el último intercambio. Tu objetivo se decide por la ubicación, independientemente del resultado del Equipo Azul.","max":1},
+{"id":"julieta","name":"Julieta","color":"g","team":"g","note":"Ganas si al final estás en la misma habitación que Romeo y Bomba. Incluye a Romeo al preparar la partida.","max":1,"link":"romeo"},
+{"id":"duende","name":"Duende","color":"v","team":"v","note":"Empiezas «imprudente», así que debes aceptar las propuestas permitidas de intercambio de cartas o colores. Cada vez que compartes, intercambias tu carta de forma permanente con la otra persona. Quien tiene Duende al final gana. Cada jugador puede recibir el papel una vez en la partida y debe avisar si intentan devolvérselo.","max":1,"conds":["imprudente"]},
+{"id":"criada","name":"Criada","color":"g","team":"g","note":"Ganas si al final compartes habitación con el Mayordomo y el Presidente. Incluye al Mayordomo al preparar la partida.","max":1,"link":"mayordomo"},
+{"id":"martir","name":"Mártir","color":"r","team":"r","note":"Eres la reserva de Bomba cuando se juega con carta enterrada. Si Bomba quedó enterrada, asumes su detonación, su objetivo rojo y la co-revelación con Ingeniero si está en juego. Si Bomba está en juego, conservas el objetivo rojo normal. Dr. Boom y Caballero Martes tienen sus propios disparadores.","max":1,"reserve":1},
+{"id":"cerebro","name":"Cerebro","color":"g","team":"g","note":"Ganas si terminas como líder de tu habitación y ya lideraste la otra habitación en algún momento de la partida. Solo haber sido líder de la habitación donde acabas resulta insuficiente.","max":1},
+{"id":"alcalde-a","name":"Alcalde","color":"a","team":"a","note":"Si en tu habitación hay un número par de jugadores, puedes revelar públicamente tu carta al intentar destituir al líder. Tu voto de destitución vale dos, salvo que el Alcalde contrario también revele su carta.","max":1},
+{"id":"alcalde-r","name":"Alcalde","color":"r","team":"r","note":"Si en tu habitación hay un número par de jugadores, puedes revelar públicamente tu carta al intentar destituir al líder. Tu voto de destitución vale dos, salvo que el Alcalde contrario también revele su carta.","max":1},
+{"id":"medico-a","name":"Médico","color":"a","team":"a","note":"Cuando alguien hace una co-revelación contigo, le quitas las condiciones adquiridas. Por ejemplo, eliminas la maldición que le impuso Momia. Tu poder no te da inmunidad ni te limpia a ti. Para quitarte una condición puedes compartir con el otro Médico.","max":1},
+{"id":"medico-r","name":"Médico","color":"r","team":"r","note":"Cuando alguien hace una co-revelación contigo, le quitas las condiciones adquiridas. Por ejemplo, eliminas la maldición que le impuso Momia. Tu poder no te da inmunidad ni te limpia a ti. Para quitarte una condición puedes compartir con el otro Médico.","max":1},
+{"id":"mi6","name":"MI6","color":"g","team":"g","note":"Ganas si haces una co-revelación con el Presidente y otra con Bomba antes de que termine la partida. Basta con completar ambos encuentros en momentos distintos. Ver solo un color o recibir una revelación unilateral no cuenta.","max":1},
+{"id":"mimo-a","name":"Mimo","color":"a","team":"a","note":"Es un papel de actuación. Haz lo posible por permanecer en silencio durante toda la partida. Puedes comunicarte con gestos. Conservas el objetivo de tu equipo.","max":1},
+{"id":"mimo-r","name":"Mimo","color":"r","team":"r","note":"Es un papel de actuación. Haz lo posible por permanecer en silencio durante toda la partida. Puedes comunicarte con gestos. Conservas el objetivo de tu equipo.","max":1},
+{"id":"esbirro","name":"Esbirro","color":"g","team":"g","note":"Ganas si nunca se destituye a un líder en la habitación en la que estás cuando ocurre la destitución. Te importa lo que sucede en la habitación que ocupas en cada momento.","max":1},
+{"id":"amante","name":"Amante","color":"g","team":"g","note":"Ganas si terminas en la habitación del Presidente y la Esposa está en la otra. Incluye a la Esposa en la partida.","max":1,"link":"esposa"},
+{"id":"moby","name":"Moby","color":"g","team":"g","note":"Ganas si Ahab termina en la habitación de Bomba y tú terminas en la otra. Juega con Ahab.","max":1,"link":"ahab"},
+{"id":"momia-a","name":"Momia","color":"a","team":"a","note":"Quien hace una co-revelación contigo queda «maldito» y debe hacer lo posible por guardar silencio desde entonces. Mientras conserve la condición, los poderes que exigen una frase o anuncio verbal quedan bloqueados. Médico puede quitar una maldición adquirida.","max":1},
+{"id":"momia-r","name":"Momia","color":"r","team":"r","note":"Quien hace una co-revelación contigo queda «maldito» y debe hacer lo posible por guardar silencio desde entonces. Mientras conserve la condición, los poderes que exigen una frase o anuncio verbal quedan bloqueados. Médico puede quitar una maldición adquirida.","max":1},
+{"id":"negociador-a","name":"Negociador","color":"a","team":"a","note":"Empiezas con la condición «astuto». Solo puedes hacer co-revelaciones de carta completa. No puedes intercambiar colores ni hacer revelaciones unilaterales privadas o públicas. Si otra condición te prohíbe también la co-revelación, te quedas sin una forma voluntaria de compartir.","max":1,"conds":["astuto"]},
+{"id":"negociador-r","name":"Negociador","color":"r","team":"r","note":"Empiezas con la condición «astuto». Solo puedes hacer co-revelaciones de carta completa. No puedes intercambiar colores ni hacer revelaciones unilaterales privadas o públicas. Si otra condición te prohíbe también la co-revelación, te quedas sin una forma voluntaria de compartir.","max":1,"conds":["astuto"]},
+{"id":"tirano-nuclear","name":"Tirano nuclear","color":"g","team":"g","note":"Empiezas «imprudente» y debes aceptar propuestas de co-revelación. La consigna de tu carta es evitar compartir con los dos personajes principales. Para esta baraja, cuenta victoria si ni el Presidente ni Bomba compartieron contigo antes del final. Si ganas, todos los demás pierden.","max":1,"conds":["imprudente"]},
+{"id":"enfermera","name":"Enfermera","color":"a","team":"a","note":"Eres la reserva del Doctor cuando se juega con carta enterrada. Si Doctor quedó enterrado, el Presidente debe hacer la co-revelación contigo para cumplir el requisito del Equipo Azul. Si Doctor sigue en juego, conservas el objetivo azul normal.","max":1,"reserve":1},
+{"id":"paparazzi-a","name":"Paparazzi","color":"a","team":"a","note":"Intenta enterarte de conversaciones e intercambios privados observando, sin tocar a los jugadores ni manipular sus cartas.","max":1},
+{"id":"paparazzi-r","name":"Paparazzi","color":"r","team":"r","note":"Intenta enterarte de conversaciones e intercambios privados observando, sin tocar a los jugadores ni manipular sus cartas.","max":1},
+{"id":"paranoico-a","name":"Paranoico","color":"a","team":"a","note":"Empiezas «paranoico». Solo puedes hacer co-revelaciones y tienes una voluntaria por partida. Psicólogo puede quitarte la condición. «Imprudente» y «paranoico» se cancelan.","max":1,"conds":["paranoico"]},
+{"id":"paranoico-r","name":"Paranoico","color":"r","team":"r","note":"Empiezas «paranoico». Solo puedes hacer co-revelaciones y tienes una voluntaria por partida. Psicólogo puede quitarte la condición. «Imprudente» y «paranoico» se cancelan.","max":1,"conds":["paranoico"]},
+{"id":"presidente","name":"Presidente","color":"a","team":"a","note":"Eres el personaje principal azul. Tu equipo gana si sobrevives y cumple cualquier requisito adicional en juego. En la partida básica, procura terminar en una habitación distinta de Bomba.","max":1},
+{"id":"hija-del-presidente","name":"Hija del presidente","color":"a","team":"a","note":"Eres la reserva del Presidente cuando se juega con carta enterrada. Si Presidente quedó enterrado, asumes su papel y debes sobrevivir. Si Doctor está en juego, también tienes que compartir con él. Si Presidente sigue en juego, conservas el objetivo azul normal. Dr. Boom no se activa contigo.","max":1,"reserve":1},
+{"id":"detective","name":"Detective","color":"g","team":"g","note":"Juega solo si hay una carta enterrada. Después del último intercambio y antes de que todos revelen, anuncia la identidad exacta de la carta enterrada. Si aciertas, ganas.","max":1},
+{"id":"psicologo-a","name":"Psicólogo","color":"a","team":"a","note":"Muestra tu carta en privado a alguien con una condición psicológica, como «tímido», «discreto» o «paranoico». Si esa persona hace inmediatamente una co-revelación contigo, le quitas esa condición. Este poder permite la co-revelación necesaria para tratar al Tímido o Discreto.","max":1},
+{"id":"psicologo-r","name":"Psicólogo","color":"r","team":"r","note":"Muestra tu carta en privado a alguien con una condición psicológica, como «tímido», «discreto» o «paranoico». Si esa persona hace inmediatamente una co-revelación contigo, le quitas esa condición. Este poder permite la co-revelación necesaria para tratar al Tímido o Discreto.","max":1},
+{"id":"reina","name":"Reina","color":"g","team":"g","note":"Ganas si al final estás en una habitación en la que no está ni el Presidente ni Bomba. En una partida de dos habitaciones, ambos deben acabar juntos en la otra.","max":1},
+{"id":"rojo","name":"Equipo Rojo","color":"r","team":"r","note":"Carta básica sin poder especial. Ganas con el Equipo Rojo si el Presidente muere. En la partida básica, ayuda a Bomba a terminar en la misma habitación que el Presidente.","max":7},
+{"id":"rival","name":"Rival","color":"g","team":"g","note":"Ganas si terminas en una habitación distinta de la del Presidente. Importa la ubicación tras el último intercambio de rehenes.","max":1},
+{"id":"robot","name":"Robot","color":"g","team":"g","note":"Ganas si el primer jugador con quien hagas una co-revelación o intercambio de color pierde. Si no compartes con nadie, pierdes. Si tu primer intercambio es con Clon y también eres su primer intercambio, ambos pierden.","max":1},
+{"id":"romeo","name":"Romeo","color":"g","team":"g","note":"Ganas si al final compartes habitación con Julieta y Bomba. Incluye a Julieta al preparar la partida.","max":1,"link":"romeo"},
+{"id":"guardia-de-seguridad-a","name":"Guardia de seguridad","color":"a","team":"a","note":"Una vez por partida, muestra tu carta públicamente, elige a otro jugador en tu habitación y dile que se queda. Esa persona no puede salir como rehén en esa ronda. Tu carta queda visible hasta el final.","max":1},
+{"id":"guardia-de-seguridad-r","name":"Guardia de seguridad","color":"r","team":"r","note":"Una vez por partida, muestra tu carta públicamente, elige a otro jugador en tu habitación y dile que se queda. Esa persona no puede salir como rehén en esa ronda. Tu carta queda visible hasta el final.","max":1},
+{"id":"timido-a","name":"Tímido","color":"a","team":"a","note":"Empiezas «tímido». Por voluntad propia no puedes mostrar tu carta ni su color. Psicólogo puede darte una co-revelación inmediata para quitar la condición. «Tímido» e «imprudente» se cancelan.","max":1,"conds":["timido"]},
+{"id":"timido-r","name":"Tímido","color":"r","team":"r","note":"Empiezas «tímido». Por voluntad propia no puedes mostrar tu carta ni su color. Psicólogo puede darte una co-revelación inmediata para quitar la condición. «Tímido» e «imprudente» se cancelan.","max":1,"conds":["timido"]},
+{"id":"francotirador","name":"Francotirador","color":"g","team":"g","note":"Después del último intercambio, antes de revelar las cartas, anuncia públicamente a quién disparas. Juega con Objetivo y Señuelo.","max":1,"link":"sniper"},
+{"id":"espia-azul","name":"Espía azul","color":"r","team":"a","note":"Tu equipo real es Azul y tu carta se ve roja. Si muestras solo el color, pareces del equipo contrario. Si enseñas la carta completa, se descubre tu lealtad. Ganas con el Equipo Azul.","max":1},
+{"id":"espia-rojo","name":"Espía rojo","color":"a","team":"r","note":"Tu equipo real es Rojo y tu carta se ve azul. Si muestras solo el color, pareces del equipo contrario. Si enseñas la carta completa, se descubre tu lealtad. Ganas con el Equipo Rojo.","max":1},
+{"id":"superviviente","name":"Superviviente","color":"g","team":"g","note":"Ganas si terminas en una habitación distinta de la de Bomba. Se comprueba la posición tras el último intercambio.","max":1},
+{"id":"objetivo","name":"Objetivo","color":"g","team":"g","note":"Ganas si Francotirador no te elige para su disparo final. Incluye a Francotirador y Señuelo. Si elige a Señuelo, tanto Señuelo como tú cumplen sus respectivos objetivos.","max":1,"link":"sniper"},
+{"id":"maton-a","name":"Matón","color":"a","team":"a","note":"Quien hace una co-revelación contigo adquiere la condición «discreto» y solo puede intercambiar colores. Psicólogo puede quitarla. «Imprudente» y «discreto» se cancelan.","max":1},
+{"id":"maton-r","name":"Matón","color":"r","team":"r","note":"Quien hace una co-revelación contigo adquiere la condición «discreto» y solo puede intercambiar colores. Psicólogo puede quitarla. «Imprudente» y «discreto» se cancelan.","max":1},
+{"id":"mecanico","name":"Mecánico","color":"r","team":"r","note":"Eres la reserva de Ingeniero cuando se juega con carta enterrada. Si Ingeniero quedó enterrado, Bomba debe hacer la co-revelación contigo para cumplir el requisito del Equipo Rojo. Si Ingeniero sigue en juego, conservas el objetivo rojo normal.","max":1,"reserve":1},
+{"id":"viajero","name":"Viajero","color":"g","team":"g","note":"Ganas si cambias de habitación como rehén al final de la mayoría de las rondas. Necesitas 2 de 3 o 3 de 5. Los desplazamientos por poderes fuera del intercambio de rehenes no cuentan.","max":1},
+{"id":"caballero-martes","name":"Caballero Martes","color":"a","team":"a","note":"Si haces una co-revelación con Bomba original, la partida termina de inmediato. La carta indica victoria inmediata azul. El poder no se activa con Mártir ni si Bomba quedó enterrada.","max":1},
+{"id":"usurpador-a","name":"Usurpador","color":"a","team":"a","note":"Una vez por partida y antes de la última ronda, muestra tu carta públicamente y toma el liderazgo de la habitación. Déjala visible hasta el final. Nadie puede destituirte durante la ronda en que activaste el poder. Si los dos Usurpadores lo activan en la misma habitación y ronda, conserva el puesto el primero.","max":1},
+{"id":"usurpador-r","name":"Usurpador","color":"r","team":"r","note":"Una vez por partida y antes de la última ronda, muestra tu carta públicamente y toma el liderazgo de la habitación. Déjala visible hasta el final. Nadie puede destituirte durante la ronda en que activaste el poder. Si los dos Usurpadores lo activan en la misma habitación y ronda, conserva el puesto el primero.","max":1},
+{"id":"victima","name":"Víctima","color":"g","team":"g","note":"Ganas si terminas en la misma habitación que Bomba. Se comprueba después del último intercambio, independientemente de qué equipo gane.","max":1},
+{"id":"esposa","name":"Esposa","color":"g","team":"g","note":"Ganas si estás en la habitación del Presidente al final y la Amante está en la otra. Incluye a la Amante en la partida.","max":1,"link":"esposa"},
+{"id":"zombi","name":"Zombi","color":"v","team":"v","note":"Empiezas en el equipo Zombi. Cada vez que un Zombi comparte carta completa o color, contagia a la otra persona. Los contagiados conservan su carta y sus poderes, pero adoptan el objetivo Zombi y avisan al compartir. Ganan si al final todos los jugadores vivos cuentan como Zombis. Los Embajadores quedan fuera de ese conteo.","max":1}];
+const BUILTIN_TEMPLATES = [{"id":"b0","name":"Básico (aprender)","builtin":true,"counts":{"presidente":1,"bomba":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b1","name":"1 · Mi primera carta enterrada","builtin":true,"counts":{"presidente":1,"bomba":1,"hija-del-presidente":1,"martir":1},"custom":[],"autofill":true,"bury":true,"colorRule":"auto","gamblerOdd":false},
+{"id":"b2","name":"2 · Mi primera co-revelación","builtin":true,"counts":{"presidente":1,"bomba":1,"negociador-a":1,"negociador-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"never","gamblerOdd":true},
+{"id":"b3","name":"3 · Practicar la co-revelación","builtin":true,"counts":{"presidente":1,"bomba":1,"doctor":1,"ingeniero":1},"custom":[],"autofill":true,"bury":false,"colorRule":"never","gamblerOdd":true},
+{"id":"b4","name":"4 · Co-revelación con muerte súbita","builtin":true,"counts":{"presidente":1,"bomba":1,"doctor":1,"ingeniero":1,"caballero-martes":1,"dr-boom":1},"custom":[],"autofill":true,"bury":false,"colorRule":"never","gamblerOdd":true},
+{"id":"b5","name":"5 · Mi primer intercambio de color","builtin":true,"counts":{"presidente":1,"bomba":1,"discreto-a":1,"discreto-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"always","gamblerOdd":true},
+{"id":"b6","name":"6 · Practicar el intercambio de color","builtin":true,"counts":{"presidente":1,"bomba":1,"discreto-a":1,"discreto-r":1,"espia-azul":1,"espia-rojo":1},"custom":[],"autofill":true,"bury":false,"colorRule":"always","gamblerOdd":true},
+{"id":"b7","name":"7 · Mi primer papel de actuación","builtin":true,"counts":{"presidente":1,"bomba":1,"paparazzi-a":1,"paparazzi-r":1,"mimo-a":1,"mimo-r":1,"angel-a":1,"angel-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b8","name":"9 · Mi primera limpieza","builtin":true,"counts":{"presidente":1,"bomba":1,"medico-a":1,"medico-r":1,"momia-a":1,"momia-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b9","name":"10 · Revelaciones privadas y públicas","builtin":true,"counts":{"presidente":1,"bomba":1,"agente-a":1,"agente-r":1,"guardia-de-seguridad-a":1,"guardia-de-seguridad-r":1,"negociador-a":1,"negociador-r":1,"paranoico-a":1,"paranoico-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b10","name":"11 · Introducción a los grises","builtin":true,"counts":{"presidente":1,"bomba":1,"francotirador":1,"objetivo":1,"senuelo":1,"victima":1,"becaria":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b11","name":"Introducción a los roles avanzados","builtin":true,"counts":{"presidente":1,"bomba":1,"timido-a":1,"timido-r":1,"paparazzi-a":1,"paparazzi-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b12","name":"Misterio para seis","builtin":true,"counts":{"presidente":1,"bomba":1,"hija-del-presidente":1,"martir":1,"detective":1},"custom":[],"autofill":true,"bury":true,"colorRule":"auto","gamblerOdd":false},
+{"id":"b13","name":"Seis jugadores y al menos un perdedor","builtin":true,"counts":{"presidente":1,"bomba":1,"rival":1,"becaria":1,"superviviente":1,"victima":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b14","name":"Amor y odio para seis","builtin":true,"counts":{"presidente":1,"bomba":1,"ahab":1,"moby":1,"esposa":1,"amante":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b15","name":"Dos habitaciones, dos explosiones y un disparo","builtin":true,"counts":{"presidente":1,"bomba":1,"francotirador":1,"objetivo":1,"senuelo":1,"patata-caliente":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b16","name":"La partida estándar","builtin":true,"counts":{"presidente":1,"bomba":1,"hija-del-presidente":1,"martir":1,"doctor":1,"ingeniero":1,"enfermera":1,"mecanico":1},"custom":[],"autofill":true,"bury":true,"colorRule":"auto","gamblerOdd":false},
+{"id":"b17","name":"Misterio de asesinato (12+)","builtin":true,"counts":{"presidente":1,"bomba":1,"hija-del-presidente":1,"martir":1,"doctor":1,"ingeniero":1,"enfermera":1,"mecanico":1,"francotirador":1,"objetivo":1,"senuelo":1},"custom":[],"autofill":true,"bury":true,"colorRule":"auto","gamblerOdd":false},
+{"id":"b18","name":"No hables mal (12+)","builtin":true,"counts":{"presidente":1,"bomba":1,"angel-a":1,"angel-r":1,"demonio-a":1,"demonio-r":1,"mimo-a":1,"mimo-r":1,"momia-a":1,"momia-r":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b19","name":"Día de San Valentín (12+)","builtin":true,"counts":{"presidente":1,"bomba":1,"cupido":1,"eris":1,"ahab":1,"moby":1,"esposa":1,"amante":1,"rival":1,"becaria":1,"superviviente":1,"victima":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b20","name":"Bipolar (12+)","builtin":true,"counts":{"presidente":1,"bomba":1,"criminal-a":1,"criminal-r":1,"sicario-a":1,"sicario-r":1,"psicologo-a":1,"psicologo-r":1,"camello-a":1,"camello-r":1,"tirano-nuclear":1,"patata-caliente":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b21","name":"Antimonopolio (13+)","builtin":true,"counts":{"presidente":1,"bomba":1,"criminal-a":1,"criminal-r":1,"embajador-a":1,"embajador-r":1,"discreto-a":1,"discreto-r":1,"invencible":1,"inmunologo":1,"espia-azul":1,"espia-rojo":1,"patata-caliente":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b22","name":"Fiesta de tímidos (14+)","builtin":true,"counts":{"presidente":1,"bomba":1,"timido-a":1,"timido-r":1,"negociador-a":1,"negociador-r":1,"criminal-a":1,"criminal-r":1,"psicologo-a":1,"psicologo-r":1,"discreto-a":1,"discreto-r":1,"maton-a":1,"maton-r":1,"espia-azul":1,"espia-rojo":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true},
+{"id":"b23","name":"Infección al azar","builtin":true,"counts":{"presidente":1,"bomba":1,"hija-del-presidente":1,"martir":1,"doctor":1,"ingeniero":1,"enfermera":1,"mecanico":1,"agorafobico":1,"zombi":1},"custom":[],"autofill":true,"bury":true,"colorRule":"auto","gamblerOdd":false},
+{"id":"b24","name":"El encubrimiento (16+)","builtin":true,"counts":{"presidente":1,"bomba":1,"sicario-a":1,"sicario-r":1,"alcalde-a":1,"alcalde-r":1,"usurpador-a":1,"usurpador-r":1,"discreto-a":1,"discreto-r":1,"doctor":1,"ingeniero":1,"espia-azul":1,"espia-rojo":1,"invencible":1,"inmunologo":1},"custom":[],"autofill":true,"bury":false,"colorRule":"auto","gamblerOdd":true}];
+
+const COND = {
+  timido: { name: "Tímido", desc: "No puedes mostrar tu carta ni su color por voluntad propia.", psy: true },
+  discreto: { name: "Discreto", desc: "Solo puedes intercambiar colores.", psy: true },
+  astuto: { name: "Astuto", desc: "Solo puedes hacer co-revelaciones de carta completa.", psy: false },
+  paranoico: { name: "Paranoico", desc: "Solo co-revelaciones, y una sola voluntaria por partida.", psy: true },
+  imprudente: { name: "Imprudente", desc: "Debes aceptar las propuestas de co-revelación e intercambio de color.", psy: false },
+  maldito: { name: "Maldito", desc: "Debes guardar silencio.", psy: false },
+  enamorado: { name: "Enamorado", desc: "Tu objetivo: terminar en la misma habitación que tu pareja.", psy: false },
+  odio: { name: "Odio", desc: "Tu objetivo: terminar en habitación distinta a la de la otra persona.", psy: false },
+  honesto: { name: "Honesto", desc: "Cuando hables, debes decir la verdad.", psy: false },
+  mentiroso: { name: "Mentiroso", desc: "Cuando hables, debes mentir.", psy: false },
+  zombi: { name: "Zombi", desc: "Contagiado: tu objetivo pasa a ser el de los Zombis y avisas al compartir.", psy: false },
+  inmune: { name: "Inmune", desc: "Ningún poder ni condición te afecta.", psy: false }
+};
+const ACQUIRABLE = ["timido", "discreto", "imprudente", "maldito", "enamorado", "odio", "zombi"];
+const LINK_NAMES = { ahab: ["ahab", "moby"], mayordomo: ["mayordomo", "criada"], romeo: ["romeo", "julieta"], esposa: ["esposa", "amante"], sniper: ["francotirador", "objetivo", "senuelo"] };
+
+// ---------- utilidades ----------
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function rand(n) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rid(n = 16) { const ch = "abcdefghijkmnpqrstuvwxyz23456789"; let s = ""; for (let i = 0; i < n; i++) s += ch[rand(ch.length)]; return s; }
+function newCode() { const ch = "ABCDEFGHJKLMNPQRSTUVWXYZ"; let s = ""; for (let i = 0; i < 4; i++) s += ch[rand(ch.length)]; return s; }
+const norm = s => String(s).trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const ls = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
+  set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+let toastT;
+function toast(m) { let t = $(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); } t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2400); }
+const clean = o => JSON.parse(JSON.stringify(o)); // quita undefined (Firestore no los acepta)
+const byId = id => CATALOG.find(c => c.id === id);
+const cardOf = r => clean({ id: r.id, name: r.name, color: r.color, team: r.team, note: r.note || "", conds: r.conds || [] });
+
+// ---------- almacenamiento: Firebase o modo de prueba local ----------
+function firebaseApi(cfg) {
+  firebase.initializeApp(cfg);
+  const fs = firebase.firestore();
+  const G = code => fs.collection("games").doc(code);
+  const P = code => G(code).collection("players");
+  const onErr = e => { console.error(e); toast("Sin conexión con la base de datos"); };
+  return {
+    demo: false,
+    async getGame(code) { const s = await G(code).get(); return s.exists ? s.data() : null; },
+    createGame: (code, data) => G(code).set(clean(data)),
+    updateGame: (code, patch) => G(code).update(clean(patch)),
+    watchGame: (code, cb) => G(code).onSnapshot(s => cb(s.exists ? s.data() : null), onErr),
+    watchPlayers: (code, cb) => P(code).onSnapshot(q => cb(q.docs.map(d => ({ id: d.id, ...d.data() }))), onErr),
+    watchPlayer: (code, pid, cb) => P(code).doc(pid).onSnapshot(s => cb(s.exists ? { id: s.id, ...s.data() } : null), onErr),
+    async listPlayers(code) { const q = await P(code).get(); return q.docs.map(d => ({ id: d.id, ...d.data() })); },
+    async addPlayer(code, data) { const id = rid(); await P(code).doc(id).set(clean(data)); return id; },
+    updatePlayer: (code, pid, patch) => P(code).doc(pid).update(clean(patch)),
+    removePlayer: (code, pid) => P(code).doc(pid).delete(),
+    async batch(code, gamePatch, playerPatches) {
+      const b = fs.batch();
+      if (gamePatch) b.update(G(code), clean(gamePatch));
+      Object.entries(playerPatches).forEach(([pid, p]) => b.update(P(code).doc(pid), clean(p)));
+      await b.commit();
+    },
+    async listTemplates() { const q = await fs.collection("templates").get(); return q.docs.map(d => ({ id: d.id, ...d.data() })); },
+    async saveTemplate(t) { const id = rid(); await fs.collection("templates").doc(id).set(clean(t)); return id; },
+    deleteTemplate: id => fs.collection("templates").doc(id).delete()
+  };
+}
+function localApi() {
+  const K = "rs-demo-db";
+  const read = () => ls.get(K) || { games: {}, templates: {} };
+  const subs = new Set();
+  const fire = () => subs.forEach(f => f());
+  const bc = "BroadcastChannel" in window ? new BroadcastChannel(K) : null;
+  if (bc) bc.onmessage = fire;
+  window.addEventListener("storage", e => { if (e.key === K) fire(); });
+  const write = db => { ls.set(K, db); if (bc) bc.postMessage(1); fire(); };
+  const gameOf = g => { if (!g) return null; const { players, ...rest } = g; return clean(rest); };
+  const plist = g => g ? Object.entries(g.players || {}).map(([id, p]) => ({ id, ...p })) : [];
+  const watch = (get, cb) => { let last; const f = () => { const v = get(read()); const k = JSON.stringify(v); if (k !== last) { last = k; cb(v); } }; subs.add(f); setTimeout(f); return () => subs.delete(f); };
+  return {
+    demo: true,
+    async getGame(code) { return gameOf(read().games[code]); },
+    async createGame(code, data) { const db = read(); db.games[code] = { ...clean(data), players: {} }; write(db); },
+    async updateGame(code, patch) { const db = read(); Object.assign(db.games[code], clean(patch)); write(db); },
+    watchGame: (code, cb) => watch(db => gameOf(db.games[code]), cb),
+    watchPlayers: (code, cb) => watch(db => plist(db.games[code]), cb),
+    watchPlayer: (code, pid, cb) => watch(db => { const p = db.games[code]?.players?.[pid]; return p ? { id: pid, ...p } : null; }, cb),
+    async listPlayers(code) { return plist(read().games[code]); },
+    async addPlayer(code, data) { const db = read(); const id = rid(); db.games[code].players[id] = clean(data); write(db); return id; },
+    async updatePlayer(code, pid, patch) { const db = read(); const p = db.games[code]?.players?.[pid]; if (p) { Object.assign(p, clean(patch)); write(db); } },
+    async removePlayer(code, pid) { const db = read(); delete db.games[code].players[pid]; write(db); },
+    async batch(code, gamePatch, playerPatches) { const db = read(); const g = db.games[code]; if (gamePatch) Object.assign(g, clean(gamePatch)); Object.entries(playerPatches).forEach(([pid, p]) => { if (g.players[pid]) Object.assign(g.players[pid], clean(p)); }); write(db); },
+    async listTemplates() { return Object.entries(read().templates).map(([id, t]) => ({ id, ...t })); },
+    async saveTemplate(t) { const db = read(); const id = rid(); db.templates[id] = clean(t); write(db); return id; },
+    async deleteTemplate(id) { const db = read(); delete db.templates[id]; write(db); }
+  };
+}
+let api;
+try { api = window.FIREBASE_CONFIG && window.firebase ? firebaseApi(window.FIREBASE_CONFIG) : localApi(); }
+catch (e) { console.error(e); api = localApi(); }
+
+// ---------- navegación ----------
+let unsubs = [];
+function go(fn, ...args) { unsubs.forEach(u => { try { u(); } catch (e) {} }); unsubs = []; window.scrollTo(0, 0); fn(...args); }
+const app = () => $("#app");
+const demoNote = () => api.demo ? `<p class="demo">Modo de prueba: todo se guarda solo en este navegador. Abre otra pestaña para simular a otro jugador. Para jugar con varios celulares hay que conectar Firebase.</p>` : "";
+
+// ---------- inicio ----------
+function home(msg) {
+  const ps = ls.get("rs-player"), hs = ls.get("rs-host");
+  app().innerHTML = `<div class="narrow">
+    <div style="display:grid;gap:8px">
+      <span class="eyebrow">Roles ocultos · dos habitaciones</span>
+      <h1>Reparto Secreto</h1>
+    </div>
+    <div class="stripe"></div>
+    ${demoNote()}
+    ${ps ? `<button class="primary big wide" id="backPlayer">Volver a mi carta · ${esc(ps.code)}</button>` : ""}
+    <form class="panel" id="joinForm">
+      <h2>Unirme a una partida</h2>
+      <label for="code">Código de la partida
+        <input class="code" id="code" maxlength="4" autocomplete="off" autocapitalize="characters" placeholder="ABCD">
+      </label>
+      <p class="err" id="joinErr">${esc(msg || "")}</p>
+      <button class="primary big wide" type="submit">Entrar</button>
+    </form>
+    <div class="panel">
+      <h2>Soy el anfitrión</h2>
+      ${hs ? `<button class="wide" id="backHost">Volver al panel de la partida ${esc(hs.code)}</button>` : ""}
+      <button class="wide" id="newGame">Crear partida nueva</button>
+      <details><summary>Recuperar mi panel en otro celular</summary>
+        <form id="recover" class="row">
+          <input type="text" id="rCode" maxlength="4" placeholder="Código" autocapitalize="characters" style="flex:1 1 90px;text-transform:uppercase">
+          <input type="tel" id="rPin" maxlength="4" placeholder="PIN" inputmode="numeric" style="flex:1 1 90px">
+          <button type="submit">Recuperar</button>
+        </form>
+        <p class="err" id="rErr"></p>
+      </details>
+    </div>
+  </div>`;
+  const bp = $("#backPlayer"); if (bp) bp.onclick = () => go(playerView);
+  const bh = $("#backHost"); if (bh) bh.onclick = () => go(hostLobby);
+  $("#newGame").onclick = () => go(hostSetup, null);
+  $("#joinForm").onsubmit = async e => {
+    e.preventDefault();
+    const code = $("#code").value.trim().toUpperCase();
+    if (code.length !== 4) { $("#joinErr").textContent = "El código tiene 4 letras."; return; }
+    const g = await api.getGame(code).catch(() => null);
+    if (!g) { $("#joinErr").textContent = "No encontré esa partida. Revisa el código."; return; }
+    go(joinView, code);
+  };
+  $("#recover").onsubmit = async e => {
+    e.preventDefault();
+    const code = $("#rCode").value.trim().toUpperCase(), pin = $("#rPin").value.trim();
+    const g = await api.getGame(code).catch(() => null);
+    if (!g || g.hostPin !== pin) { $("#rErr").textContent = "El código o el PIN no coinciden."; return; }
+    ls.set("rs-host", { code }); go(hostLobby);
+  };
+}
+
+// ---------- unirse ----------
+function joinView(code) {
+  app().innerHTML = `<div class="narrow">
+    <button class="ghost" id="back" style="justify-self:start">← Volver</button>
+    <div style="display:grid;gap:6px"><span class="eyebrow">Partida ${esc(code)}</span><h1>¿Quién eres?</h1></div>
+    <form class="panel" id="f">
+      <label for="name">Tu nombre<input type="text" id="name" maxlength="24" autocomplete="nickname" placeholder="Como te conocen en el grupo"></label>
+      <label for="pin">Un PIN de 4 números<input type="tel" id="pin" maxlength="4" inputmode="numeric" placeholder="Ej. 2580"></label>
+      <p class="muted small">Con tu nombre y este PIN recuperas tu carta si se te cierra el navegador o cambias de celular.</p>
+      <p class="err" id="err"></p>
+      <button class="primary big wide" type="submit">Entrar a la partida</button>
+    </form>
+  </div>`;
+  $("#back").onclick = () => go(home);
+  $("#name").focus();
+  $("#f").onsubmit = async e => {
+    e.preventDefault();
+    const name = $("#name").value.trim(), pin = $("#pin").value.trim();
+    if (!name) return $("#err").textContent = "Escribe tu nombre.";
+    if (!/^\d{4}$/.test(pin)) return $("#err").textContent = "El PIN son 4 números.";
+    const players = await api.listPlayers(code);
+    const same = players.find(p => norm(p.name) === norm(name));
+    let pid;
+    if (same) {
+      if (same.pin !== pin) return $("#err").textContent = "Ese nombre ya está en la partida. Si eres tú, pon tu PIN; si no, usa otro nombre.";
+      pid = same.id;
+    } else {
+      pid = await api.addPlayer(code, { name: name.slice(0, 24), pin, joinedAt: Date.now(), card: null, round: 0, acq: [], cured: [], paraUsed: false });
+    }
+    ls.set("rs-player", { code, pid, name });
+    go(playerView);
+  };
+}
+
+// ---------- reglas para mostrar la carta ----------
+// Devuelve las condiciones activas y qué puede mostrar el jugador por voluntad propia.
+function rulesFor(card, me) {
+  const innate = (card.conds || []).filter(c => !(me.cured || []).includes(c));
+  const immune = innate.includes("inmune");
+  const set = new Set(innate.concat(immune ? [] : (me.acq || [])));
+  if (set.has("honesto") && set.has("mentiroso")) { set.delete("honesto"); set.delete("mentiroso"); }
+  if (set.has("enamorado") && set.has("odio")) { set.delete("enamorado"); set.delete("odio"); }
+  if (set.has("imprudente")) ["timido", "discreto", "paranoico"].forEach(c => { if (set.has(c)) { set.delete(c); set.delete("imprudente"); } });
+  let can = { color: true, role: true, full: true };
+  const only = keys => Object.keys(can).forEach(k => { if (!keys.includes(k)) can[k] = false; });
+  if (set.has("timido")) only([]);
+  if (set.has("discreto")) only(["color"]);
+  if (set.has("astuto")) only(["full"]);
+  if (set.has("paranoico")) { only(["full"]); if (me.paraUsed) can.full = false; }
+  return { set, can, immune };
+}
+
+// ---------- vista del jugador ----------
+function cardFront(c) {
+  const spy = c.color !== c.team;
+  return `<div class="face front ${c.color}"><div class="emblem"></div>
+    <div class="team">${spy ? `Lealtad: ${COLOR[c.team]} · carta ${COLOR[c.color].toLowerCase()}` : TEAM[c.team]}</div>
+    <div class="rname">${esc(c.name)}</div>${c.note ? `<div class="rnote">${esc(c.note)}</div>` : ""}</div>`;
+}
+function fullScreen(mode, c) {
+  const d = document.createElement("div");
+  if (mode === "color") { d.className = "full " + c.color; d.innerHTML = `<div><span class="lbl">Mi color</span><b>${COLOR[c.color]}</b><small>Toca para ocultar</small></div>`; }
+  else if (mode === "role") { d.className = "full n"; d.innerHTML = `<div><span class="lbl">Mi rol</span><b>${esc(c.name)}</b><small>Toca para ocultar</small></div>`; }
+  else { d.className = "full " + c.color; d.innerHTML = `<div><span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] : TEAM[c.team]}</span><b>${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}<small>Toca para ocultar</small></div>`; }
+  d.setAttribute("role", "dialog"); d.tabIndex = 0;
+  const opened = Date.now();
+  const close = () => { if (Date.now() - opened > 400) d.remove(); }; // evita que el mismo toque la cierre
+  d.onclick = close; d.onkeydown = e => { if (["Escape", "Enter", " "].includes(e.key)) close(); };
+  document.body.appendChild(d); d.focus();
+}
+function inPlayHTML(g) {
+  const by = {}; TEAM_ORDER.forEach(t => by[t] = []);
+  (g.inPlay || []).forEach(x => (by[x.color] || by.g).push(x));
+  const total = (g.inPlay || []).reduce((s, x) => s + x.n, 0);
+  const list = t => by[t].length ? `<div class="team-label"><span class="dot ${t}"></span>Color ${COLOR[t].toLowerCase()}</div><ul>${by[t].map(r => `<li><span class="dot ${t}"></span>${esc(r.name)}<span class="n">×${r.n}</span></li>`).join("")}</ul>` : "";
+  return `<section class="inplay"><div class="panel-head"><h2>Cartas en esta partida</h2><span class="count">${total}</span></div>
+    ${TEAM_ORDER.map(list).join("")}
+    ${g.buried ? `<p class="muted small">Hay ${g.buried} carta enterrada: está en la lista pero nadie la tiene.</p>` : ""}
+    ${g.sober ? `<p class="muted small">Una carta está apartada para el Borracho.</p>` : ""}</section>`;
+}
+function playerView() {
+  const ps = ls.get("rs-player"); if (!ps) return go(home);
+  let game, me, players = [], lastKey = "", loaded = { g: false, m: false };
+  const render = () => {
+    if (!loaded.g || !loaded.m) return;
+    if (!game) { ls.set("rs-player", null); return go(home, "Esa partida ya no existe."); }
+    if (!me) { ls.set("rs-player", null); return go(home, "El anfitrión te quitó de la partida. Puedes volver a entrar con el código."); }
+    const hasCard = me.card && me.round === game.round;
+    const key = JSON.stringify([hasCard, me.card, me.round, me.acq, me.cured, me.paraUsed, game.round, game.inPlay, game.buried, !!game.sober, game.colorAllowed, hasCard ? 0 : players.map(p => p.name)]);
+    if (key === lastKey) return; lastKey = key;
+    if (!hasCard) {
+      app().innerHTML = `<div class="narrow">
+        <div style="display:grid;gap:6px"><span class="eyebrow">Partida ${esc(ps.code)}</span><h1>Estás dentro, ${esc(me.name)}</h1></div>
+        ${demoNote()}
+        <div class="panel wait"><div class="pulse"></div><p><b>${game.round ? "Esperando la siguiente partida" : "Esperando a que el anfitrión reparta"}</b></p><p class="muted small">Tu carta aparece aquí sola. No hace falta recargar.</p></div>
+        <div class="panel"><div class="panel-head"><h2>En la sala</h2><span class="count">${players.length}</span></div>
+          <div class="chips">${players.slice().sort((a, b) => a.joinedAt - b.joinedAt).map(p => `<span class="chip"><span>${esc(p.name)}</span></span>`).join("")}</div></div>
+        <button class="ghost" id="leave">Salir de esta pantalla</button>
+      </div>`;
+      $("#leave").onclick = () => go(home);
+      return;
+    }
+    const c = me.card;
+    const R = rulesFor(c, me);
+    const showColor = game.colorAllowed !== false;
+    const active = [...R.set];
+    const removable = active.filter(k => (me.acq || []).includes(k) || COND[k]?.psy);
+    app().innerHTML = `<div class="stage">
+      <div style="display:grid;gap:4px"><span class="eyebrow">Partida ${esc(ps.code)} · Reparto ${game.round}</span><h1 style="font-size:clamp(2rem,9vw,2.6rem)">${esc(me.name)}</h1></div>
+      <button type="button" class="card" id="card" aria-label="Ver u ocultar mi carta">
+        <div class="inner"><div class="face back"><div class="seal"><b>Carta oculta</b><span>Toca para verla tú</span></div></div>${cardFront(c)}</div>
+      </button>
+      <div style="display:grid;gap:8px;width:100%">
+        <span class="eyebrow">Mostrar a otra persona</span>
+        <div class="reveal${showColor ? "" : " two"}">
+          ${showColor ? `<button type="button" data-m="color">Color</button>` : ""}
+          <button type="button" data-m="role">Solo rol</button>
+          <button type="button" data-m="full">Carta completa</button>
+        </div>
+        ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color.</p>`}
+      </div>
+      <details class="conds panel">
+        <summary>Mis condiciones${active.length ? ` · ${active.length}` : ""}</summary>
+        ${active.length ? `<div class="chips">${active.map(k => `<span class="chip" title="${esc(COND[k]?.desc)}"><span>${esc(COND[k]?.name || k)}</span>${removable.includes(k) ? `<button type="button" data-rm="${k}" aria-label="Quitar ${esc(COND[k]?.name)}">×</button>` : ""}</span>`).join("")}</div>
+          <div class="notes">${active.map(k => `<span class="i"><b>${esc(COND[k]?.name)}:</b> ${esc(COND[k]?.desc)}</span>`).join("")}</div>` : `<p class="muted small">No tienes condiciones.</p>`}
+        ${R.immune ? `<p class="muted small">Eres inmune: no puedes adquirir condiciones.</p>` : `
+        <label for="addCond" class="small">Me aplicaron una condición
+          <div class="row"><select id="addCond">${ACQUIRABLE.filter(k => !active.includes(k)).map(k => `<option value="${k}">${COND[k].name}</option>`).join("")}</select><button type="button" id="addCondBtn">Agregar</button></div>
+        </label>
+        <div class="row"><button type="button" id="medic">Me limpió el Médico</button><button type="button" id="psych">Me trató el Psicólogo</button></div>`}
+      </details>
+      ${inPlayHTML(game)}
+      <button class="ghost" id="leave">Salir de esta pantalla</button>
+    </div>`;
+    const card = $("#card");
+    card.onclick = () => card.classList.toggle("flipped");
+    // Si la carta no permite mostrar algo, el botón se ve igual pero no hace nada.
+    $$("[data-m]").forEach(b => b.onclick = async () => {
+      const m = b.dataset.m;
+      const now = rulesFor(c, me);
+      if (!now.can[m]) return;
+      card.classList.remove("flipped");
+      fullScreen(m, c);
+      if (m === "full" && now.set.has("paranoico") && !me.paraUsed) await api.updatePlayer(ps.code, ps.pid, { paraUsed: true });
+    });
+    $$("[data-rm]").forEach(b => b.onclick = () => {
+      const k = b.dataset.rm;
+      api.updatePlayer(ps.code, ps.pid, { acq: (me.acq || []).filter(x => x !== k), cured: (c.conds || []).includes(k) ? [...new Set([...(me.cured || []), k])] : (me.cured || []) });
+    });
+    const ab = $("#addCondBtn"); if (ab) ab.onclick = () => { const k = $("#addCond").value; if (k) api.updatePlayer(ps.code, ps.pid, { acq: [...new Set([...(me.acq || []), k])], cured: (me.cured || []).filter(x => x !== k) }); };
+    const md = $("#medic"); if (md) md.onclick = () => { api.updatePlayer(ps.code, ps.pid, { acq: [] }); toast("Condiciones adquiridas quitadas"); };
+    const py = $("#psych"); if (py) py.onclick = () => {
+      const psy = Object.keys(COND).filter(k => COND[k].psy);
+      api.updatePlayer(ps.code, ps.pid, { acq: (me.acq || []).filter(k => !psy.includes(k)), cured: [...new Set([...(me.cured || []), ...(c.conds || []).filter(k => psy.includes(k))])] });
+      toast("Condiciones psicológicas quitadas");
+    };
+    $("#leave").onclick = () => go(home);
+  };
+  app().innerHTML = `<div class="narrow"><div class="panel wait"><div class="pulse"></div><p>Cargando tu partida…</p></div></div>`;
+  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; render(); }));
+  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); }));
+  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); }));
+}
+
+// ---------- mazo ----------
+const allRoles = B => CATALOG.concat(B.custom || []);
+function expand(B) { const out = []; allRoles(B).forEach(r => { for (let i = 0; i < (B.counts[r.id] || 0); i++) out.push(r); }); return out; }
+function tcount(list) { const c = { a: 0, r: 0, g: 0, v: 0, x: 0 }; list.forEach(r => c[r.team]++); return c; }
+const extraCards = B => (B.bury ? 1 : 0) + ((B.counts.borracho || 0) ? 1 : 0);
+function fillTo(B, target) {
+  const deck = expand(B).slice();
+  if (!B.autofill) return deck;
+  const tc = tcount(deck);
+  const A = byId("azul"), R = byId("rojo"), J = byId("jugador");
+  while (deck.length < target) {
+    const left = target - deck.length;
+    if (left === 1 && tc.a === tc.r && B.gamblerOdd && !deck.some(r => r.id === "jugador")) { deck.push(J); tc.g++; continue; }
+    const r = tc.a <= tc.r ? A : R; tc[r.team]++; deck.push(r);
+  }
+  return deck;
+}
+function deckWarnings(B) {
+  const has = id => (B.counts[id] || 0) > 0;
+  const w = [], i = [];
+  if (!has("presidente") && !has("hija-del-presidente")) w.push("Falta el Presidente.");
+  if (!has("bomba") && !has("martir")) w.push("Falta la Bomba.");
+  Object.values(LINK_NAMES).forEach(g => { const inn = g.filter(has); if (inn.length && inn.length < g.length) w.push(`${inn.map(id => byId(id).name).join(", ")} necesita${inn.length > 1 ? "n" : ""} a ${g.filter(id => !has(id)).map(id => byId(id).name).join(" y ")}.`); });
+  if (has("detective") && !B.bury) w.push("Detective necesita jugar con carta enterrada.");
+  if (["hija-del-presidente", "martir", "enfermera", "mecanico"].some(has) && !B.bury) i.push("Hija del presidente, Mártir, Enfermera y Mecánico son reservas para jugar con carta enterrada.");
+  if (has("enfermera") && !has("doctor")) i.push("Enfermera es reserva del Doctor.");
+  if (has("mecanico") && !has("ingeniero")) i.push("Mecánico es reserva del Ingeniero.");
+  if (has("borracho")) i.push("Se apartará una carta sobria para el Borracho. Desde la sala lo despiertas al empezar la última ronda.");
+  if (B.bury) i.push("Se reparte una carta de más y una queda enterrada al azar (nunca una de los personajes que juegan en pareja o trío).");
+  return { w, i };
+}
+
+// ---------- anfitrión: elegir cartas ----------
+async function hostSetup(editCode) {
+  let B;
+  if (editCode) { const g = await api.getGame(editCode); B = clean(g.setup); }
+  else B = ls.get("rs-builder2") || clean(BUILTIN_TEMPLATES[0]);
+  B.counts = B.counts || {}; B.custom = B.custom || [];
+  B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true }, B);
+  let templates = [], tplName = "", pin = "", err = "", q = "";
+  const open = new Set(["a", "r"]);
+  const loadT = async () => { try { templates = await api.listTemplates(); } catch (e) { templates = []; } render(); };
+
+  function applyFilter() {
+    const nq = norm(q);
+    $$(".role[data-name]").forEach(el => el.hidden = !!nq && !el.dataset.name.includes(nq));
+    if (nq) $$(".teamsec").forEach(d => d.open = true);
+  }
+  function render() {
+    const deck = expand(B), tc = tcount(deck);
+    const roleCard = r => {
+      const n = B.counts[r.id] || 0, cap = r.id === "azul" || r.id === "rojo" ? 99 : (r.max || 1);
+      const tag = r.color !== r.team ? `carta ${COLOR[r.color].toLowerCase()}` : "";
+      return `<div class="role ${r.color}${n ? " on" : ""}" data-name="${esc(norm(r.name + " " + COLOR[r.team]))}"><div class="bar"></div>
+      <div><div class="name">${esc(r.name)}${tag ? `<span class="tag">${tag}</span>` : ""}</div>${r.note ? `<div class="note">${esc(r.note)}</div>` : ""}</div>
+      <div class="stepper"><button type="button" data-dec="${esc(r.id)}" aria-label="Quitar ${esc(r.name)}" ${n ? "" : "disabled"}>−</button><output>${n}</output><button type="button" data-inc="${esc(r.id)}" aria-label="Agregar ${esc(r.name)}" ${n >= cap ? "disabled" : ""}>+</button></div></div>`;
+    };
+    const group = t => {
+      const l = allRoles(B).filter(r => r.team === t);
+      if (!l.length) return "";
+      return `<details class="teamsec" data-team="${t}" ${open.has(t) ? "open" : ""}><summary><span class="team-label"><span class="dot ${t}"></span>${t === "a" || t === "r" ? TEAM[t] : "Lealtad " + COLOR[t].toLowerCase()} · ${l.length} cartas</span><span class="count">${tc[t]} elegidas</span></summary><div class="deck">${l.map(roleCard).join("")}</div></details>`;
+    };
+    const sel = allRoles(B).filter(r => B.counts[r.id]);
+    const allT = BUILTIN_TEMPLATES.concat(templates);
+    const W = deckWarnings(B);
+    app().innerHTML = `<div class="wrap">
+      <button class="ghost" id="back" style="justify-self:start">← ${editCode ? "Volver a la sala" : "Volver"}</button>
+      <div style="display:grid;gap:8px"><span class="eyebrow">${editCode ? "Partida " + esc(editCode) : "Nueva partida"}</span><h1>Elige las cartas</h1></div>
+      <div class="stripe"></div>
+      ${demoNote()}
+      <section class="panel">
+        <div class="panel-head"><h2>Plantillas</h2></div>
+        <label for="tplSel" class="small">Mazos del reglamento y tus plantillas guardadas
+          <div class="row"><select id="tplSel"><option value="">Elige una plantilla…</option>
+            <optgroup label="Del reglamento">${BUILTIN_TEMPLATES.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join("")}</optgroup>
+            ${templates.length ? `<optgroup label="Mis plantillas">${templates.map(t => `<option value="${esc(t.id)}">${esc(t.name)}</option>`).join("")}</optgroup>` : ""}
+          </select><button type="button" id="tplLoad">Cargar</button></div>
+        </label>
+        ${templates.length ? `<div class="chips">${templates.map(t => `<span class="chip tpl"><button type="button" data-tpl="${esc(t.id)}">${esc(t.name)}</button><button type="button" data-deltpl="${esc(t.id)}" aria-label="Borrar plantilla ${esc(t.name)}">×</button></span>`).join("")}</div>` : ""}
+        <form id="saveTpl" class="row">
+          <input type="text" id="tplName" maxlength="40" placeholder="Nombre para guardar estas cartas como plantilla" value="${esc(tplName)}">
+          <button type="submit">Guardar plantilla</button>
+        </form>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Reglas de la partida</h2></div>
+        <div class="opts">
+          <label class="check"><input type="checkbox" id="autofill" ${B.autofill ? "checked" : ""}><span>Completar con Equipo Azul y Equipo Rojo hasta el número de jugadores <span class="muted small">(la plantilla sirve igual para 8 que para 20)</span></span></label>
+          <label class="check"><input type="checkbox" id="gamblerOdd" ${B.gamblerOdd ? "checked" : ""}><span>Si quedan impares, agregar a Jugador (gris)</span></label>
+          <label class="check"><input type="checkbox" id="bury" ${B.bury ? "checked" : ""}><span>Jugar con carta enterrada</span></label>
+          <label for="colorRule" class="small">Mostrar solo el color
+            <select id="colorRule">
+              <option value="auto" ${B.colorRule === "auto" ? "selected" : ""}>Según el reglamento: solo con 11 jugadores o más</option>
+              <option value="always" ${B.colorRule === "always" ? "selected" : ""}>Permitido siempre</option>
+              <option value="never" ${B.colorRule === "never" ? "selected" : ""}>No permitido</option>
+            </select></label>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Cartas</h2><span class="count">${deck.length} elegidas</span></div>
+        ${sel.length ? `<div class="chips">${sel.map(r => `<span class="chip"><span class="dot ${r.color}"></span><span>${esc(r.name)}${B.counts[r.id] > 1 ? " ×" + B.counts[r.id] : ""}</span></span>`).join("")}</div>` : `<p class="muted small">Todavía no eliges cartas.</p>`}
+        ${W.w.length || W.i.length ? `<div class="notes">${W.w.map(x => `<span class="w">${esc(x)}</span>`).join("")}${W.i.map(x => `<span class="i">${esc(x)}</span>`).join("")}</div>` : ""}
+        <input type="search" id="q" placeholder="Buscar carta por nombre…" value="${esc(q)}" aria-label="Buscar carta">
+        ${TEAM_ORDER.map(group).join("")}
+        <details class="teamsec"><summary><span class="team-label">Agregar un personaje que no está en la lista</span></summary>
+          <form id="addCustom" class="custom-form">
+            <input type="text" id="cName" class="n" placeholder="Nombre de la carta" maxlength="40">
+            <select id="cTeam" aria-label="Lealtad"><option value="a">Lealtad azul</option><option value="r">Lealtad roja</option><option value="g">Gris</option><option value="v">Verde</option></select>
+            <select id="cColor" aria-label="Color impreso"><option value="">Mismo color</option><option value="a">Carta azul</option><option value="r">Carta roja</option><option value="g">Carta gris</option></select>
+            <input type="text" id="cNote" class="full" placeholder="Qué hace (opcional)" maxlength="300">
+            <button type="submit">Agregar</button>
+          </form>
+          ${B.custom.length ? `<div class="row" style="margin-top:10px">${B.custom.map(c => `<button type="button" class="ghost" data-delc="${esc(c.id)}">Quitar «${esc(c.name)}»</button>`).join("")}</div>` : ""}
+        </details>
+      </section>
+      <section class="panel">
+        ${editCode ? `<button class="primary big" id="saveGame">Guardar cambios</button>` : `
+        <label for="hpin">Tu PIN de anfitrión (4 números)<input type="tel" id="hpin" maxlength="4" inputmode="numeric" placeholder="Para recuperar el panel si cambias de celular" value="${esc(pin)}"></label>
+        <button class="primary big" id="create">Crear partida y abrir la sala</button>`}
+        <p class="err">${esc(err)}</p>
+      </section>
+    </div>`;
+    $("#back").onclick = () => go(editCode ? hostLobby : home);
+    $$(".teamsec[data-team]").forEach(d => d.ontoggle = () => { d.open ? open.add(d.dataset.team) : open.delete(d.dataset.team); });
+    $$("[data-inc]").forEach(b => b.onclick = () => { B.counts[b.dataset.inc] = (B.counts[b.dataset.inc] || 0) + 1; keepScroll(render); });
+    $$("[data-dec]").forEach(b => b.onclick = () => { const k = b.dataset.dec; B.counts[k] = Math.max(0, (B.counts[k] || 0) - 1); if (!B.counts[k]) delete B.counts[k]; keepScroll(render); });
+    ["autofill", "gamblerOdd", "bury"].forEach(k => $("#" + k).onchange = e => { B[k] = e.target.checked; keepScroll(render); });
+    $("#colorRule").onchange = e => { B.colorRule = e.target.value; };
+    const loadTpl = t => { B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true }, clean(t)); delete B.id; delete B.name; delete B.builtin; toast("Plantilla «" + t.name + "» cargada"); render(); };
+    $("#tplLoad").onclick = () => { const id = $("#tplSel").value; const t = allT.find(x => x.id === id); if (t) loadTpl(t); };
+    $$("[data-tpl]").forEach(b => b.onclick = () => loadTpl(allT.find(x => x.id === b.dataset.tpl)));
+    $$("[data-deltpl]").forEach(b => b.onclick = async () => { await api.deleteTemplate(b.dataset.deltpl); toast("Plantilla borrada"); loadT(); });
+    $("#tplName").oninput = e => tplName = e.target.value;
+    $("#saveTpl").onsubmit = async e => { e.preventDefault(); const n = tplName.trim(); if (!n) { toast("Escribe un nombre para la plantilla"); return; } await api.saveTemplate({ name: n, counts: B.counts, custom: B.custom, autofill: B.autofill, bury: B.bury, colorRule: B.colorRule, gamblerOdd: B.gamblerOdd }); tplName = ""; toast("Plantilla guardada"); loadT(); };
+    $("#q").oninput = e => { q = e.target.value; applyFilter(); };
+    $("#addCustom").onsubmit = e => { e.preventDefault(); const name = $("#cName").value.trim(); if (!name) return; const id = "c" + rid(6); const team = $("#cTeam").value; B.custom.push({ id, name, team, color: $("#cColor").value || team, note: $("#cNote").value.trim(), max: 9 }); B.counts[id] = 1; render(); };
+    $$("[data-delc]").forEach(b => b.onclick = () => { const id = b.dataset.delc; B.custom = B.custom.filter(c => c.id !== id); delete B.counts[id]; render(); });
+    if (editCode) {
+      $("#saveGame").onclick = async () => { await api.updateGame(editCode, { setup: B }); ls.set("rs-builder2", B); toast("Cartas actualizadas"); go(hostLobby); };
+    } else {
+      $("#hpin").oninput = e => pin = e.target.value;
+      $("#create").onclick = async () => {
+        if (!/^\d{4}$/.test(pin.trim())) { err = "Pon un PIN de 4 números."; return render(); }
+        let code; for (let i = 0; i < 8; i++) { code = newCode(); if (!(await api.getGame(code))) break; }
+        await api.createGame(code, { setup: B, hostPin: pin.trim(), round: 0, inPlay: [], buried: 0, createdAt: Date.now() });
+        ls.set("rs-builder2", B); ls.set("rs-host", { code });
+        go(hostLobby);
+      };
+    }
+    applyFilter();
+  }
+  function keepScroll(fn) { const y = window.scrollY; fn(); window.scrollTo(0, y); }
+  render(); loadT();
+}
+
+// ---------- anfitrión: sala ----------
+function hostLobby() {
+  const hs = ls.get("rs-host"); if (!hs) return go(home);
+  const code = hs.code;
+  let game, players = [], gl = false, reveal = false, confirmEnd = false, swapA = "", swapB = "";
+  const render = () => {
+    if (!gl) return;
+    if (!game) { ls.set("rs-host", null); return go(home, "Esa partida ya no existe."); }
+    const list = players.slice().sort((a, b) => a.joinedAt - b.joinedAt);
+    const n = list.length, S = game.setup;
+    const target = n + extraCards(S);
+    const deck = fillTo(S, target);
+    const started = game.round > 0;
+    const late = list.filter(p => !(p.card && p.round === game.round)).length;
+    const W = deckWarnings(S);
+    let st, cls = "ok", ok = false;
+    if (n < 2) { st = "Esperando jugadores"; cls = "warn"; }
+    else if (deck.length < target) { st = `Faltan ${target - deck.length} cartas`; cls = "warn"; }
+    else if (deck.length > target) { st = `Sobran ${deck.length - target} cartas: quita algunas o espera más jugadores`; cls = "warn"; }
+    else { st = "Listo para repartir"; ok = true; }
+    const colorAllowed = S.colorRule === "always" || (S.colorRule !== "never" && n >= 11);
+    const drunk = list.find(p => p.card && p.round === game.round && p.card.id === "borracho");
+    const withCard = list.filter(p => p.card && p.round === game.round);
+    const url = location.href.split("#")[0];
+    app().innerHTML = `<div class="wrap">
+      <button class="ghost" id="home" style="justify-self:start">← Inicio</button>
+      ${demoNote()}
+      <section class="panel lobby-head">
+        <span class="eyebrow">Código de la partida</span>
+        <div class="bigcode">${esc(code)}</div>
+        <p class="muted">Que cada quien abra <b style="color:var(--fg);overflow-wrap:anywhere">${esc(url)}</b> en su celular y escriba este código.</p>
+        ${started ? `<span class="pill ok">Reparto ${game.round} hecho</span>` : ""}
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Jugadores</h2>
+          <div class="row">${started ? `<button class="ghost" id="reveal">${reveal ? "Ocultar cartas" : "Ver qué le tocó a cada uno"}</button>` : ""}<span class="count">${n} dentro</span></div></div>
+        ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (reveal ? esc(p.card.name) : "Tiene carta") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
+        ${started && reveal && (game.buriedCard || game.sober) ? `<p class="small muted">${game.buriedCard ? `Carta enterrada: <b style="color:var(--fg)">${esc(game.buriedCard.name)}</b>. ` : ""}${game.sober ? `Carta sobria del Borracho: <b style="color:var(--fg)">${esc(game.sober.name)}</b>.` : ""}</p>` : ""}
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Mazo</h2><button id="edit">Cambiar cartas</button></div>
+        <div class="row"><span class="pill">${n} jugadores</span><span class="pill">${deck.length} cartas</span><span class="pill ${cls}">${st}</span></div>
+        <p class="muted small">Mostrar solo color: ${colorAllowed ? "permitido" : "no permitido"}${S.colorRule === "auto" ? " (según el número de jugadores)" : ""}.</p>
+        ${W.w.length ? `<div class="notes">${W.w.map(x => `<span class="w">${esc(x)}</span>`).join("")}</div>` : ""}
+        ${started && late ? `<p class="small" style="color:var(--warn)">${late} jugador${late > 1 ? "es" : ""} sin carta. Reparte otra vez para incluirlos.</p>` : ""}
+        <button class="primary big" id="deal" ${ok ? "" : "disabled"}>${started ? "Repartir otra vez (nueva partida)" : "Iniciar y repartir"}</button>
+        <p class="muted small">${started ? "Al repartir de nuevo, todos reciben una carta nueva al instante." : "Las cartas aparecen solas en el celular de cada jugador."}</p>
+      </section>
+      ${started ? `<section class="panel">
+        <div class="panel-head"><h2>Durante el juego</h2></div>
+        ${drunk && game.sober ? `<div class="row"><span>Al empezar la última ronda:</span><button class="primary" id="wake">Despertar al Borracho</button></div>` : ""}
+        <label class="small">Intercambiar cartas entre dos jugadores <span class="muted">(Patata caliente, Duende)</span>
+          <div class="row">
+            <select id="swapA"><option value="">Jugador…</option>${withCard.map(p => `<option value="${esc(p.id)}" ${swapA === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
+            <select id="swapB"><option value="">Jugador…</option>${withCard.map(p => `<option value="${esc(p.id)}" ${swapB === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
+            <button id="swap">Intercambiar</button>
+          </div></label>
+        <p class="muted small">Al intercambiar, cada carta llega limpia: se borran las condiciones que habían adquirido.</p>
+      </section>` : ""}
+      <section class="panel">
+        ${confirmEnd ? `<div class="confirm"><span>¿Terminar la partida? Los jugadores ya no verán sus cartas.</span><button id="endYes" class="primary">Sí, terminar</button><button id="endNo">Cancelar</button></div>` : `<button class="ghost" id="end" style="justify-self:start">Terminar partida</button>`}
+      </section>
+    </div>`;
+    $("#home").onclick = () => go(home);
+    $("#edit").onclick = () => go(hostSetup, code);
+    const rv = $("#reveal"); if (rv) rv.onclick = () => { reveal = !reveal; render(); };
+    $$("[data-kick]").forEach(b => b.onclick = async () => { await api.removePlayer(code, b.dataset.kick); toast("Jugador quitado"); });
+    $("#deal").onclick = async () => {
+      const ids = list.map(p => p.id);
+      const full = fillTo(S, ids.length + extraCards(S));
+      let pool = shuffle(full);
+      // Las cartas que se apartan (enterrada y sobria) nunca son de parejas/tríos ni el propio Borracho.
+      const takeAside = () => { const i = pool.findIndex(r => !r.link && r.id !== "borracho"); return i < 0 ? null : pool.splice(i, 1)[0]; };
+      const sober = (S.counts.borracho || 0) ? takeAside() : null;
+      const buried = S.bury ? takeAside() : null;
+      if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false });
+      const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed }, patches);
+      toast("Cartas repartidas");
+    };
+    const wk = $("#wake"); if (wk) wk.onclick = async () => { await api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } }); toast(drunk.name + " ya tiene su carta sobria"); };
+    const sa = $("#swapA"), sb = $("#swapB");
+    if (sa) { sa.onchange = e => swapA = e.target.value; sb.onchange = e => swapB = e.target.value; }
+    const sw = $("#swap"); if (sw) sw.onclick = async () => {
+      const A = list.find(p => p.id === swapA), Bp = list.find(p => p.id === swapB);
+      if (!A || !Bp || A.id === Bp.id) { toast("Elige dos jugadores distintos"); return; }
+      await api.batch(code, null, { [A.id]: { card: Bp.card, acq: [], cured: [], paraUsed: false }, [Bp.id]: { card: A.card, acq: [], cured: [], paraUsed: false } });
+      swapA = swapB = ""; toast(`${A.name} y ${Bp.name} intercambiaron cartas`);
+    };
+    if (confirmEnd) {
+      $("#endYes").onclick = async () => { for (const p of list) await api.removePlayer(code, p.id); await api.updateGame(code, { round: 0, ended: true }); ls.set("rs-host", null); go(home); };
+      $("#endNo").onclick = () => { confirmEnd = false; render(); };
+    } else $("#end").onclick = () => { confirmEnd = true; render(); };
+  };
+  app().innerHTML = `<div class="narrow"><div class="panel wait"><div class="pulse"></div><p>Abriendo la sala…</p></div></div>`;
+  unsubs.push(api.watchGame(code, g => { game = g; gl = true; render(); }));
+  unsubs.push(api.watchPlayers(code, l => { players = l; render(); }));
+}
+
+// ---------- arranque ----------
+if (ls.get("rs-player")) go(playerView); else go(home);
+})();
+</script>
+</body>
+</html>
