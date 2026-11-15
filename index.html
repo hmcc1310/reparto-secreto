@@ -135,7 +135,17 @@ details[open] > summary { margin-bottom: 10px; }
 .front .rnote { font-size: .84rem; line-height: 1.35; background: rgba(0,0,0,.2); padding: 10px 12px; border-radius: 10px; max-height: 13.5em; overflow-y: auto; }
 .front .emblem { position: absolute; right: -40px; top: 40%; width: 200px; height: 200px; border-radius: 50%; border: 18px solid rgba(255,255,255,.12); transform: translateY(-50%); pointer-events: none; }
 .reveal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
-.reveal.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
+.sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+.sumbar > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; flex-wrap: wrap; }
+.sumbar > summary::-webkit-details-marker { display: none; }
+.sum-title { font-weight: 700; }
+.sum-counts { display: flex; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: .9rem; }
+.sum-counts > span { display: inline-flex; align-items: center; gap: 4px; }
+.sum-more { margin-left: auto; color: var(--muted); font-size: .9rem; text-decoration: underline; }
+.sum-body { display: grid; gap: 8px; padding: 0 16px 14px; max-height: 50vh; overflow: auto; }
+.sum-body .chip button { border: 0; background: transparent; color: var(--muted); padding: 0 0 0 4px; }
 .reveal button { padding: 12px 6px; font-weight: 600; font-size: .9rem; }
 .inplay, .conds { width: 100%; text-align: left; display: grid; gap: 10px; }
 .inplay ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
@@ -448,37 +458,43 @@ function home(msg) {
 }
 
 // ---------- unirse ----------
-function joinView(code) {
-  app().innerHTML = `<div class="narrow">
-    <button class="ghost" id="back" style="justify-self:start">← Volver</button>
-    <div style="display:grid;gap:6px"><span class="eyebrow">Partida ${esc(code)}</span><h1>¿Quién eres?</h1></div>
-    <form class="panel" id="f">
-      <label for="name">Tu nombre<input type="text" id="name" maxlength="24" autocomplete="nickname" placeholder="Como te conocen en el grupo"></label>
-      <label for="pin">Un PIN de 4 números<input type="tel" id="pin" maxlength="4" inputmode="numeric" placeholder="Ej. 2580"></label>
-      <p class="muted small">Con tu nombre y este PIN recuperas tu carta si se te cierra el navegador o cambias de celular.</p>
-      <p class="err" id="err"></p>
-      <button class="primary big wide" type="submit">Entrar a la partida</button>
-    </form>
-  </div>`;
-  $("#back").onclick = () => go(home);
-  $("#name").focus();
-  $("#f").onsubmit = async e => {
-    e.preventDefault();
-    const name = $("#name").value.trim(), pin = $("#pin").value.trim();
-    if (!name) return $("#err").textContent = "Escribe tu nombre.";
-    if (!/^\d{4}$/.test(pin)) return $("#err").textContent = "El PIN son 4 números.";
-    const players = await api.listPlayers(code);
-    const same = players.find(p => norm(p.name) === norm(name));
-    let pid;
-    if (same) {
-      if (same.pin !== pin) return $("#err").textContent = "Ese nombre ya está en la partida. Si eres tú, pon tu PIN; si no, usa otro nombre.";
-      pid = same.id;
-    } else {
-      pid = await api.addPlayer(code, { name: name.slice(0, 24), pin, joinedAt: Date.now(), card: null, round: 0, acq: [], cured: [], paraUsed: false });
-    }
-    ls.set("rs-player", { code, pid, name });
-    go(playerView);
+async function joinView(code) {
+  const players = (await api.listPlayers(code).catch(() => [])).slice().sort((a, b) => a.joinedAt - b.joinedAt);
+  let pick = null;
+  const enter = p => { ls.set("rs-player", { code, pid: p.id, name: p.name }); go(playerView); };
+  const render = () => {
+    app().innerHTML = `<div class="narrow">
+      <button class="ghost" id="back" style="justify-self:start">← Volver</button>
+      <div style="display:grid;gap:6px"><span class="eyebrow">Partida ${esc(code)}</span><h1>¿Quién eres?</h1></div>
+      ${players.length ? `<div class="panel">
+        <h2>¿Ya estabas en la partida?</h2>
+        <p class="muted small">Toca tu nombre para volver a tu carta.</p>
+        <div class="names">${players.map(p => `<button type="button" data-pid="${esc(p.id)}" class="${pick === p.id ? "primary" : ""}">${pick === p.id ? `Sí, soy ${esc(p.name)} · entrar` : esc(p.name)}</button>`).join("")}</div>
+        ${pick ? `<p class="muted small">Toca otra vez para confirmar.</p>` : ""}
+      </div>` : ""}
+      <form class="panel" id="f">
+        <h2>${players.length ? "Soy nuevo" : "Entrar"}</h2>
+        <label for="name">Tu nombre<input type="text" id="name" maxlength="24" autocomplete="nickname" placeholder="Como te conocen en el grupo"></label>
+        <p class="err" id="err"></p>
+        <button class="primary big wide" type="submit">Entrar a la partida</button>
+      </form>
+    </div>`;
+    $("#back").onclick = () => go(home);
+    $$("[data-pid]").forEach(b => b.onclick = () => {
+      if (pick === b.dataset.pid) return enter(players.find(p => p.id === pick));
+      pick = b.dataset.pid; render();
+    });
+    $("#f").onsubmit = async e => {
+      e.preventDefault();
+      const name = $("#name").value.trim();
+      if (!name) return $("#err").textContent = "Escribe tu nombre.";
+      const now = await api.listPlayers(code);
+      if (now.some(p => norm(p.name) === norm(name))) return $("#err").textContent = "Ese nombre ya está en la partida. Si eres tú, tócalo en la lista de arriba; si no, usa otro nombre (por ejemplo, con tu apellido).";
+      const pid = await api.addPlayer(code, { name: name.slice(0, 24), joinedAt: Date.now(), card: null, round: 0, acq: [], cured: [], paraUsed: false });
+      enter({ id: pid, name });
+    };
   };
+  render();
 }
 
 // ---------- reglas para mostrar la carta ----------
@@ -561,12 +577,12 @@ function playerView() {
       </button>
       <div style="display:grid;gap:8px;width:100%">
         <span class="eyebrow">Mostrar a otra persona</span>
-        <div class="reveal${showColor ? "" : " two"}">
-          ${showColor ? `<button type="button" data-m="color">Color</button>` : ""}
+        <div class="reveal">
+          <button type="button" data-m="color" ${showColor ? "" : "disabled"}>Color</button>
           <button type="button" data-m="role">Solo rol</button>
           <button type="button" data-m="full">Carta completa</button>
         </div>
-        ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color.</p>`}
+        ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color: el reglamento lo permite desde 11 jugadores. El anfitrión puede cambiarlo en las reglas de la partida.</p>`}
       </div>
       <details class="conds panel">
         <summary>Mis condiciones${active.length ? ` · ${active.length}` : ""}</summary>
@@ -586,6 +602,7 @@ function playerView() {
     // Si la carta no permite mostrar algo, el botón se ve igual pero no hace nada.
     $$("[data-m]").forEach(b => b.onclick = async () => {
       const m = b.dataset.m;
+      if (m === "color" && !showColor) return;
       const now = rulesFor(c, me);
       if (!now.can[m]) return;
       card.classList.remove("flipped");
@@ -650,7 +667,7 @@ async function hostSetup(editCode) {
   else B = ls.get("rs-builder2") || clean(BUILTIN_TEMPLATES[0]);
   B.counts = B.counts || {}; B.custom = B.custom || [];
   B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true }, B);
-  let templates = [], tplName = "", pin = "", err = "", q = "";
+  let templates = [], tplName = "", pin = "", err = "", q = "", sumOpen = false;
   const open = new Set(["a", "r"]);
   const loadT = async () => { try { templates = await api.listTemplates(); } catch (e) { templates = []; } render(); };
 
@@ -711,7 +728,6 @@ async function hostSetup(editCode) {
       </section>
       <section class="panel">
         <div class="panel-head"><h2>Cartas</h2><span class="count">${deck.length} elegidas</span></div>
-        ${sel.length ? `<div class="chips">${sel.map(r => `<span class="chip"><span class="dot ${r.color}"></span><span>${esc(r.name)}${B.counts[r.id] > 1 ? " ×" + B.counts[r.id] : ""}</span></span>`).join("")}</div>` : `<p class="muted small">Todavía no eliges cartas.</p>`}
         ${W.w.length || W.i.length ? `<div class="notes">${W.w.map(x => `<span class="w">${esc(x)}</span>`).join("")}${W.i.map(x => `<span class="i">${esc(x)}</span>`).join("")}</div>` : ""}
         <input type="search" id="q" placeholder="Buscar carta por nombre…" value="${esc(q)}" aria-label="Buscar carta">
         ${TEAM_ORDER.map(group).join("")}
@@ -726,6 +742,16 @@ async function hostSetup(editCode) {
           ${B.custom.length ? `<div class="row" style="margin-top:10px">${B.custom.map(c => `<button type="button" class="ghost" data-delc="${esc(c.id)}">Quitar «${esc(c.name)}»</button>`).join("")}</div>` : ""}
         </details>
       </section>
+      <details class="sumbar" id="sumbar" ${sumOpen ? "open" : ""}>
+        <summary><span class="sum-title">Resumen · ${deck.length} carta${deck.length === 1 ? "" : "s"}</span>
+          <span class="sum-counts">${TEAM_ORDER.filter(t => tc[t]).map(t => `<span><span class="dot ${t}"></span>${tc[t]}</span>`).join("")}</span>
+          <span class="sum-more">${sumOpen ? "Ocultar" : "Ver"}</span></summary>
+        <div class="sum-body">
+          ${sel.length ? TEAM_ORDER.filter(t => sel.some(r => r.team === t)).map(t => `<div class="team-label"><span class="dot ${t}"></span>${t === "a" || t === "r" ? TEAM[t] : "Lealtad " + COLOR[t].toLowerCase()} · ${tc[t]}</div>
+            <div class="chips">${sel.filter(r => r.team === t).map(r => `<span class="chip"><span class="dot ${r.color}"></span><span>${esc(r.name)}${B.counts[r.id] > 1 ? " ×" + B.counts[r.id] : ""}</span><button type="button" data-dec="${esc(r.id)}" aria-label="Quitar uno de ${esc(r.name)}">×</button></span>`).join("")}</div>`).join("") : `<p class="muted small">Todavía no eliges cartas.</p>`}
+          ${B.autofill ? `<p class="muted small">Al repartir se completa con Equipo Azul y Equipo Rojo hasta el número de jugadores.</p>` : ""}
+        </div>
+      </details>
       <section class="panel">
         ${editCode ? `<button class="primary big" id="saveGame">Guardar cambios</button>` : `
         <label for="hpin">Tu PIN de anfitrión (4 números)<input type="tel" id="hpin" maxlength="4" inputmode="numeric" placeholder="Para recuperar el panel si cambias de celular" value="${esc(pin)}"></label>
@@ -734,6 +760,7 @@ async function hostSetup(editCode) {
       </section>
     </div>`;
     $("#back").onclick = () => go(editCode ? hostLobby : home);
+    $("#sumbar").ontoggle = e => { sumOpen = e.target.open; $(".sum-more").textContent = sumOpen ? "Ocultar" : "Ver"; };
     $$(".teamsec[data-team]").forEach(d => d.ontoggle = () => { d.open ? open.add(d.dataset.team) : open.delete(d.dataset.team); });
     $$("[data-inc]").forEach(b => b.onclick = () => { B.counts[b.dataset.inc] = (B.counts[b.dataset.inc] || 0) + 1; keepScroll(render); });
     $$("[data-dec]").forEach(b => b.onclick = () => { const k = b.dataset.dec; B.counts[k] = Math.max(0, (B.counts[k] || 0) - 1); if (!B.counts[k]) delete B.counts[k]; keepScroll(render); });
