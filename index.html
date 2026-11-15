@@ -321,6 +321,14 @@ const COND = {
 };
 const ACQUIRABLE = ["timido", "discreto", "imprudente", "maldito", "enamorado", "odio", "zombi"];
 const LINK_NAMES = { ahab: ["ahab", "moby"], mayordomo: ["mayordomo", "criada"], romeo: ["romeo", "julieta"], esposa: ["esposa", "amante"], sniper: ["francotirador", "objetivo", "senuelo"] };
+// Parejas azul/roja: al agregar o quitar una, se agrega o quita la otra.
+const PAIRS = (() => {
+  const m = {}, link = (x, y) => { m[x] = [y]; m[y] = [x]; };
+  [["presidente", "bomba"], ["doctor", "ingeniero"], ["enfermera", "mecanico"], ["hija-del-presidente", "martir"], ["espia-azul", "espia-rojo"], ["invencible", "inmunologo"], ["caballero-martes", "dr-boom"], ["eris", "cupido"]].forEach(([x, y]) => link(x, y));
+  CATALOG.forEach(r => { if (r.id.endsWith("-a")) { const o = r.id.slice(0, -2) + "-r"; if (CATALOG.some(c => c.id === o)) link(r.id, o); } });
+  Object.values(LINK_NAMES).forEach(g => g.forEach(id => m[id] = g.filter(x => x !== id)));
+  return m;
+})();
 
 // ---------- utilidades ----------
 const $ = (s, el = document) => el.querySelector(s);
@@ -698,6 +706,9 @@ function deckWarnings(B) {
   if (!has("presidente") && !has("hija-del-presidente")) w.push("Falta el Presidente.");
   if (!has("bomba") && !has("martir")) w.push("Falta la Bomba.");
   Object.values(LINK_NAMES).forEach(g => { const inn = g.filter(has); if (inn.length && inn.length < g.length) w.push(`${inn.map(id => byId(id).name).join(", ")} necesita${inn.length > 1 ? "n" : ""} a ${g.filter(id => !has(id)).map(id => byId(id).name).join(" y ")}.`); });
+  const seen = new Set();
+  Object.keys(PAIRS).forEach(id => { if (seen.has(id) || LINK_NAMES[id] || Object.values(LINK_NAMES).some(g => g.includes(id))) return; const o = PAIRS[id][0]; seen.add(id); seen.add(o);
+    if ((B.counts[id] || 0) !== (B.counts[o] || 0)) i.push(`${byId(id).name} ${COLOR[byId(id).color].toLowerCase()} y ${byId(o).name} ${COLOR[byId(o).color].toLowerCase()} no están parejos.`); });
   if (has("detective") && !B.bury) w.push("Detective necesita jugar con carta enterrada.");
   if (["hija-del-presidente", "martir", "enfermera", "mecanico"].some(has) && !B.bury) i.push("Hija del presidente, Mártir, Enfermera y Mecánico son reservas para jugar con carta enterrada.");
   if (has("enfermera") && !has("doctor")) i.push("Enfermera es reserva del Doctor.");
@@ -713,7 +724,7 @@ async function hostSetup(editCode) {
   if (editCode) { const g = await api.getGame(editCode); B = clean(g.setup); }
   else B = ls.get("rs-builder2") || clean(BUILTIN_TEMPLATES[0]);
   B.counts = B.counts || {}; B.custom = B.custom || [];
-  B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true }, B);
+  B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true, pairs: true }, B);
   let templates = [], tplName = "", pin = "", err = "", q = "", sumOpen = false;
   const open = new Set(["a", "r"]);
   const loadT = async () => { try { templates = await api.listTemplates(); } catch (e) { templates = []; } render(); };
@@ -764,6 +775,7 @@ async function hostSetup(editCode) {
         <div class="opts">
           <label class="check"><input type="checkbox" id="autofill" ${B.autofill ? "checked" : ""}><span>Completar con Equipo Azul y Equipo Rojo hasta el número de jugadores <span class="muted small">(la plantilla sirve igual para 8 que para 20)</span></span></label>
           <label class="check"><input type="checkbox" id="gamblerOdd" ${B.gamblerOdd ? "checked" : ""}><span>Si quedan impares, agregar a Jugador (gris)</span></label>
+          <label class="check"><input type="checkbox" id="pairs" ${B.pairs ? "checked" : ""}><span>Agregar las parejas automáticamente <span class="muted small">(al elegir Mimo azul se agrega Mimo rojo, Doctor con Ingeniero, etc.)</span></span></label>
           <label class="check"><input type="checkbox" id="bury" ${B.bury ? "checked" : ""}><span>Jugar con carta enterrada</span></label>
           <label for="colorRule" class="small">Mostrar solo el color
             <select id="colorRule">
@@ -809,11 +821,19 @@ async function hostSetup(editCode) {
     $("#back").onclick = () => go(editCode ? hostLobby : home);
     $("#sumbar").ontoggle = e => { sumOpen = e.target.open; $(".sum-more").textContent = sumOpen ? "Ocultar" : "Ver"; };
     $$(".teamsec[data-team]").forEach(d => d.ontoggle = () => { d.open ? open.add(d.dataset.team) : open.delete(d.dataset.team); });
-    $$("[data-inc]").forEach(b => b.onclick = () => { B.counts[b.dataset.inc] = (B.counts[b.dataset.inc] || 0) + 1; keepScroll(render); });
-    $$("[data-dec]").forEach(b => b.onclick = () => { const k = b.dataset.dec; B.counts[k] = Math.max(0, (B.counts[k] || 0) - 1); if (!B.counts[k]) delete B.counts[k]; keepScroll(render); });
-    ["autofill", "gamblerOdd", "bury"].forEach(k => $("#" + k).onchange = e => { B[k] = e.target.checked; keepScroll(render); });
+    // Si "parejas" está activo, las parejas quedan con el mismo número de cartas.
+    const syncPairs = (k, verb) => {
+      if (!B.pairs || !PAIRS[k]) return;
+      const n = B.counts[k] || 0, moved = [];
+      PAIRS[k].forEach(o => { const r = byId(o); if (!r) return; const cur = B.counts[o] || 0, want = Math.min(n, r.max || 1);
+        if (verb === "add" ? cur < want : cur > n) { B.counts[o] = verb === "add" ? want : n; if (!B.counts[o]) delete B.counts[o]; moved.push(r.name + (r.name === byId(k).name ? " " + COLOR[r.color].toLowerCase() : "")); } });
+      if (moved.length) toast((verb === "add" ? "También se agregó: " : "También se quitó: ") + moved.join(", "));
+    };
+    $$("[data-inc]").forEach(b => b.onclick = () => { const k = b.dataset.inc; B.counts[k] = (B.counts[k] || 0) + 1; syncPairs(k, "add"); keepScroll(render); });
+    $$("[data-dec]").forEach(b => b.onclick = () => { const k = b.dataset.dec; B.counts[k] = Math.max(0, (B.counts[k] || 0) - 1); if (!B.counts[k]) delete B.counts[k]; syncPairs(k, "rm"); keepScroll(render); });
+    ["autofill", "gamblerOdd", "bury", "pairs"].forEach(k => $("#" + k).onchange = e => { B[k] = e.target.checked; keepScroll(render); });
     $("#colorRule").onchange = e => { B.colorRule = e.target.value; };
-    const loadTpl = t => { B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true }, clean(t)); delete B.id; delete B.name; delete B.builtin; toast("Plantilla «" + t.name + "» cargada"); render(); };
+    const loadTpl = t => { B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true, pairs: true }, clean(t)); delete B.id; delete B.name; delete B.builtin; toast("Plantilla «" + t.name + "» cargada"); render(); };
     $("#tplLoad").onclick = () => { const id = $("#tplSel").value; const t = allT.find(x => x.id === id); if (t) loadTpl(t); };
     $$("[data-tpl]").forEach(b => b.onclick = () => loadTpl(allT.find(x => x.id === b.dataset.tpl)));
     $$("[data-deltpl]").forEach(b => b.onclick = async () => { await api.deleteTemplate(b.dataset.deltpl); toast("Plantilla borrada"); loadT(); });
