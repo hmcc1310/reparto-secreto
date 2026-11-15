@@ -464,7 +464,7 @@ function home(msg) {
   const ps = ls.get("rs-player"), hs = ls.get("rs-host");
   app().innerHTML = `<div class="narrow">
     <div style="display:grid;gap:8px">
-      <span class="eyebrow">Roles ocultos · dos habitaciones</span>
+      <span class="eyebrow">Roles ocultos · dos habitaciones · versión 11</span>
       <h1>Reparto Secreto</h1>
     </div>
     <div class="stripe"></div>
@@ -894,6 +894,11 @@ function hostLobby() {
         <p class="muted">Que cada quien abra <b style="color:var(--fg);overflow-wrap:anywhere">${esc(url)}</b> en su celular y escriba este código.</p>
         ${started ? `<span class="pill ok">Reparto ${game.round} hecho</span>` : ""}
       </section>
+      ${!started ? `<section class="panel tpanel">
+        <div class="panel-head"><h2>Temporizador</h2></div>
+        <button class="primary big" disabled>▶ Iniciar ronda 1</button>
+        <p class="muted small">Primero reparte las cartas (más abajo, botón «Iniciar y repartir»). Después aquí inicias cada ronda y a todos les aparece el reloj arriba de la pantalla.</p>
+      </section>` : ""}
       ${started && T ? `<section class="panel tpanel">
         <div class="panel-head"><h2>Temporizador</h2><span class="count">Ronda ${T.r} de ${T.n}</span></div>
         <div class="row">
