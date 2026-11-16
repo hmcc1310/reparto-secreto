@@ -579,6 +579,8 @@ const MORE_COND = {
   traidor: { name: "Traidor", desc: "Tu objetivo cambia al del equipo contrario.", en: { name: "Traitor", desc: "Your goal changes to the opposite team's." } },
   encantado: { name: "Encantado", desc: "Además de tu objetivo, pierdes si al final no estás en el mismo cuarto que el Flautista que te encantó.", en: { name: "Piped", desc: "On top of your goal, you lose if you don't end in the same room as the Piper who piped you." } },
   sincarta: { name: "Sin carta", desc: "Te quitaron la carta: ya no puedes mostrarla ni compartirla, pero conservas tu equipo y poderes.", en: { name: "Card taken", desc: "Your card was taken: you can no longer show or share it, but you keep your team and powers." } },
+  enganchado: { name: "Enganchado", desc: "Si terminas en un cuarto distinto al del Ciempiés, quedas «desgarrado».", en: { name: "Attached", desc: "If you end up in a different room from the Centipede, you become “torn”." } },
+  desgarrado: { name: "Desgarrado", desc: "Debes mostrar tu carta a todos de forma permanente.", en: { name: "Torn", desc: "You must permanently reveal your card to everyone." } },
   impregnado: { name: "Impregnado", desc: "Al final, todos los que estén en tu cuarto mueren.", en: { name: "Impregnated", desc: "At the end, everyone in your room dies." } }
 };
 Object.entries(MORE_COND).forEach(([k, c]) => { COND[k] = { name: c.name, desc: c.desc, psy: false }; });
@@ -945,7 +947,37 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "Según si terminaste con las Tijeras y sin el Papel.": "Based on whether you ended with Scissors and without Paper.", "Según si terminaste con la Piedra y sin las Tijeras.": "Based on whether you ended with Rock and without Scissors.",
     "Según si terminaste con el Papel y sin la Piedra.": "Based on whether you ended with Paper and without Rock.", "Según si alguien hizo co-revelación contigo.": "Based on whether someone card shared with you.",
     "No terminaste en el cuarto del Flautista que te encantó.": "You didn't end in the room of the Piper who piped you.", "Murió el Líder de secta.": "The Cult Leader died.",
-    "Ganó el Illuminati: todos los demás pierden.": "The Illuminati won: everyone else loses.", "¡Ganó el Illuminati!": "The Illuminati won!"
+    "Ganó el Illuminati: todos los demás pierden.": "The Illuminati won: everyone else loses.", "¡Ganó el Illuminati!": "The Illuminati won!",
+    "Mi poder": "My power", "Elige…": "Choose…", "Ya usaste tu poder en esta ronda.": "You already used your power this round.", "Ya usaste tu poder en esta partida.": "You already used your power this game.", "Ya usaste tu poder.": "You already used your power.",
+    "Este poder no se puede usar en la última ronda.": "This power can't be used in the last round.", "Obligar a hacer co-revelación contigo a:": "Force to card share with you:", "Usar poder de Agente": "Use Agent power",
+    "Primer jugador:": "First player:", "Segundo jugador:": "Second player:", "Obligarlos a hacer co-revelación": "Force them to card share", "Obligarlos a intercambiar cartas": "Force them to trade cards",
+    "Decirles que se odian": "Tell them they hate each other", "Decirles que están enamorados": "Tell them they're in love", "Revelarme y tomar el liderazgo": "Reveal myself and take the leadership",
+    "Te revelaste: si tu cuarto es par, tu voto para cambiar de líder vale dos.": "You revealed yourself: if your room is even, your vote to change the leader counts as two.", "Revelarme como Alcalde": "Reveal myself as Mayor",
+    "No puede salir como rehén esta ronda:": "Can't leave as a hostage this round:", "Usar poder (te revelas a todos)": "Use power (you reveal to everyone)", "Tiene que salir como rehén esta ronda:": "Must leave as a hostage this round:",
+    "¡Arr, al tablón!": "Argh, walk the plank!", "Revelarme y salir como rehén esta ronda": "Reveal myself and leave as a hostage this round", "Esta ronda no pueden sacarte del cuarto.": "This round nobody can take you out of the room.",
+    "«Piedra»: no salgo esta ronda": "“Stone”: I'm not leaving this round", "Solo funciona si tu cuarto tiene más gente que el otro.": "It only works if your room has more people than the other.", "Sacar de tu cuarto a:": "Kick out of your room:", "¡Fuera!": "Get out!",
+    "Ir al otro cuarto y sacar a:": "Go to the other room and kick out:", "Solo funciona si tu cuarto tiene menos gente que el otro.": "It only works if your room has fewer people than the other.", "Traer del otro cuarto a:": "Grab from the other room:", "Atraparlo": "Grab them",
+    "Atrapar en el otro cuarto a:": "Grab in the other room:", "Usar poder: los dos salen del juego": "Use power: both of you leave the game",
+    "Estás de visita en el otro cuarto. Regresa antes de que termine la ronda o pierdes.": "You're visiting the other room. Go back before the round ends or you lose.", "Regresar a mi cuarto": "Go back to my room", "Revelarme e irme al otro cuarto": "Reveal myself and go to the other room",
+    "Ver la carta enterrada": "See the buried card", "En esta partida no hay carta enterrada.": "There's no buried card in this game.", "Ya cambiaste tu carta en esta ronda.": "You already traded your card this round.", "Cambiar mi carta por la enterrada (sin verla)": "Trade my card for the buried one (without looking)",
+    "Cambiarme a Equipo Azul": "Switch to Blue Team", "Cambiarme a Equipo Rojo": "Switch to Red Team", "Si no te cambias antes del final, pierdes.": "If you don't switch before the end, you lose.", "Cambiar mi carta por una al azar": "Trade my card for a random one",
+    "Tenías que elegir a tus hijos en la primera ronda.": "You had to choose your children in the first round.", "Primer hijo:": "First child:", "Segundo hijo:": "Second child:", "«Ustedes son mis hijos»": "“You are my children”",
+    "Tu predicción se hace en la última ronda.": "Your prediction is made in the last round.", "¿Quién será el rehén que entre a tu cuarto?": "Who will be the hostage coming into your room?", "Revelarme y predecir": "Reveal myself and predict",
+    "Cartas que te han dado:": "Cards you've been given:", "Para darte su carta, la otra persona usa «Dar mi carta» en «Compartir con alguien» y tú escribes su código.": "To give you their card, the other person uses “Give my card” under “Share with someone” and you type their code.",
+    "¿Usar tu poder?": "Use your power?", "Algunos poderes solo se pueden usar una vez. ¿Seguro?": "Some powers can only be used once. Are you sure?", "Sí, usar": "Yes, use it", "Poder usado": "Power used",
+    "Elige a un jugador": "Choose a player", "Elige a dos jugadores distintos": "Choose two different players", "Intercambiaron cartas": "They traded cards", "Ahora eres el líder": "You're the leader now", "Cambiaron de cuarto": "They switched rooms",
+    "Es inmune: atrapa a otro": "They're immune: grab someone else", "Era inmune: sales tú solo": "They were immune: you leave alone", "Los dos salen del juego": "Both of you leave the game",
+    "Dar mi carta (Informante o Juez)": "Give my card (Informer or Judge)", "Dar tu carta: solo funciona si quien escribe el código es Informante o Juez.": "Give your card: it only works if whoever types the code is an Informer or Judge.",
+    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "El Ninja te sacó del juego (o lo usaste tú). No estás en ningún cuarto, pero al final sigues ganando o perdiendo según tu objetivo.": "The Ninja took you out of the game (or you used it). You're not in any room, but at the end you still win or lose according to your goal.",
+    "Esta ronda nadie puede quitar al líder (Usurpador).": "This round nobody can remove the leader (Usurper).", "se queda esta ronda": "stays this round", "Gárgola: no sale": "Gargoyle: won't leave", "debe salir como rehén": "must leave as a hostage", "Rata de visita": "Rat visiting",
+    "Al empezar la última ronda (se despierta solo al iniciar el reloj de esa ronda):": "When the last round starts (wakes up by itself when that round's clock starts):",
+    "Eras la Rata y no regresaste a tu cuarto a tiempo.": "You were the Rat and didn't get back to your room in time.", "Enamorado: según si terminaste en el mismo cuarto que tu pareja.": "In love: based on whether you ended in the same room as your partner.",
+    "Odio: según si terminaste en un cuarto distinto al de esa persona.": "In hate: based on whether you ended in a different room from that person.", "Cambiaste de cuarto.": "You changed rooms.", "Nunca cambiaste de cuarto.": "You never changed rooms.",
+    "Destituyeron a un líder en tu cuarto.": "A leader was usurped in your room.", "Nunca destituyeron a un líder en tu cuarto.": "No leader was ever usurped in your room.", "Según si terminaste de líder y antes lideraste el otro cuarto.": "Based on whether you ended as leader and had led the other room.",
+    "Según si tus hijos terminaron con el Presidente.": "Based on whether your children ended with the President.", "No elegiste a tus hijos.": "You didn't choose your children.", "Según si tus hijos sobrevivieron.": "Based on whether your children survived.",
+    "Según tu predicción del último rehén.": "Based on your prediction of the last hostage.", "No hiciste tu predicción.": "You didn't make your prediction.", "No cambiaste tu carta antes del final.": "You didn't change your card before the end.",
+    "Nadie empató: no usaste tu poder.": "There was no tie: you didn't use your power.", "Hubo empate y usaste tu poder de Juez.": "There was a tie and you used your Judge power.", "Empate sin desempate.": "Tie without a tiebreak.",
+    "Empate: el Juez tiene las mismas cartas de cada color; pierden los dos equipos.": "Tie: the Judge has the same number of each color; both teams lose.", "Se desempató con las cartas entregadas.": "The tie was broken with the cards given.", "Te quedaste con su carta.": "You kept their card."
   });
   I18N_RE.push(
     [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
@@ -970,6 +1002,12 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     [/^Salió el Xenomorfo de (.+): muere todo su cuarto\.$/, "The Xenomorph burst out of $1: their whole room dies."],
     [/^Ganó el (.+): los dos equipos pierden\.$/, (_, c) => `The ${cn(c)} won: both teams lose.`], [/^¡Ganó el (.+)!$/, (_, c) => `The ${cn(c)} won!`],
     [/^Revelación privada \(Bully\) con (.+)$/, "Private reveal (Bully) with $1"],
+    [/^Tus hijos: (.+)\.$/, (_, l) => `Your children: ${l.replace(" y ", " and ")}.`], [/^Tu predicción: (.+)\.$/, "Your prediction: $1."],
+    [/^(.+) no puede salir esta ronda$/, "$1 can't leave this round"], [/^(.+) tiene que salir como rehén$/, "$1 must leave as a hostage"], [/^(.+) → tu cuarto$/, "$1 → your room"],
+    [/^El poder se desperdició: (.+)$/, (_, w) => `The power was wasted: ${tr(w)}`], [/^Le diste tu carta a (.+)\.$/, "You gave your card to $1."], [/^Carta entregada con (.+)$/, "Card given to/by $1"],
+    [/^\((\d+) azules, (\d+) rojas\)\.$/, "($1 blue, $2 red)."], [/^🃏 (.+)$/, (_, c) => "🃏 " + cn(c)],
+    [/^Saliste como rehén (\d+) de (\d+) veces necesarias\.$/, "You left as a hostage $1 of the $2 times needed."], [/^Ayudaste a destituir líderes en (\d+) de (\d+) rondas necesarias\.$/, "You helped usurp leaders in $1 of the $2 rounds needed."],
+    [/^Empate: el Juez decide a favor del (Equipo Azul|Equipo Rojo)\.$/, (_, t) => `Tie: the Judge decides for the ${team(t)}.`], [/^Empate: pierde el equipo cuyo Informante tiene más cartas\. Gana el (Equipo Azul|Equipo Rojo)\.$/, (_, t) => `Tie: the team whose Informer has more cards loses. The ${team(t)} wins.`],
     [/^Adquiriste la condición «(.+)»\.$/, (_, c) => `You acquired the “${cn(c)}” condition.`],
     [/^Co-revelación con (.+)$/, "Card share with $1"], [/^Intercambio de color con (.+)$/, "Color share with $1"], [/^Color de (.+)$/, "$1's color"],
     [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
@@ -1108,7 +1146,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 20;
+const APP_VERSION = 21;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1322,6 +1360,7 @@ function rulesFor(card, me) {
   if (set.has("astuto")) only(["full"]);
   if (set.has("exhibicionista")) only(["full"]);
   if (set.has("sincarta")) only([]);
+  if (set.has("desgarrado")) only(["full"]);
   if (set.has("paranoico")) { only(["full"]); if (me.paraUsed) can.full = false; }
   return { set, can, immune };
 }
@@ -1387,7 +1426,7 @@ function endRoles(game, players) {
   return { list, pres, bomb, doc, eng };
 }
 // Cartas grises que la página resuelve sola (por cuarto o por las respuestas).
-const AUTO_GREY = ["lider-nato", "heroe", "villano", "doble-de-riesgo", "piedra", "papel", "tijeras", "illuminati", "patata-caliente", "duende", "jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
+const AUTO_GREY = ["agorafobico", "viajero", "anarquista", "esbirro", "cerebro", "padre", "madre", "telepata", "equipo-gris", "cambiante", "juez", "lider-nato", "heroe", "villano", "doble-de-riesgo", "piedra", "papel", "tijeras", "illuminati", "patata-caliente", "duende", "jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
 const SELF_COND = ["enamorado", "odio", "zombi"];
 function endQuestions(game, players, me) {
   if (!me.card || me.round !== game.round) return [];
@@ -1404,7 +1443,9 @@ function endQuestions(game, players, me) {
   if (id === "mi6" && !(sharedCard(me, R.pres) && sharedCard(me, R.bomb))) qs.push({ k: "mi6", q: "¿Hiciste co-revelación con el Presidente y también con la Bomba?", opts: [["y", "Sí, con los dos"], ["n", "No"]] });
   if (id === "tirano-nuclear" && !(sharedCard(me, R.pres) && sharedCard(me, R.bomb))) qs.push({ k: "tyrant", q: "¿El Presidente y la Bomba hicieron co-revelación contigo (los dos)?", opts: [["y", "Sí, los dos"], ["n", "No"]] });
   if ((id === "clon" || id === "robot") && !(me.shares || []).length) qs.push({ k: "first", q: "¿Con quién fue tu primera co-revelación o intercambio de color?", opts: [["", "Con nadie"], ...others] });
-  const selfCond = (me.acq || []).some(k => SELF_COND.includes(k));
+  // Enamorado/odio con pareja conocida (Cupido/Eris desde la página) se calculan solos.
+  const knownLove = k => (k === "enamorado" && me.loveWith) || (k === "odio" && me.hateWith);
+  const selfCond = (me.acq || []).some(k => SELF_COND.includes(k) && !knownLove(k));
   if (selfCond || (!["a", "r"].includes(me.card.team) && !AUTO_GREY.includes(id))) qs.push({ k: "self", q: selfCond ? "Tu objetivo cambió por una condición. ¿Lo cumpliste?" : "¿Cumpliste el objetivo de tu carta?", opts: [["y", "Sí"], ["n", "No"]], note: me.card.note });
   return qs;
 }
@@ -1443,8 +1484,12 @@ function computeResult(game, players, manual) {
   if (shotP) lines.push(`El Francotirador le disparó a ${shotP.name}${shotSafe ? "" : " (muere)"}.`);
   if (!winner) winner = "?";
   const res = {}, win = (p, w, why) => res[p.id] = { win: !!w, why };
+  const maj = Math.floor(((game.timer && game.timer.n) || 3) / 2) + 1;
   R.list.forEach(p => {
-    const id = p.card.id, a = A(p);
+    const id = p.card.id, a = A(p), set = rulesFor(p.card, p).set;
+    if (p.ratLost) return win(p, false, "Eras la Rata y no regresaste a tu cuarto a tiempo.");
+    if (set.has("enamorado") && p.loveWith) { const o = R.list.find(q => q.id === p.loveWith); return win(p, same(p, o), "Enamorado: según si terminaste en el mismo cuarto que tu pareja."); }
+    if (set.has("odio") && p.hateWith) { const o = R.list.find(q => q.id === p.hateWith); return win(p, !!o && !same(p, o), "Odio: según si terminaste en un cuarto distinto al de esa persona."); }
     if (a.self) return win(p, a.self === "y", a.self === "y" ? "Dijiste que cumpliste tu objetivo." : "Dijiste que no cumpliste tu objetivo.");
     if (p.card.team === "a" || p.card.team === "r") {
       const t = (p.acq || []).includes("traidor") ? (p.card.team === "a" ? "r" : "a") : p.card.team;
@@ -1458,6 +1503,17 @@ function computeResult(game, players, manual) {
       case "objetivo": return win(p, !shotP || shotP.id !== p.id, "Según el disparo del Francotirador.");
       case "senuelo": return win(p, shotP && shotP.id === p.id, "Según el disparo del Francotirador.");
       case "patata-caliente": return win(p, false, "Terminaste con la Patata caliente.");
+      case "agorafobico": return win(p, !(p.moves > 0), p.moves > 0 ? "Cambiaste de cuarto." : "Nunca cambiaste de cuarto.");
+      case "viajero": return win(p, (p.hostageTimes || 0) >= maj, `Saliste como rehén ${p.hostageTimes || 0} de ${maj} veces necesarias.`);
+      case "anarquista": return win(p, (p.usurpRounds || []).length >= maj, `Ayudaste a destituir líderes en ${(p.usurpRounds || []).length} de ${maj} rondas necesarias.`);
+      case "esbirro": return win(p, !p.sawUsurp, p.sawUsurp ? "Destituyeron a un líder en tu cuarto." : "Nunca destituyeron a un líder en tu cuarto.");
+      case "cerebro": return win(p, game["leader" + p.room] === p.id && (p.ledRooms || []).includes(otherRoom(p.room)), "Según si terminaste de líder y antes lideraste el otro cuarto.");
+      case "padre": { const k = (p.kids || []).map(id => R.list.find(q => q.id === id)); return win(p, k.length === 2 && k.every(x => same(x, pr)), p.kids ? "Según si tus hijos terminaron con el Presidente." : "No elegiste a tus hijos."); }
+      case "madre": { const k = (p.kids || []).map(id => R.list.find(q => q.id === id)).filter(Boolean); const care = k.filter(x => x.id !== (bo && bo.id)); return win(p, k.length === 2 && care.every(x => !dead.has(x.id)), p.kids ? "Según si tus hijos sobrevivieron." : "No elegiste a tus hijos."); }
+      case "telepata": { const sw = game.lastSwapIn; return win(p, !!(p.predict && sw && game.timer && sw.r >= game.timer.n && (sw.into[p.room] || []).includes(p.predict)), p.predict ? "Según tu predicción del último rehén." : "No hiciste tu predicción."); }
+      case "equipo-gris": return win(p, false, "No cambiaste tu carta antes del final.");
+      case "cambiante": return win(p, false, "No cambiaste tu carta antes del final.");
+      case "juez": return win(p, false, "Nadie empató: no usaste tu poder.");
       case "lider-nato": return win(p, game["leader" + p.room] === p.id, "Según si terminaste como líder de tu cuarto.");
       case "heroe": return win(p, same(p, pr) && same(p, bo), "Según si terminaste con el Presidente y la Bomba.");
       case "villano": return win(p, same(p, pr) && !same(p, bo), "Según si terminaste con el Presidente y lejos de la Bomba.");
@@ -1501,6 +1557,15 @@ function computeResult(game, players, manual) {
   ["heroe", "villano"].forEach(cid => { const x = holderOf(R.list, cid); if (x && res[x.id] && res[x.id].win) { R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: false, why: `Ganó el ${x.card.name}: los dos equipos pierden.` }; }); lines.push(`¡Ganó el ${x.card.name}!`); } });
   const ill = holderOf(R.list, "illuminati");
   if (ill && res[ill.id] && res[ill.id].win) { Object.keys(res).forEach(k => { if (k !== ill.id) res[k] = { win: false, why: "Ganó el Illuminati: todos los demás pierden." }; }); lines.push("¡Ganó el Illuminati!"); }
+  // Empate entre rojos y azules (ambos ganan o ambos pierden): Juez e Informantes deciden.
+  const teamRes = t => R.list.filter(p => p.card.team === t && !(p.acq || []).includes("traidor")).map(p => res[p.id] && res[p.id].win);
+  const aw = teamRes("a"), rw = teamRes("r"), tie = aw.length && rw.length && aw.every(Boolean) === rw.every(Boolean) && (aw.every(Boolean) || !aw.some(Boolean)) && (rw.every(Boolean) || !rw.some(Boolean));
+  if (tie) {
+    let w = null; const judge = holderOf(R.list, "juez");
+    if (judge) { const t = judge.taken || [], na = t.filter(x => x === "a").length, nr = t.filter(x => x === "r").length; if (na !== nr) w = na > nr ? "a" : "r"; res[judge.id] = { win: true, why: "Hubo empate y usaste tu poder de Juez." }; lines.push(w ? `Empate: el Juez decide a favor del ${w === "a" ? "Equipo Azul" : "Equipo Rojo"}.` : "Empate: el Juez tiene las mismas cartas de cada color; pierden los dos equipos."); if (!w) R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: false, why: "Empate sin desempate." }; }); }
+    else { const inf = t => R.list.filter(p => cardBase(p.card.id) === "informante" && p.card.team === t).reduce((n, p) => n + (p.taken || []).length, 0), ia = inf("a"), ir = inf("r"); if (ia !== ir) { w = ia > ir ? "r" : "a"; lines.push(`Empate: pierde el equipo cuyo Informante tiene más cartas. Gana el ${w === "a" ? "Equipo Azul" : "Equipo Rojo"}.`); } }
+    if (w) R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: p.card.team === w, why: "Se desempató con las cartas entregadas." }; });
+  }
   const tyr = holderOf(R.list, "tirano-nuclear");
   if (tyr && res[tyr.id] && res[tyr.id].win) { Object.keys(res).forEach(k => { if (k !== tyr.id) res[k] = { win: false, why: "Ganó el Tirano nuclear: todos los demás pierden." }; }); lines.push("¡Ganó el Tirano nuclear!"); }
   const ann = [];
@@ -1561,6 +1626,7 @@ function applyShare(game, A, B, kind) {
     if (base(cx.id) === "vampiro" && Y.card.color !== cx.color) give(X, Y, py, "seducido");
     if (base(cx.id) === "conspirador" && aligned(Y.card) && Y.card.team !== cx.team && base(Y.card.id) !== "leal") give(X, Y, py, "traidor");
     if (base(cx.id) === "leal" && py.acq.includes("traidor")) { py.acq = py.acq.filter(k => k !== "traidor"); notes[Y.id].push("El Leal te quitó la condición «traidor»."); }
+    if (base(cx.id) === "ciempies") { give(X, Y, py, "enganchado"); if (!rulesFor(Y.card, Y).immune) py.centipede = X.id; }
     if (base(cx.id) === "flautista") { give(X, Y, py, "encantado"); if (!rulesFor(Y.card, Y).immune) py.piper = X.id; }
     if (["alienigena", "ladron-de-cuerpos"].includes(base(cx.id)) && !rulesFor(Y.card, Y).immune && !py.acq.includes("sincarta")) { py.acq.push("sincarta"); notes[Y.id].push(`El ${cx.name} se quedó con tu carta: ya no puedes mostrarla.`); }
     if ((cx.id === "socialista" || cx.id === "capitalista") && aligned(Y.card) && !rulesFor(Y.card, Y).immune) { py.card = cardOf(byId(cx.id === "socialista" ? "rojo" : "azul")); py.acq = []; notes[Y.id].push(`Tu carta cambió por una de ${cx.id === "socialista" ? "Equipo Rojo" : "Equipo Azul"}.`); }
@@ -1606,6 +1672,15 @@ async function completeShare(code, game, players, me, codeTyped) {
   const A = players.find(p => p.offer && p.offer.code === codeTyped && p.id !== me.id && p.card && p.round === game.round);
   if (!A) return "No encontré ese código. Revisa los números.";
   const B = players.find(p => p.id === me.id) || me;
+  if (A.offer.kind === "give") {
+    const rb = cardBase(B.card.id), at = Date.now(), id = rid(8);
+    const okGive = (rb === "juez" || (rb === "informante" && A.card.color !== B.card.color && ["a", "r"].includes(A.card.color))) && (!A.room || A.room === B.room) && !(A.acq || []).includes("sincarta");
+    if (!okGive) { await api.updatePlayer(code, A.id, { offer: null, offerFail: { id: rid(6), msg: "" } }); return "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta."; }
+    await api.batch(code, null, {
+      [A.id]: { offer: null, acq: [...new Set([...(A.acq || []), "sincarta"])], lastShare: { id, with: B.id, name: B.name, kind: "give", card: B.card, notes: [`Le diste tu carta a ${B.name}.`], at } },
+      [B.id]: { taken: [...(B.taken || []), A.card.color], lastShare: { id, with: A.id, name: A.name, kind: "give", card: A.card, notes: ["Te quedaste con su carta."], at } } });
+    return "";
+  }
   const why = shareBlocked(game, A, B, A.offer.kind);
   if (why) { await api.updatePlayer(code, A.id, { offer: null, offerFail: { id: rid(6), msg: "No se completó el intercambio." } }); return why; }
   const { pa, pb, instant } = applyShare(game, A, B, A.offer.kind);
@@ -1619,7 +1694,7 @@ function showShareResult(ls_key, me) {
   ls.set(ls_key, s.id);
   const c = s.card, d = document.createElement("div");
   d.className = "full " + (s.kind === "color" ? c.color : "priv"); d.setAttribute("role", "dialog"); d.tabIndex = 0;
-  d.innerHTML = `<div><span class="stamp">${s.kind === "color" ? "Intercambio de color" : s.kind === "reveal" ? "Revelación privada (Bully)" : "Co-revelación"} con ${esc(s.name)}</span>
+  d.innerHTML = `<div><span class="stamp">${s.kind === "color" ? "Intercambio de color" : s.kind === "reveal" ? "Revelación privada (Bully)" : s.kind === "give" ? "Carta entregada" : "Co-revelación"} con ${esc(s.name)}</span>
     ${s.kind === "color" ? `<span class="lbl">Color de ${esc(s.name)}</span><b>${COLOR[c.color]}</b>` : `<span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] + " · carta " + COLOR[c.color].toLowerCase() : TEAM[c.team]}</span><b class="t-${c.color}">${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}`}
     ${(s.notes || []).length ? `<p>${s.notes.map(n => `<b>${esc(n)}</b>`).join(" ")}</p>` : ""}
     <small>Toca para cerrar</small></div>`;
@@ -1635,73 +1710,195 @@ function sharePanelHTML(game, me) {
     <div class="panel-head"><h2>Compartir con alguien</h2></div>
     ${o ? `<p class="small">Dile este código a la otra persona para que lo escriba en su celular:</p>
       <div class="sharecode">${esc(o.code)}</div>
-      <p class="muted small">${o.kind === "color" ? "Intercambio de color" : "Co-revelación (carta completa)"}. Cuando lo escriba, cada uno verá en su celular lo del otro.</p>
+      <p class="muted small">${o.kind === "give" ? "Dar tu carta: solo funciona si quien escribe el código es Informante o Juez." : `${o.kind === "color" ? "Intercambio de color" : "Co-revelación (carta completa)"}. Cuando lo escriba, cada uno verá en su celular lo del otro.`}</p>
       <button type="button" class="ghost" id="shCancel">Cancelar</button>`
     : `<p class="muted small">Para compartir de verdad: uno genera un código y el otro lo escribe. La página les muestra la carta o el color del otro y aplica los efectos (Patata caliente, Criminal, Médico, Zombi…).</p>
-      <div class="row"><button type="button" data-sh="card">Co-revelación</button><button type="button" data-sh="color" ${game.colorAllowed === false ? "disabled" : ""}>Intercambio de color</button></div>`}
+      <div class="row"><button type="button" data-sh="card">Co-revelación</button><button type="button" data-sh="color" ${game.colorAllowed === false ? "disabled" : ""}>Intercambio de color</button><button type="button" class="ghost" data-sh="give">Dar mi carta (Informante o Juez)</button></div>`}
     <form class="row" id="shForm"><input type="tel" id="shCode" maxlength="4" inputmode="numeric" placeholder="¿Te dieron un código?" style="flex:1 1 140px"><button type="submit">Aceptar código</button></form>
     <p class="err" id="shErr"></p>
   </section>`;
 }
+// ---------- poderes que se usan desde el celular ("Mi poder") ----------
+// pUsed = ronda en que se usó (una vez por ronda), pGame = reparto en que se usó (una vez por partida).
+const FUN_EXCLUDE = ["presidente", "bomba", "hija-del-presidente", "martir", "rey", "dragon", "princesa-gorda", "huevo-de-dragon", "puno-rojo", "pie-rojo", "petardo-azul", "borracho", "azul", "rojo"];
+function powerInfo(game, players, me) {
+  const b = cardBase(me.card.id), r = curRound(game), last = isLastRound(game);
+  const st = me.room ? roomState(game, players, me.room) : { members: [] }, os = me.room ? roomState(game, players, otherRoom(me.room)) : { members: [] };
+  const usedRound = me.pUsed === roundTag(game), usedGame = me.pGame === game.round;
+  const mine = st.members.filter(p => p.id !== me.id), theirs = os.members;
+  return { b, r, last, st, os, usedRound, usedGame, mine, theirs };
+}
+const pickSel = (id, list, label) => `<label class="small">${label}<select id="${id}"><option value="">Elige…</option>${list.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</select></label>`;
+function powerPanelHTML(game, players, me) {
+  if (!me.card || me.round !== game.round || !me.room) return "";
+  const I = powerInfo(game, players, me), b = I.b;
+  const used = t => `<p class="muted small">${t}</p>`;
+  const notLast = I.last ? used("Este poder no se puede usar en la última ronda.") : "";
+  let body = "";
+  switch (b) {
+    case "agente": body = I.usedRound ? used("Ya usaste tu poder en esta ronda.") : `${pickSel("pwA", I.mine, "Obligar a hacer co-revelación contigo a:")}<button type="button" class="primary" data-pw="agent">Usar poder de Agente</button>`; break;
+    case "sicario": body = I.usedRound ? used("Ya usaste tu poder en esta ronda.") : `${pickSel("pwA", I.mine, "Primer jugador:")}${pickSel("pwB", I.mine, "Segundo jugador:")}<button type="button" class="primary" data-pw="enforce">Obligarlos a hacer co-revelación</button>`; break;
+    case "cientifico-loco": body = I.usedGame ? used("Ya usaste tu poder en esta partida.") : `${pickSel("pwA", I.mine, "Primer jugador:")}${pickSel("pwB", I.mine, "Segundo jugador:")}<button type="button" class="primary" data-pw="mad">Obligarlos a intercambiar cartas</button>`; break;
+    case "eris": case "cupido": body = I.usedGame ? used("Ya usaste tu poder en esta partida.") : `${pickSel("pwA", I.mine, "Primer jugador:")}${pickSel("pwB", I.mine, "Segundo jugador:")}<button type="button" class="primary" data-pw="${b}">${b === "eris" ? "Decirles que se odian" : "Decirles que están enamorados"}</button>`; break;
+    case "usurpador": body = I.usedGame ? used("Ya usaste tu poder.") : I.last ? notLast : `<button type="button" class="primary" data-pw="usurp">Revelarme y tomar el liderazgo</button>`; break;
+    case "alcalde": body = me.publicCard ? used("Te revelaste: si tu cuarto es par, tu voto para cambiar de líder vale dos.") : `<button type="button" class="primary" data-pw="mayor">Revelarme como Alcalde</button>`; break;
+    case "guardia-de-seguridad": body = I.usedGame ? used("Ya usaste tu poder.") : `${pickSel("pwA", I.mine, "No puede salir como rehén esta ronda:")}<button type="button" class="primary" data-pw="tackle">Usar poder (te revelas a todos)</button>`; break;
+    case "pirata": body = I.usedGame ? used("Ya usaste tu poder.") : `${pickSel("pwA", I.mine, "Tiene que salir como rehén esta ronda:")}<button type="button" class="primary" data-pw="plank">¡Arr, al tablón!</button>`; break;
+    case "recluta": body = I.usedGame ? used("Ya usaste tu poder.") : I.last ? notLast : `<button type="button" class="primary" data-pw="enlist">Revelarme y salir como rehén esta ronda</button>`; break;
+    case "gargola": body = tagNow(game, me, "stone") ? used("Esta ronda no pueden sacarte del cuarto.") : `<button type="button" class="primary" data-pw="stone">«Piedra»: no salgo esta ronda</button>`; break;
+    case "puerta": body = I.last ? notLast : I.st.members.length <= I.os.members.length ? used("Solo funciona si tu cuarto tiene más gente que el otro.") : `${pickSel("pwA", I.mine.filter(p => p.id !== I.st.leader), "Sacar de tu cuarto a:")}<button type="button" class="primary" data-pw="bounce">¡Fuera!</button>`; break;
+    case "canguro": body = I.usedGame ? used("Ya usaste tu poder.") : I.last ? notLast : `${pickSel("pwA", I.theirs, "Ir al otro cuarto y sacar a:")}<button type="button" class="primary" data-pw="roo">Usar poder (te revelas a todos)</button>`; break;
+    case "tentaculos": body = I.last ? notLast : I.st.members.length >= I.os.members.length ? used("Solo funciona si tu cuarto tiene menos gente que el otro.") : `${pickSel("pwA", I.theirs, "Traer del otro cuarto a:")}<button type="button" class="primary" data-pw="tentacle">Atraparlo</button>`; break;
+    case "ninja": body = I.usedGame ? used("Ya usaste tu poder.") : I.last ? notLast : `${pickSel("pwA", I.theirs, "Atrapar en el otro cuarto a:")}<button type="button" class="primary" data-pw="ninja">Usar poder: los dos salen del juego</button>`; break;
+    case "rata": body = me.ratAway ? `<p class="small">Estás de visita en el otro cuarto. Regresa antes de que termine la ronda o pierdes.</p><button type="button" class="primary" data-pw="ratback">Regresar a mi cuarto</button>` : I.usedGame ? used("Ya usaste tu poder.") : `<button type="button" class="primary" data-pw="rat">Revelarme e irme al otro cuarto</button>`; break;
+    case "miron": body = game.buriedCard ? `<button type="button" class="primary" data-pw="peek">Ver la carta enterrada</button>` : used("En esta partida no hay carta enterrada."); break;
+    case "comerciante": body = !game.buriedCard ? used("En esta partida no hay carta enterrada.") : I.usedRound ? used("Ya cambiaste tu carta en esta ronda.") : `<button type="button" class="primary" data-pw="trade">Cambiar mi carta por la enterrada (sin verla)</button>`; break;
+    case "equipo-gris": body = `<div class="row"><button type="button" data-pw="grey-a">Cambiarme a Equipo Azul</button><button type="button" data-pw="grey-r">Cambiarme a Equipo Rojo</button></div>${used("Si no te cambias antes del final, pierdes.")}`; break;
+    case "cambiante": body = `<button type="button" class="primary" data-pw="change">Cambiar mi carta por una al azar</button>${used("Si no te cambias antes del final, pierdes.")}`; break;
+    case "padre": case "madre": body = me.kids ? used(`Tus hijos: ${me.kids.map(id => esc((players.find(p => p.id === id) || {}).name || "?")).join(" y ")}.`) : I.r > 1 ? used("Tenías que elegir a tus hijos en la primera ronda.") : `${pickSel("pwA", I.mine, "Primer hijo:")}${pickSel("pwB", I.mine, "Segundo hijo:")}<button type="button" class="primary" data-pw="kids">«Ustedes son mis hijos»</button>`; break;
+    case "telepata": body = me.predict ? used(`Tu predicción: ${esc((players.find(p => p.id === me.predict) || {}).name || "?")}.`) : !I.last ? used("Tu predicción se hace en la última ronda.") : `${pickSel("pwA", I.theirs, "¿Quién será el rehén que entre a tu cuarto?")}<button type="button" class="primary" data-pw="predict">Revelarme y predecir</button>`; break;
+    case "informante": case "juez": body = `<p class="small">Cartas que te han dado: <b>${(me.taken || []).length}</b>${(me.taken || []).length ? ` (${(me.taken || []).filter(t => t === "a").length} azules, ${(me.taken || []).filter(t => t === "r").length} rojas)` : ""}.</p>${used("Para darte su carta, la otra persona usa «Dar mi carta» en «Compartir con alguien» y tú escribes su código.")}`; break;
+    default: return "";
+  }
+  return `<section class="panel powerpanel"><div class="panel-head"><h2>Mi poder</h2><span class="count">${esc(me.card.name)}</span></div>${body}</section>`;
+}
+async function usePower(code, game, players, me, action) {
+  const I = powerInfo(game, players, me), A = $("#pwA") ? $("#pwA").value : "", B = $("#pwB") ? $("#pwB").value : "";
+  const P = id => players.find(p => p.id === id), a = P(A), b2 = P(B), tag = roundTag(game);
+  const need1 = () => { if (!a) { toast("Elige a un jugador"); return false; } return true; };
+  const need2 = () => { if (!a || !b2 || a.id === b2.id) { toast("Elige a dos jugadores distintos"); return false; } return true; };
+  const immune = x => rulesFor(x.card, x).immune;
+  const clearLeader = (x, gp) => { if (game["leader" + x.room] === x.id) gp["leader" + x.room] = null; };
+  const force = async (X, Y, extraMe) => {
+    const why = shareBlocked(game, X, Y, "card");
+    if (why) { await api.updatePlayer(code, me.id, extraMe); toast("El poder se desperdició: " + why); return; }
+    const { pa, pb, instant } = applyShare(game, X, Y, "card");
+    let gp = null; if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res }; }
+    const pt = { [X.id]: pa, [Y.id]: pb }; pt[me.id] = { ...(pt[me.id] || {}), ...extraMe };
+    await api.batch(code, gp, pt); toast("Poder usado");
+  };
+  switch (action) {
+    case "agent": if (need1()) await force(me, a, { pUsed: tag }); break;
+    case "enforce": if (need2()) await force(a, b2, { pUsed: tag }); break;
+    case "mad": if (need2()) { await api.batch(code, null, { [a.id]: { card: b2.card, acq: [], cured: [], paraUsed: false }, [b2.id]: { card: a.card, acq: [], cured: [], paraUsed: false }, [me.id]: { pGame: game.round } }); toast("Intercambiaron cartas"); } break;
+    case "eris": case "cupido": if (need2()) {
+      const k = action === "eris" ? "odio" : "enamorado", f = action === "eris" ? "hateWith" : "loveWith", pt = { [me.id]: { pGame: game.round } };
+      [[a, b2], [b2, a]].forEach(([x, y]) => { if (!immune(x)) pt[x.id] = { acq: [...new Set([...(x.acq || []), k])], [f]: y.id }; });
+      await api.batch(code, null, pt); toast("Poder usado"); } break;
+    case "usurp": await setLeader(code, game, players, me.room, me.id, { ["lock" + me.room]: tag }); await api.updatePlayer(code, me.id, { pGame: game.round, publicCard: true }); toast("Ahora eres el líder"); break;
+    case "mayor": await api.updatePlayer(code, me.id, { publicCard: true }); break;
+    case "tackle": if (need1()) { await api.batch(code, null, { [a.id]: { tackled: tag }, [me.id]: { pGame: game.round, publicCard: true } }); toast(`${a.name} no puede salir esta ronda`); } break;
+    case "plank": if (need1()) { await api.batch(code, null, { [a.id]: { blasted: tag }, [me.id]: { pGame: game.round, publicCard: true } }); toast(`${a.name} tiene que salir como rehén`); } break;
+    case "enlist": await api.updatePlayer(code, me.id, { blasted: tag, pGame: game.round, publicCard: true }); break;
+    case "stone": await api.updatePlayer(code, me.id, { stone: tag, publicCard: true }); break;
+    case "bounce": if (need1()) { const gp = {}; clearLeader(a, gp); await api.batch(code, Object.keys(gp).length ? gp : null, { [a.id]: movePatch(a, otherRoom(a.room)) }); toast(`${a.name} → Cuarto ${otherRoom(a.room)}`); } break;
+    case "roo": if (need1()) { const gp = {}; clearLeader(a, gp); await api.batch(code, Object.keys(gp).length ? gp : null, { [a.id]: movePatch(a, me.room), [me.id]: { ...movePatch(me, a.room), pGame: game.round, publicCard: true } }); toast("Cambiaron de cuarto"); } break;
+    case "tentacle": if (need1()) { if (immune(a)) { toast("Es inmune: atrapa a otro"); break; } const gp = {}; clearLeader(a, gp); await api.batch(code, Object.keys(gp).length ? gp : null, { [a.id]: movePatch(a, me.room) }); toast(`${a.name} → tu cuarto`); } break;
+    case "ninja": if (need1()) { const gp = {}, pt = { [me.id]: { room: null, out: true, pGame: game.round, publicCard: true } }; clearLeader(me, gp); if (!immune(a)) { pt[a.id] = { room: null, out: true }; clearLeader(a, gp); }
+      await api.batch(code, Object.keys(gp).length ? gp : null, pt); toast(immune(a) ? "Era inmune: sales tú solo" : "Los dos salen del juego"); } break;
+    case "rat": { const gp = {}; clearLeader(me, gp); await api.batch(code, Object.keys(gp).length ? gp : null, { [me.id]: { room: otherRoom(me.room), ratAway: me.room, vote: null, pGame: game.round, publicCard: true } }); } break;
+    case "ratback": await api.updatePlayer(code, me.id, { room: me.ratAway, ratAway: null, vote: null }); break;
+    case "peek": { const c = game.buriedCard; privateView(c); } break;
+    case "trade": { const old = me.card; await api.batch(code, { buriedCard: old }, { [me.id]: { card: game.buriedCard, acq: [], cured: [], paraUsed: false, pUsed: tag } }); } break;
+    case "grey-a": case "grey-r": await api.updatePlayer(code, me.id, { card: cardOf(byId(action === "grey-a" ? "azul" : "rojo")), acq: [] }); break;
+    case "change": {
+      const inUse = new Set(players.filter(p => p.card && p.round === game.round).map(p => p.card.id));
+      const pool = CATALOG.filter(c => !inUse.has(c.id) && !c.link && !FUN_EXCLUDE.includes(c.id) && !(c.custom));
+      const c = pool[rand(pool.length)]; if (c) await api.updatePlayer(code, me.id, { card: cardOf(c), acq: [], cured: [], paraUsed: false });
+    } break;
+    case "kids": if (need2()) await api.updatePlayer(code, me.id, { kids: [a.id, b2.id] }); break;
+    case "predict": if (need1()) await api.updatePlayer(code, me.id, { predict: a.id, publicCard: true }); break;
+  }
+}
 // ---------- cuartos y líderes ----------
 // Jugador: room "1"|"2", vote (a quién apoya como líder). Partida: leader1/2, picks1/2 (rehenes anunciados), offer1/2 (ceder liderazgo).
+// Registro para objetivos: moves (cambios de cuarto), hostageTimes, ledRooms, usurpRounds, sawUsurp.
 const ROOMS = ["1", "2"];
 const otherRoom = r => r === "1" ? "2" : "1";
 const inGame = (game, p) => p.card && p.round === game.round && p.room;
+const curRound = game => (game.timer && game.timer.r) || 1;
+const roundTag = game => `${game.round}:${curRound(game)}`;
+const isLastRound = game => !!game.timer && game.timer.r >= game.timer.n;
+const cardBase = id => String(id || "").replace(/-(a|r)$/, "");
+const movePatch = (p, to) => ({ room: to, vote: null, moves: (p.moves || 0) + 1 });
 function roomState(game, players, room) {
   const members = players.filter(p => inGame(game, p) && p.room === room).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
   let leader = game["leader" + room] || null; if (!members.some(p => p.id === leader)) leader = null;
-  const need = Math.floor(members.length / 2) + 1;
-  const tally = {}; members.forEach(p => { if (p.vote && !(p.acq || []).includes("petrificado") && members.some(m => m.id === p.vote)) tally[p.vote] = (tally[p.vote] || 0) + 1; });
-  return { room, members, leader, need, tally, picks: game["picks" + room] || null, offer: game["offer" + room] || null };
+  const voters = members.filter(p => !p.ratAway);
+  const need = Math.floor(voters.length / 2) + 1;
+  // Alcalde revelado: su voto vale dos si el cuarto es par y el otro Alcalde no se reveló también.
+  const mayors = members.filter(p => cardBase(p.card.id) === "alcalde" && p.publicCard);
+  const weight = p => (mayors.length === 1 && mayors[0].id === p.id && voters.length % 2 === 0) ? 2 : 1;
+  const tally = {}; voters.forEach(p => { if (p.vote && !(p.acq || []).includes("petrificado") && members.some(m => m.id === p.vote)) tally[p.vote] = (tally[p.vote] || 0) + weight(p); });
+  return { room, members, leader, need, tally, picks: game["picks" + room] || null, offer: game["offer" + room] || null, locked: game["lock" + room] === roundTag(game) };
 }
 const hostageCount = (game, st) => Math.max(0, Math.min(hostages(game.timer || newTimer("basic", 0)), st.members.length - 1));
-async function setLeader(code, game, players, room, pid) {
+async function setLeader(code, game, players, room, pid, extraGame) {
   const st = roomState(game, players, room), patches = {};
   st.members.forEach(p => { if (p.vote) patches[p.id] = { vote: null }; });
-  await api.batch(code, { ["leader" + room]: pid, ["offer" + room]: null }, patches);
+  const L = players.find(p => p.id === pid);
+  if (L) patches[pid] = { ...(patches[pid] || {}), ledRooms: [...new Set([...(L.ledRooms || []), room])] };
+  await api.batch(code, { ["leader" + room]: pid, ["offer" + room]: null, ...(extraGame || {}) }, patches);
 }
 async function castVote(code, game, players, me, target) {
   await api.updatePlayer(code, me.id, { vote: target });
   const now = players.map(p => p.id === me.id ? { ...p, vote: target } : p);
   const st = roomState(game, now, me.room);
-  if (target && target !== st.leader && (st.tally[target] || 0) >= st.need) { await setLeader(code, game, now, me.room, target); toast("Cambio de líder"); }
+  if (target && target !== st.leader && !st.locked && (st.tally[target] || 0) >= st.need) {
+    // Destitución: queda registrada para Anarquista y Esbirro.
+    if (st.leader) {
+      const r = curRound(game), pt = {};
+      st.members.forEach(p => { pt[p.id] = { sawUsurp: true }; if (p.vote === target) pt[p.id].usurpRounds = [...new Set([...(p.usurpRounds || []), r])]; });
+      await api.batch(code, null, pt);
+      now.forEach(p => { if (pt[p.id]) Object.assign(p, pt[p.id]); });
+    }
+    await setLeader(code, game, now, me.room, target); toast("Cambio de líder");
+  }
 }
 // Los rehenes cambian de cuarto cuando los dos líderes ya anunciaron. Es idempotente: pone el cuarto destino, no lo alterna.
 async function doExchange(code, game, players) {
   if (!game.picks1 || !game.picks2) return;
-  const patches = {};
-  game.picks1.forEach(id => { if (players.some(p => p.id === id)) patches[id] = { room: "2", vote: null }; });
-  game.picks2.forEach(id => { if (players.some(p => p.id === id)) patches[id] = { room: "1", vote: null }; });
-  await api.batch(code, { picks1: null, picks2: null, swaps: (game.swaps || 0) + 1 }, patches);
+  const patches = {}, into = { "1": [], "2": [] }, sw = (game.swaps || 0) + 1;
+  const mv = (id, to) => { const p = players.find(x => x.id === id); if (!p || p.room === to && p.lastSwap === sw) return; patches[id] = { ...movePatch(p, to), hostageTimes: (p.hostageTimes || 0) + 1, lastSwap: sw }; into[to].push(id); };
+  game.picks1.forEach(id => mv(id, "2")); game.picks2.forEach(id => mv(id, "1"));
+  // La Rata que no regresó a su cuarto antes del fin de la ronda pierde.
+  players.forEach(p => { if (p.ratAway && inGame(game, p)) patches[p.id] = { ...(patches[p.id] || {}), ratLost: true, ratAway: null }; });
+  await api.batch(code, { picks1: null, picks2: null, swaps: sw, lastSwapIn: { r: curRound(game), into } }, patches);
 }
 async function lockPicks(code, game, players, room, ids) {
   await api.updateGame(code, { ["picks" + room]: ids });
   const g = { ...game, ["picks" + room]: ids };
   if (g.picks1 && g.picks2) await doExchange(code, g, players);
 }
+// Quién no puede salir (Guardia, Gárgola, Rata) y quién debe salir (Pirata, Recluta) esta ronda.
+const tagNow = (game, p, k) => p[k] === roundTag(game);
+const cantLeave = (game, p) => tagNow(game, p, "tackled") || tagNow(game, p, "stone") || !!p.ratAway;
+const mustLeave = (game, p) => tagNow(game, p, "blasted") && !cantLeave(game, p);
 // Panel "Tu cuarto" del jugador.
 function roomPanelHTML(game, players, me) {
+  if (me.out) return `<section class="panel roompanel"><h2>Saliste del juego</h2><p class="small">El Ninja te sacó del juego (o lo usaste tú). No estás en ningún cuarto, pero al final sigues ganando o perdiendo según tu objetivo.</p></section>`;
   if (!me.room) return "";
   const st = roomState(game, players, me.room), os = roomState(game, players, otherRoom(me.room));
   const isLeader = st.leader === me.id, leaderP = st.members.find(p => p.id === st.leader);
-  const n = hostageCount(game, st);
+  const forced = st.members.filter(p => p.id !== me.id && mustLeave(game, p));
+  const n = Math.max(hostageCount(game, st), forced.length);
   const nameOf = id => (players.find(p => p.id === id) || {}).name || "?";
+  const tags = p => [p.publicCard ? `🃏 ${esc(p.card.name)}` : "", tagNow(game, p, "tackled") ? "se queda esta ronda" : "", tagNow(game, p, "stone") ? "Gárgola: no sale" : "", mustLeave(game, p) ? "debe salir como rehén" : "", p.ratAway ? "Rata de visita" : ""].filter(Boolean);
   const row = p => {
-    const v = st.tally[p.id] || 0, lead = p.id === st.leader;
+    const v = st.tally[p.id] || 0, lead = p.id === st.leader, tg = tags(p);
     let btn = "";
     if (!st.leader && p.id !== me.id) btn = `<button type="button" data-nom="${esc(p.id)}">Nombrar líder</button>`;
     else if (st.leader && !lead) btn = me.vote === p.id ? `<button type="button" class="primary" data-vote="">Quitar mi voto</button>` : `<button type="button" data-vote="${esc(p.id)}">Votar</button>`;
     if (isLeader && p.id !== me.id) btn += ` <button type="button" class="ghost" data-give="${esc(p.id)}">Ceder</button>`;
-    return `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${lead ? "👑 " : ""}${esc(p.name)}${p.id === me.id ? " (tú)" : ""}</div>${v && !lead ? `<div class="rl">${v} de ${st.need} votos para ser líder</div>` : ""}</div><div class="row">${btn}</div></li>`;
+    return `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${lead ? "👑 " : ""}${esc(p.name)}${p.id === me.id ? " (tú)" : ""}</div>${v && !lead ? `<div class="rl">${v} de ${st.need} votos para ser líder</div>` : ""}${tg.length ? `<div class="rl">${tg.join(" · ")}</div>` : ""}</div><div class="row">${btn}</div></li>`;
   };
   return `<section class="panel roompanel">
     <div class="panel-head"><h2>Estás en el Cuarto ${esc(me.room)}</h2><span class="count">${st.members.length} personas</span></div>
     <p class="small">${leaderP ? `Líder: <b>👑 ${esc(leaderP.name)}</b>` : "Todavía no hay líder: el primero que alguien nombre se queda como líder."}</p>
     <ul class="plist">${st.members.map(row).join("")}</ul>
-    ${st.leader ? `<p class="muted small">Para cambiar de líder se necesitan ${st.need} votos (más de la mitad del cuarto). Puedes votar por ti.</p>` : ""}
+    ${st.leader ? `<p class="muted small">${st.locked ? "Esta ronda nadie puede quitar al líder (Usurpador)." : `Para cambiar de líder se necesitan ${st.need} votos (más de la mitad del cuarto). Puedes votar por ti.`}</p>` : ""}
     ${isLeader ? (st.picks ? "" : `<div class="hpick"><b>Elige ${n} rehén${n === 1 ? "" : "es"} para enviar al Cuarto ${otherRoom(me.room)}</b>
-      <div class="names">${st.members.filter(p => p.id !== me.id).map(p => `<label class="check"><input type="checkbox" data-pick="${esc(p.id)}"><span>${esc(p.name)}</span></label>`).join("")}</div>
+      <div class="names">${st.members.filter(p => p.id !== me.id && !cantLeave(game, p)).map(p => `<label class="check"><input type="checkbox" data-pick="${esc(p.id)}" ${mustLeave(game, p) ? "checked disabled" : ""}><span>${esc(p.name)}</span></label>`).join("")}</div>
       <button type="button" class="primary" id="lockPicks">Anunciar rehenes</button>
       <p class="muted small">Al anunciarlos ya no se pueden cambiar. Cuando los dos líderes anuncien, la página los cambia de cuarto.</p></div>`) : ""}
     ${st.picks ? `<p class="small"><b>Rehenes anunciados:</b> ${st.picks.map(id => esc(nameOf(id))).join(", ") || "ninguno"}.${os.picks ? "" : " Esperando al líder del otro cuarto…"}</p>` : ""}
@@ -1713,7 +1910,8 @@ function bindRoomPanel(code, game, players, me) {
   $$("[data-vote]").forEach(b => b.onclick = () => castVote(code, game, players, me, b.dataset.vote || null));
   $$("[data-give]").forEach(b => b.onclick = () => { api.updateGame(code, { ["offer" + me.room]: b.dataset.give }); toast("Le ofreciste el liderazgo"); });
   const lp = $("#lockPicks"); if (lp) lp.onclick = () => {
-    const st = roomState(game, players, me.room), n = hostageCount(game, st);
+    const st = roomState(game, players, me.room), forced = st.members.filter(p => p.id !== me.id && mustLeave(game, p));
+    const n = Math.max(hostageCount(game, st), forced.length);
     const ids = $$("[data-pick]").filter(x => x.checked).map(x => x.dataset.pick);
     if (ids.length !== n) { toast(`Elige exactamente ${n} rehén${n === 1 ? "" : "es"}`); return; }
     modal("¿Anunciar rehenes?", `Enviarás a <b>${ids.map(id => esc(players.find(p => p.id === id).name)).join(", ")}</b> al otro cuarto. Ya no podrás cambiarlo.`,
@@ -1726,6 +1924,18 @@ function playerView() {
   let roomKeyLast = "", offerShown = "";
   const roomKey = () => `${ps.code}|${ps.pid}|${me.round}|${me.room || ""}`;
   // El panel del cuarto se dibuja aparte para no cerrar lo demás cada vez que alguien vota.
+  let powerKeyLast = "";
+  const renderPower = () => {
+    const box = $("#powerpanel"); if (!box || !game || !me || !(me.card && me.round === game.round)) return;
+    const k = JSON.stringify([me.card.id, me.room, me.pUsed, me.pGame, me.publicCard, me.ratAway, me.stone, me.kids, me.predict, me.taken, game.timer?.r, game.timer?.n, !!game.buriedCard, game.leader1, game.leader2, players.map(p => [p.id, p.name, p.room, p.round])]);
+    if (k === powerKeyLast) return; powerKeyLast = k;
+    box.innerHTML = powerPanelHTML(game, players, me);
+    $$("[data-pw]", box).forEach(b => b.onclick = () => {
+      const act = b.dataset.pw, quiet = ["peek", "mayor", "ratback", "kids"].includes(act);
+      if (quiet) return usePower(ps.code, game, players, me, act);
+      modal("¿Usar tu poder?", "Algunos poderes solo se pueden usar una vez. ¿Seguro?", [{ label: "Cancelar" }, { label: "Sí, usar", primary: true, fn: () => usePower(ps.code, game, players, me, act) }]);
+    });
+  };
   let shareKeyLast = "";
   const renderShare = () => {
     const box = $("#sharepanel"); if (!box || !game || !me || !(me.card && me.round === game.round)) return;
@@ -1742,7 +1952,7 @@ function playerView() {
   };
   const renderRoom = () => {
     const box = $("#roompanel"); if (!box || !game || !me) return;
-    const k = JSON.stringify([me.room, me.vote, game.leader1, game.leader2, game.picks1, game.picks2, game.offer1, game.offer2, game.timer?.r, players.map(p => [p.id, p.name, p.room, p.vote, p.round])]);
+    const k = JSON.stringify([me.room, me.vote, game.leader1, game.leader2, game.picks1, game.picks2, game.offer1, game.offer2, game.timer?.r, game.lock1, game.lock2, players.map(p => [p.id, p.name, p.room, p.vote, p.round, p.card?.id, p.publicCard, p.tackled, p.blasted, p.stone, p.ratAway, (p.acq || []).includes("petrificado")])]);
     if (k === roomKeyLast) return; roomKeyLast = k;
     box.innerHTML = roomPanelHTML(game, players, me);
     bindRoomPanel(ps.code, game, players, me);
@@ -1800,6 +2010,7 @@ function playerView() {
         </div>
         ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color: el reglamento lo permite desde 11 jugadores. El anfitrión puede cambiarlo en las reglas de la partida.</p>`}
       </div>
+      <div id="powerpanel" style="width:100%"></div>
       <div id="sharepanel" style="width:100%"></div>
       <div id="roompanel" style="width:100%"></div>
       <details class="conds panel">
@@ -1825,8 +2036,8 @@ function playerView() {
         [{ label: "Aceptar y ver mi carta", primary: true, fn: () => { ls.set("rs-seen:" + ps.pid, seenKey); ls.set("rs-room:" + ps.pid, roomKey()); privateView(c); } }]);
       if (me.room && !changed) $(".modal .box p").insertAdjacentHTML("afterend", `<p class="roomcall">Ve al <b>Cuarto ${esc(me.room)}</b></p>`);
     }
-    roomKeyLast = ""; shareKeyLast = "";
-    renderRoom(); renderShare();
+    roomKeyLast = ""; shareKeyLast = ""; powerKeyLast = "";
+    renderRoom(); renderShare(); renderPower();
     $("#forgot").onclick = () => modal("¿Ver tu carta otra vez?",
       "Esto es <b>solo para ti</b>, en secreto. La pantalla dirá «Vista privada» y <b>no cuenta como revelación</b>: no se la enseñes a nadie. Para mostrarle algo a otra persona usa los botones «Mostrar a otra persona».",
       [{ label: "Cancelar" }, { label: "Sí, ver en secreto", primary: true, fn: () => { privateView(c); api.updatePlayer(ps.code, ps.pid, { peeks: (me.peeks || 0) + 1 }); } }]);
@@ -1878,9 +2089,9 @@ function playerView() {
     $$("[data-ans]", ov).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { endAns: { ...(me.endAns || {}), [b.dataset.ans]: b.dataset.v } }));
   };
   unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
-  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderShare(); renderEnd(); }));
-  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderShare(); renderEnd(); }));
-  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderShare(); renderEnd(); }));
+  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
+  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
+  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
 }
 
 // ---------- mazo ----------
@@ -2157,7 +2368,7 @@ function hostLobby() {
       </section>
       ${started ? `<section class="panel">
         <div class="panel-head"><h2>Durante el juego</h2></div>
-        ${drunk && game.sober ? `<div class="row"><span>Al empezar la última ronda:</span><button class="primary" id="wake">Despertar al Borracho</button></div>` : ""}
+        ${drunk && game.sober ? `<div class="row"><span>Al empezar la última ronda (se despierta solo al iniciar el reloj de esa ronda):</span><button class="primary" id="wake">Despertar al Borracho</button></div>` : ""}
         <label class="small">Intercambiar cartas entre dos jugadores <span class="muted">(Patata caliente, Duende)</span>
           <div class="row">
             <select id="swapA"><option value="">Jugador…</option>${withCard.map(p => `<option value="${esc(p.id)}" ${swapA === p.id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}</select>
@@ -2185,9 +2396,9 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const order = shuffle(ids), half = Math.ceil(ids.length / 2);
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false });
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false, pUsed: null, pGame: null, publicCard: false, moves: 0, hostageTimes: 0, ledRooms: [], usurpRounds: [], sawUsurp: false, tackled: null, blasted: null, stone: null, ratAway: null, ratLost: false, kids: null, predict: null, taken: [], loveWith: null, hateWith: null, centipede: null, out: false, lastSwap: 0 });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, lock1: null, lock2: null, lastSwapIn: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
@@ -2198,6 +2409,10 @@ function hostLobby() {
     const tr = $("#tReset"); if (tr) tr.onclick = () => setT({ state: "idle", endsAt: null, left: T.mins[T.r - 1] * 60 });
     const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(e.target.value, n) });
     if (started && game.picks1 && game.picks2) doExchange(code, game, list);
+    // El Borracho despierta solo al empezar la última ronda.
+    if (started && drunk && game.sober && game.timer && game.timer.r >= game.timer.n && game.timer.state === "run") api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } });
+    // Ciempiés: el enganchado que queda en otro cuarto pasa a desgarrado.
+    if (started) { const torn = {}; withCard.forEach(p => { if ((p.acq || []).includes("enganchado")) { const c = list.find(q => q.id === p.centipede); if (c && c.room && p.room && c.room !== p.room) torn[p.id] = { acq: [...(p.acq || []).filter(k => k !== "enganchado"), "desgarrado"] }; } }); if (Object.keys(torn).length) api.batch(code, null, torn); }
     const es = $("#endStart"); if (es) es.onclick = () => api.updateGame(code, { endPhase: "pre", result: null });
     const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual) });
     const er = $("#endReveal"); if (er) er.onclick = () => pend.length ? modal("¿Revelar ya?", "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».", [{ label: "Esperar" }, { label: "Revelar", primary: true, fn: () => doReveal() }]) : doReveal();
@@ -2206,10 +2421,10 @@ function hostLobby() {
     $$("[data-lead]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.lead); setLeader(code, game, list, p.room, p.id); });
     $$("[data-move]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.move); const to = otherRoom(p.room);
       const gp = {}; if (game["leader" + p.room] === p.id) gp["leader" + p.room] = null;
-      api.batch(code, Object.keys(gp).length ? gp : null, { [p.id]: { room: to, vote: null } }); toast(`${p.name} → Cuarto ${to}`); });
+      api.batch(code, Object.keys(gp).length ? gp : null, { [p.id]: movePatch(p, to) }); toast(`${p.name} → Cuarto ${to}`); });
     const rr = $("#reroom"); if (rr) rr.onclick = () => modal("¿Reacomodar cuartos?", "Se reparten otra vez todos los jugadores en dos cuartos al azar y se borran los líderes.",
       [{ label: "Cancelar" }, { label: "Sí, reacomodar", primary: true, fn: () => { const ids = shuffle(withCard.map(p => p.id)), half = Math.ceil(ids.length / 2), pt = {};
-        ids.forEach((id, i) => pt[id] = { room: i < half ? "1" : "2", vote: null }); api.batch(code, { leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null }, pt); toast("Cuartos reacomodados"); } }]);
+        ids.forEach((id, i) => pt[id] = { room: i < half ? "1" : "2", vote: null, moves: 0 }); api.batch(code, { leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null }, pt); toast("Cuartos reacomodados"); } }]);
     const wk = $("#wake"); if (wk) wk.onclick = async () => { await api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } }); toast(drunk.name + " ya tiene su carta sobria"); };
     const sa = $("#swapA"), sb = $("#swapB");
     if (sa) { sa.onchange = e => swapA = e.target.value; sb.onchange = e => swapB = e.target.value; }
