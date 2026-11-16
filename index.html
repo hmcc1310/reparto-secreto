@@ -178,6 +178,7 @@ body.has-timer #lang { top: 66px; }
 .endres .me.w { border-color: var(--ok); } .endres .me.l { border-color: var(--red); }
 .endres .me b { font-size: 1.3rem; }
 .res { font-weight: 700; font-size: .85rem; } .res.w { color: var(--ok); } .res.l { color: var(--red); }
+.sharecode { font-family: var(--mono); font-size: 2.6rem; font-weight: 700; letter-spacing: .3em; text-align: center; padding: 8px; border: 2px dashed var(--line); border-radius: var(--r); }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -907,7 +908,18 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     "Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)": "End now with a winner (Dr. Boom, Tuesday Knight, another version of the game…)", "Ganó el Equipo Azul": "The Blue Team won", "Ganó el Equipo Rojo": "The Red Team won",
     "Faltan por responder:": "Still to answer:", "Ya respondieron todos.": "Everyone has answered.", "Revelar resultados": "Reveal results", "Cancelar el final": "Cancel the ending",
     "No encuentro Presidente y Bomba: elige quién ganó.": "I can't find a President and a Bomber: choose who won.", "Ocultar resultados": "Hide results", "¿Revelar ya?": "Reveal now?",
-    "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».": "Some answers are still missing. If you reveal now, they count as “no”.", "Esperar": "Wait", "Revelar": "Reveal"
+    "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».": "Some answers are still missing. If you reveal now, they count as “no”.", "Esperar": "Wait", "Revelar": "Reveal",
+    "Terminaste con la Patata caliente.": "You ended with the Hot Potato.", "Terminaste con el Duende.": "You ended with the Leprechaun.",
+    "Compartir con alguien": "Share with someone", "Dile este código a la otra persona para que lo escriba en su celular:": "Tell this code to the other person so they type it on their phone:",
+    "Intercambio de color. Cuando lo escriba, cada uno verá en su celular lo del otro.": "Color share. When they type it, each of you will see the other's on your phone.",
+    "Co-revelación (carta completa). Cuando lo escriba, cada uno verá en su celular lo del otro.": "Card share (full card). When they type it, each of you will see the other's on your phone.",
+    "Para compartir de verdad: uno genera un código y el otro lo escribe. La página les muestra la carta o el color del otro y aplica los efectos (Patata caliente, Criminal, Médico, Zombi…).": "To really share: one generates a code and the other types it. The page shows each of you the other's card or color and applies the effects (Hot Potato, Criminal, Medic, Zombie…).",
+    "Co-revelación": "Card share", "Intercambio de color": "Color share", "¿Te dieron un código?": "Were you given a code?", "Aceptar código": "Accept code", "El código son 4 números.": "The code is 4 digits.",
+    "No encontré ese código. Revisa los números.": "I couldn't find that code. Check the digits.", "No puedes compartir contigo.": "You can't share with yourself.", "Tienen que estar en el mismo cuarto.": "You have to be in the same room.",
+    "En esta partida no se puede intercambiar solo el color.": "In this game you can't share only the color.", "No se pudo: la carta o una condición de alguno de los dos no lo permite.": "It didn't work: the card or a condition of one of you doesn't allow it.",
+    "No se completó el intercambio": "The share wasn't completed", "Te limpiaron: perdiste tus condiciones adquiridas.": "You were cleansed: you lost your acquired conditions.",
+    "El Psicólogo te quitó las condiciones psicológicas.": "The Psychologist removed your psychological conditions.", "¡Se intercambiaron las cartas!": "The cards were swapped!",
+    "Dr. Boom hizo co-revelación con el Presidente: ¡explosión inmediata!": "Dr. Boom card shared with the President: instant explosion!", "El Caballero Martes hizo co-revelación con la Bomba: ¡gana el Equipo Azul!": "The Tuesday Knight card shared with the Bomber: the Blue Team wins!"
   });
   I18N_RE.push(
     [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
@@ -927,6 +939,8 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     [/^El Francotirador le disparó a (.+?)( \(muere\))?\.$/, (_, n, d) => `The Sniper shot ${n}${d ? " (dies)" : ""}.`],
     [/^Apostaste por el (Equipo Azul|Equipo Rojo)\.$/, (_, t) => `You bet on the ${team(t)}.`], [/^Dijiste: (.+)\.$/, (_, c) => `You said: ${c === "nada" ? "nothing" : cn(c)}.`],
     [/^Le disparaste a (.+)\.$/, "You shot $1."],
+    [/^Adquiriste la condición «(.+)»\.$/, (_, c) => `You acquired the “${cn(c)}” condition.`],
+    [/^Co-revelación con (.+)$/, "Card share with $1"], [/^Intercambio de color con (.+)$/, "Color share with $1"], [/^Color de (.+)$/, "$1's color"],
     [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
     [/^(\d+) elegidas$/, "$1 selected"],
     [/^(Equipo Azul|Equipo Rojo|Lealtad \S+) · (\d+) cartas$/, (_, t, n) => `${team(t)} · ${pl(n, "card", "cards")}`],
@@ -1063,7 +1077,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1340,7 +1354,7 @@ function endRoles(game, players) {
   return { list, pres, bomb, doc, eng };
 }
 // Cartas grises que la página resuelve sola (por cuarto o por las respuestas).
-const AUTO_GREY = ["jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
+const AUTO_GREY = ["patata-caliente", "duende", "jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
 const SELF_COND = ["enamorado", "odio", "zombi"];
 function endQuestions(game, players, me) {
   if (!me.card || me.round !== game.round) return [];
@@ -1349,13 +1363,14 @@ function endQuestions(game, players, me) {
   if (id === "jugador") qs.push({ k: "gamble", q: "Antes de revelar: ¿qué equipo crees que ganó?", opts: [["a", "Equipo Azul"], ["r", "Equipo Rojo"]] });
   if (id === "detective") qs.push({ k: "buried", q: "¿Cuál es la carta enterrada?", opts: [...new Set((game.inPlay || []).map(x => x.name))].map(n => [n, n]) });
   if (id === "francotirador") qs.push({ k: "shot", q: "¿A quién le disparas?", opts: others });
-  if (R.pres && R.doc && me.id === R.pres.id) qs.push({ k: "metDoc", q: `¿Hiciste co-revelación (carta completa) con ${R.doc.card.id === "doctor" ? "el Doctor" : "la Enfermera"}?`, opts: [["y", "Sí"], ["n", "No"]] });
-  if (R.pres && R.doc && me.id === R.doc.id) qs.push({ k: "metPres", q: "¿Hiciste co-revelación (carta completa) con el Presidente?", opts: [["y", "Sí"], ["n", "No"]] });
-  if (R.bomb && R.eng && me.id === R.bomb.id) qs.push({ k: "metEng", q: `¿Hiciste co-revelación (carta completa) con ${R.eng.card.id === "ingeniero" ? "el Ingeniero" : "el Mecánico"}?`, opts: [["y", "Sí"], ["n", "No"]] });
-  if (R.bomb && R.eng && me.id === R.eng.id) qs.push({ k: "metBomb", q: "¿Hiciste co-revelación (carta completa) con la Bomba?", opts: [["y", "Sí"], ["n", "No"]] });
-  if (id === "mi6") qs.push({ k: "mi6", q: "¿Hiciste co-revelación con el Presidente y también con la Bomba?", opts: [["y", "Sí, con los dos"], ["n", "No"]] });
-  if (id === "tirano-nuclear") qs.push({ k: "tyrant", q: "¿El Presidente y la Bomba hicieron co-revelación contigo (los dos)?", opts: [["y", "Sí, los dos"], ["n", "No"]] });
-  if (id === "clon" || id === "robot") qs.push({ k: "first", q: "¿Con quién fue tu primera co-revelación o intercambio de color?", opts: [["", "Con nadie"], ...others] });
+  const docOk = sharedAs(R.pres, R.doc), engOk = sharedAs(R.bomb, R.eng);
+  if (R.pres && R.doc && !docOk && me.id === R.pres.id) qs.push({ k: "metDoc", q: `¿Hiciste co-revelación (carta completa) con ${R.doc.card.id === "doctor" ? "el Doctor" : "la Enfermera"}?`, opts: [["y", "Sí"], ["n", "No"]] });
+  if (R.pres && R.doc && !docOk && me.id === R.doc.id) qs.push({ k: "metPres", q: "¿Hiciste co-revelación (carta completa) con el Presidente?", opts: [["y", "Sí"], ["n", "No"]] });
+  if (R.bomb && R.eng && !engOk && me.id === R.bomb.id) qs.push({ k: "metEng", q: `¿Hiciste co-revelación (carta completa) con ${R.eng.card.id === "ingeniero" ? "el Ingeniero" : "el Mecánico"}?`, opts: [["y", "Sí"], ["n", "No"]] });
+  if (R.bomb && R.eng && !engOk && me.id === R.eng.id) qs.push({ k: "metBomb", q: "¿Hiciste co-revelación (carta completa) con la Bomba?", opts: [["y", "Sí"], ["n", "No"]] });
+  if (id === "mi6" && !(sharedCard(me, R.pres) && sharedCard(me, R.bomb))) qs.push({ k: "mi6", q: "¿Hiciste co-revelación con el Presidente y también con la Bomba?", opts: [["y", "Sí, con los dos"], ["n", "No"]] });
+  if (id === "tirano-nuclear" && !(sharedCard(me, R.pres) && sharedCard(me, R.bomb))) qs.push({ k: "tyrant", q: "¿El Presidente y la Bomba hicieron co-revelación contigo (los dos)?", opts: [["y", "Sí, los dos"], ["n", "No"]] });
+  if ((id === "clon" || id === "robot") && !(me.shares || []).length) qs.push({ k: "first", q: "¿Con quién fue tu primera co-revelación o intercambio de color?", opts: [["", "Con nadie"], ...others] });
   const selfCond = (me.acq || []).some(k => SELF_COND.includes(k));
   if (selfCond || (!["a", "r"].includes(me.card.team) && !AUTO_GREY.includes(id))) qs.push({ k: "self", q: selfCond ? "Tu objetivo cambió por una condición. ¿Lo cumpliste?" : "¿Cumpliste el objetivo de tu carta?", opts: [["y", "Sí"], ["n", "No"]], note: me.card.note });
   return qs;
@@ -1369,8 +1384,8 @@ function computeResult(game, players, manual) {
   if (shotP && !shotSafe) dead.add(shotP.id);
   let winner = manual || null;
   if (!winner && R.pres && R.bomb) {
-    const docReq = !!R.doc, docMet = docReq && A(R.pres).metDoc === "y" && A(R.doc).metPres === "y";
-    const engReq = !!R.eng, engMet = engReq && A(R.bomb).metEng === "y" && A(R.eng).metBomb === "y";
+    const docReq = !!R.doc, docMet = docReq && (sharedAs(R.pres, R.doc) || (A(R.pres).metDoc === "y" && A(R.doc).metPres === "y"));
+    const engReq = !!R.eng, engMet = engReq && (sharedAs(R.bomb, R.eng) || (A(R.bomb).metEng === "y" && A(R.eng).metBomb === "y"));
     const bomberShot = dead.has(R.bomb.id);
     const bombWorks = !bomberShot && (!engReq || engMet);
     if (bombWorks) R.list.filter(p => same(p, R.bomb)).forEach(p => dead.add(p.id));
@@ -1395,7 +1410,9 @@ function computeResult(game, players, manual) {
       case "francotirador": return win(p, shotP && shotP.card.id === "objetivo", shotP ? `Le disparaste a ${shotP.name}.` : "No disparaste.");
       case "objetivo": return win(p, !shotP || shotP.id !== p.id, "Según el disparo del Francotirador.");
       case "senuelo": return win(p, shotP && shotP.id === p.id, "Según el disparo del Francotirador.");
-      case "mi6": return win(p, a.mi6 === "y", "Según tus co-revelaciones.");
+      case "patata-caliente": return win(p, false, "Terminaste con la Patata caliente.");
+      case "duende": return win(p, true, "Terminaste con el Duende.");
+      case "mi6": return win(p, a.mi6 === "y" || (sharedCard(p, pr) && sharedCard(p, bo)), "Según tus co-revelaciones.");
       case "becaria": return win(p, same(p, pr), "Según si terminaste con el Presidente.");
       case "victima": return win(p, same(p, bo), "Según si terminaste con la Bomba.");
       case "superviviente": return win(p, !same(p, bo), "Según si terminaste lejos de la Bomba.");
@@ -1410,14 +1427,14 @@ function computeResult(game, players, manual) {
       case "ahab": { const m = h("moby"); return win(p, m && dead.has(m.id) && !dead.has(p.id), "Según quién murió."); }
       case "moby": { const m = h("ahab"); return win(p, m && dead.has(m.id) && !dead.has(p.id), "Según quién murió."); }
       case "bomba-bot": return win(p, same(p, bo) && !same(pr, bo), "Según dónde terminaron la Bomba y el Presidente.");
-      case "tirano-nuclear": return win(p, a.tyrant !== "y", "Según tus co-revelaciones.");
+      case "tirano-nuclear": return win(p, a.tyrant !== "y" && !(sharedCard(p, pr) && sharedCard(p, bo)), "Según tus co-revelaciones.");
     }
   });
   // Clon y Robot dependen del resultado de otro jugador.
   R.list.forEach(p => {
-    const a = A(p), t = res[a.first];
-    if (p.card.id === "clon" && !a.self) res[p.id] = { win: !!(t && t.win), why: a.first ? "Ganas si ganó tu primera co-revelación." : "No compartiste con nadie." };
-    if (p.card.id === "robot" && !a.self) res[p.id] = { win: !!(t && !t.win), why: a.first ? "Ganas si perdió tu primera co-revelación." : "No compartiste con nadie." };
+    const a = A(p), first = a.first != null ? a.first : ((p.shares || [])[0] || {}).with || "", t = res[first];
+    if (p.card.id === "clon" && !a.self) res[p.id] = { win: !!(t && t.win), why: first ? "Ganas si ganó tu primera co-revelación." : "No compartiste con nadie." };
+    if (p.card.id === "robot" && !a.self) res[p.id] = { win: !!(t && !t.win), why: first ? "Ganas si perdió tu primera co-revelación." : "No compartiste con nadie." };
   });
   const tyr = holderOf(R.list, "tirano-nuclear");
   if (tyr && res[tyr.id] && res[tyr.id].win) { Object.keys(res).forEach(k => { if (k !== tyr.id) res[k] = { win: false, why: "Ganó el Tirano nuclear: todos los demás pierden." }; }); lines.push("¡Ganó el Tirano nuclear!"); }
@@ -1438,6 +1455,100 @@ function resultHTML(game, players, meId) {
     ${list.some(p => !p.room) ? `<ul class="plist">${list.filter(p => !p.room).map(row).join("")}</ul>` : ""}
     ${game.buriedCard ? `<p class="small">Carta enterrada: <b>${esc(game.buriedCard.name)}</b></p>` : ""}
   </div>`;
+}
+// ---------- compartir con código (co-revelación e intercambio de color) ----------
+// A genera un código (player.offer); B lo escribe; la página muestra a cada uno la carta o el color del otro,
+// aplica los efectos de las cartas y lo deja registrado (player.shares) para el final.
+const GIVE_COND = { "criminal-a": "timido", "criminal-r": "timido", "camello-a": "imprudente", "camello-r": "imprudente", "maton-a": "discreto", "maton-r": "discreto", "momia-a": "maldito", "momia-r": "maldito", "profesor-a": "astuto", "profesor-r": "astuto" };
+const CLEANSERS = ["medico-a", "medico-r", "limpiador-a", "limpiador-r"];
+const SWAPPERS = ["patata-caliente", "duende"];
+const sharedCard = (p, q) => !!(p && q && (p.shares || []).some(s => s.with === q.id && s.kind === "card"));
+// Co-revelación hecha mientras cada uno tenía su carta actual (si la carta cambió de mano, hay que repetirla).
+const sharedAs = (p, q) => !!(p && q && (p.shares || []).some(s => s.with === q.id && s.kind === "card" && s.myCard === p.card.id && s.theirCard === q.card.id));
+function shareBlocked(game, A, B, kind) {
+  if (A.id === B.id) return "No puedes compartir contigo.";
+  if (A.room && B.room && A.room !== B.room) return "Tienen que estar en el mismo cuarto.";
+  if (kind === "color" && game.colorAllowed === false) return "En esta partida no se puede intercambiar solo el color.";
+  const need = kind === "card" ? "full" : "color";
+  if (!rulesFor(A.card, A).can[need] || !rulesFor(B.card, B).can[need]) return "No se pudo: la carta o una condición de alguno de los dos no lo permite.";
+  return "";
+}
+function applyShare(game, A, B, kind) {
+  const pa = { acq: [...(A.acq || [])], cured: [...(A.cured || [])] }, pb = { acq: [...(B.acq || [])], cured: [...(B.cured || [])] };
+  const notes = { [A.id]: [], [B.id]: [] }, ca = A.card, cb = B.card;
+  const give = (from, to, pt, k) => { if (rulesFor(to.card, to).immune) return; if (!pt.acq.includes(k)) { pt.acq.push(k); notes[to.id].push(`Adquiriste la condición «${COND[k].name}».`); } };
+  const cleanse = (to, pt) => { if (pt.acq.length) notes[to.id].push("Te limpiaron: perdiste tus condiciones adquiridas."); pt.acq = []; };
+  const psy = (to, pt) => { const ps = Object.keys(COND).filter(k => COND[k].psy); pt.acq = pt.acq.filter(k => !ps.includes(k)); pt.cured = [...new Set([...pt.cured, ...(to.card.conds || []).filter(k => ps.includes(k))])]; notes[to.id].push("El Psicólogo te quitó las condiciones psicológicas."); };
+  const pair = [[A, ca, B, pb], [B, cb, A, pa]];
+  if (kind === "card") pair.forEach(([X, cx, Y, py]) => {
+    if (GIVE_COND[cx.id]) give(X, Y, py, GIVE_COND[cx.id]);
+    if (CLEANSERS.includes(cx.id)) cleanse(Y, py);
+    if (cx.id.startsWith("psicologo")) psy(Y, py);
+  });
+  // Zombi: contagia con co-revelación o intercambio de color.
+  pair.forEach(([X, cx, Y, py]) => { if ((cx.id === "zombi" || (X.acq || []).includes("zombi")) && !(Y.card.id === "zombi")) give(X, Y, py, "zombi"); });
+  if (kind === "card") [[A, pa], [B, pb]].forEach(([X, pt]) => { if (rulesFor(X.card, X).set.has("paranoico")) pt.paraUsed = true; });
+  // Intercambio de cartas (Patata caliente, Duende, Ladrón de identidad): la carta llega limpia.
+  const thief = kind === "card" && (ca.id.startsWith("ladron-de-identidad") || cb.id.startsWith("ladron-de-identidad"));
+  if (SWAPPERS.includes(ca.id) || SWAPPERS.includes(cb.id) || thief) {
+    pa.card = cb; pb.card = ca; pa.acq = []; pb.acq = []; pa.cured = []; pb.cured = []; pa.paraUsed = false; pb.paraUsed = false;
+    if (thief) { const victim = ca.id.startsWith("ladron-de-identidad") ? pb : pa; victim.acq = ["timido"]; }
+    notes[A.id].push("¡Se intercambiaron las cartas!"); notes[B.id].push("¡Se intercambiaron las cartas!");
+  }
+  // Victorias inmediatas.
+  let instant = null;
+  if (kind === "card") {
+    if ((ca.id === "dr-boom" && cb.id === "presidente") || (cb.id === "dr-boom" && ca.id === "presidente")) instant = { w: "r", line: "Dr. Boom hizo co-revelación con el Presidente: ¡explosión inmediata!" };
+    if ((ca.id === "caballero-martes" && cb.id === "bomba") || (cb.id === "caballero-martes" && ca.id === "bomba")) instant = { w: "a", line: "El Caballero Martes hizo co-revelación con la Bomba: ¡gana el Equipo Azul!" };
+  }
+  const at = Date.now(), id = rid(8), r = (game.timer && game.timer.r) || 0;
+  pa.shares = [...(A.shares || []), { with: B.id, kind, myCard: ca.id, theirCard: cb.id, r }];
+  pb.shares = [...(B.shares || []), { with: A.id, kind, myCard: cb.id, theirCard: ca.id, r }];
+  pa.lastShare = { id, with: B.id, name: B.name, kind, card: cb, notes: notes[A.id], at };
+  pb.lastShare = { id, with: A.id, name: A.name, kind, card: ca, notes: notes[B.id], at };
+  pa.offer = null;
+  return { pa, pb, instant };
+}
+async function completeShare(code, game, players, me, codeTyped) {
+  const A = players.find(p => p.offer && p.offer.code === codeTyped && p.id !== me.id && p.card && p.round === game.round);
+  if (!A) return "No encontré ese código. Revisa los números.";
+  const B = players.find(p => p.id === me.id) || me;
+  const why = shareBlocked(game, A, B, A.offer.kind);
+  if (why) { await api.updatePlayer(code, A.id, { offer: null, offerFail: { id: rid(6), msg: "No se completó el intercambio." } }); return why; }
+  const { pa, pb, instant } = applyShare(game, A, B, A.offer.kind);
+  let gp = null;
+  if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res }; }
+  await api.batch(code, gp, { [A.id]: pa, [B.id]: pb });
+  return "";
+}
+function showShareResult(ls_key, me) {
+  const s = me.lastShare; if (!s || ls.get(ls_key) === s.id) return false;
+  ls.set(ls_key, s.id);
+  const c = s.card, d = document.createElement("div");
+  d.className = "full " + (s.kind === "color" ? c.color : "priv"); d.setAttribute("role", "dialog"); d.tabIndex = 0;
+  d.innerHTML = `<div><span class="stamp">${s.kind === "color" ? "Intercambio de color" : "Co-revelación"} con ${esc(s.name)}</span>
+    ${s.kind === "color" ? `<span class="lbl">Color de ${esc(s.name)}</span><b>${COLOR[c.color]}</b>` : `<span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] + " · carta " + COLOR[c.color].toLowerCase() : TEAM[c.team]}</span><b class="t-${c.color}">${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}`}
+    ${(s.notes || []).length ? `<p>${s.notes.map(n => `<b>${esc(n)}</b>`).join(" ")}</p>` : ""}
+    <small>Toca para cerrar</small></div>`;
+  const opened = Date.now();
+  d.onclick = () => { if (Date.now() - opened > 600) d.remove(); };
+  $$(".full").forEach(x => x.remove()); document.body.appendChild(d); d.focus();
+  try { navigator.vibrate && navigator.vibrate(200); } catch (e) {}
+  return true;
+}
+function sharePanelHTML(game, me) {
+  const o = me.offer;
+  return `<section class="panel sharepanel">
+    <div class="panel-head"><h2>Compartir con alguien</h2></div>
+    ${o ? `<p class="small">Dile este código a la otra persona para que lo escriba en su celular:</p>
+      <div class="sharecode">${esc(o.code)}</div>
+      <p class="muted small">${o.kind === "color" ? "Intercambio de color" : "Co-revelación (carta completa)"}. Cuando lo escriba, cada uno verá en su celular lo del otro.</p>
+      <button type="button" class="ghost" id="shCancel">Cancelar</button>`
+    : `<p class="muted small">Para compartir de verdad: uno genera un código y el otro lo escribe. La página les muestra la carta o el color del otro y aplica los efectos (Patata caliente, Criminal, Médico, Zombi…).</p>
+      <div class="row"><button type="button" data-sh="card">Co-revelación</button><button type="button" data-sh="color" ${game.colorAllowed === false ? "disabled" : ""}>Intercambio de color</button></div>`}
+    <form class="row" id="shForm"><input type="tel" id="shCode" maxlength="4" inputmode="numeric" placeholder="¿Te dieron un código?" style="flex:1 1 140px"><button type="submit">Aceptar código</button></form>
+    <p class="err" id="shErr"></p>
+  </section>`;
 }
 // ---------- cuartos y líderes ----------
 // Jugador: room "1"|"2", vote (a quién apoya como líder). Partida: leader1/2, picks1/2 (rehenes anunciados), offer1/2 (ceder liderazgo).
@@ -1522,6 +1633,20 @@ function playerView() {
   let roomKeyLast = "", offerShown = "";
   const roomKey = () => `${ps.code}|${ps.pid}|${me.round}|${me.room || ""}`;
   // El panel del cuarto se dibuja aparte para no cerrar lo demás cada vez que alguien vota.
+  let shareKeyLast = "";
+  const renderShare = () => {
+    const box = $("#sharepanel"); if (!box || !game || !me || !(me.card && me.round === game.round)) return;
+    if (me.offerFail && ls.get("rs-offerfail:" + ps.pid) !== me.offerFail.id) { ls.set("rs-offerfail:" + ps.pid, me.offerFail.id); toast("No se completó el intercambio"); }
+    showShareResult("rs-share:" + ps.pid, me);
+    const k = JSON.stringify([me.offer, game.colorAllowed]);
+    if (k === shareKeyLast && box.firstChild) return; shareKeyLast = k;
+    box.innerHTML = sharePanelHTML(game, me);
+    $$("[data-sh]", box).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { offer: { code: String(1000 + rand(9000)), kind: b.dataset.sh, at: Date.now() } }));
+    const cc = $("#shCancel", box); if (cc) cc.onclick = () => api.updatePlayer(ps.code, ps.pid, { offer: null });
+    $("#shForm", box).onsubmit = async e => { e.preventDefault(); const v = $("#shCode", box).value.trim(); $("#shErr", box).textContent = "";
+      if (!/^\d{4}$/.test(v)) { $("#shErr", box).textContent = "El código son 4 números."; return; }
+      const err = await completeShare(ps.code, game, players, me, v); if (err) $("#shErr", box).textContent = err; else $("#shCode", box).value = ""; };
+  };
   const renderRoom = () => {
     const box = $("#roompanel"); if (!box || !game || !me) return;
     const k = JSON.stringify([me.room, me.vote, game.leader1, game.leader2, game.picks1, game.picks2, game.offer1, game.offer2, game.timer?.r, players.map(p => [p.id, p.name, p.room, p.vote, p.round])]);
@@ -1582,6 +1707,7 @@ function playerView() {
         </div>
         ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color: el reglamento lo permite desde 11 jugadores. El anfitrión puede cambiarlo en las reglas de la partida.</p>`}
       </div>
+      <div id="sharepanel" style="width:100%"></div>
       <div id="roompanel" style="width:100%"></div>
       <details class="conds panel">
         <summary>Mis condiciones${active.length ? ` · ${active.length}` : ""}</summary>
@@ -1606,8 +1732,8 @@ function playerView() {
         [{ label: "Aceptar y ver mi carta", primary: true, fn: () => { ls.set("rs-seen:" + ps.pid, seenKey); ls.set("rs-room:" + ps.pid, roomKey()); privateView(c); } }]);
       if (me.room && !changed) $(".modal .box p").insertAdjacentHTML("afterend", `<p class="roomcall">Ve al <b>Cuarto ${esc(me.room)}</b></p>`);
     }
-    roomKeyLast = "";
-    renderRoom();
+    roomKeyLast = ""; shareKeyLast = "";
+    renderRoom(); renderShare();
     $("#forgot").onclick = () => modal("¿Ver tu carta otra vez?",
       "Esto es <b>solo para ti</b>, en secreto. La pantalla dirá «Vista privada» y <b>no cuenta como revelación</b>: no se la enseñes a nadie. Para mostrarle algo a otra persona usa los botones «Mostrar a otra persona».",
       [{ label: "Cancelar" }, { label: "Sí, ver en secreto", primary: true, fn: () => { privateView(c); api.updatePlayer(ps.code, ps.pid, { peeks: (me.peeks || 0) + 1 }); } }]);
@@ -1659,9 +1785,9 @@ function playerView() {
     $$("[data-ans]", ov).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { endAns: { ...(me.endAns || {}), [b.dataset.ans]: b.dataset.v } }));
   };
   unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
-  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderEnd(); }));
-  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderEnd(); }));
-  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderEnd(); }));
+  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderShare(); renderEnd(); }));
+  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderShare(); renderEnd(); }));
+  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderShare(); renderEnd(); }));
 }
 
 // ---------- mazo ----------
@@ -1966,7 +2092,7 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const order = shuffle(ids), half = Math.ceil(ids.length / 2);
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null });
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
       await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
