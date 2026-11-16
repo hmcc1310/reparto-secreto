@@ -570,6 +570,19 @@ const EXTRA_LINKS = {"piedra": ["piedra", "papel", "tijeras"], "toqueton": ["toq
 CATALOG.push(...EXTRA_CATALOG);
 Object.entries(EXTRA_COND).forEach(([k, c]) => { COND[k] = { name: c.name, desc: c.desc, psy: !!c.psy }; });
 Object.assign(LINK_NAMES, EXTRA_LINKS);
+// Condiciones que ponen los poderes automatizados al compartir.
+const MORE_COND = {
+  hipnotizado: { name: "Hipnotizado", desc: "Debes actuar como el personaje que te dijo el Hipnotista. No cambias de poder ni de equipo.", en: { name: "Hypnotized", desc: "You must act as the character the Hypnotist told you. Your power and team don't change." } },
+  seducido: { name: "Seducido", desc: "Debes hacer con tu carta lo que te pida el Vampiro y votar como él.", en: { name: "Seduced", desc: "You must do with your card whatever the Vampire asks and vote as they do." } },
+  petrificado: { name: "Petrificado", desc: "Ya no puedes votar: cuando haya votación, quédate tieso con los brazos abajo.", en: { name: "Stoned", desc: "You can no longer vote: whenever there's a vote, stand stiff with your arms down." } },
+  mordido: { name: "Mordido", desc: "Debes responder con la verdad cualquier pregunta de los hombres lobo. Contagias al compartir y debes avisarlo.", en: { name: "Bitten", desc: "You must honestly answer any question from the werewolves. You spread it when sharing and must say so." } },
+  traidor: { name: "Traidor", desc: "Tu objetivo cambia al del equipo contrario.", en: { name: "Traitor", desc: "Your goal changes to the opposite team's." } },
+  encantado: { name: "Encantado", desc: "Además de tu objetivo, pierdes si al final no estás en el mismo cuarto que el Flautista que te encantó.", en: { name: "Piped", desc: "On top of your goal, you lose if you don't end in the same room as the Piper who piped you." } },
+  sincarta: { name: "Sin carta", desc: "Te quitaron la carta: ya no puedes mostrarla ni compartirla, pero conservas tu equipo y poderes.", en: { name: "Card taken", desc: "Your card was taken: you can no longer show or share it, but you keep your team and powers." } },
+  impregnado: { name: "Impregnado", desc: "Al final, todos los que estén en tu cuarto mueren.", en: { name: "Impregnated", desc: "At the end, everyone in your room dies." } }
+};
+Object.entries(MORE_COND).forEach(([k, c]) => { COND[k] = { name: c.name, desc: c.desc, psy: false }; });
+ACQUIRABLE.push("hipnotizado", "seducido", "petrificado", "mordido", "traidor");
 const PAIRS = (() => {
   const m = {}, link = (x, y) => { m[x] = [y]; m[y] = [x]; };
   [["presidente", "bomba"], ["doctor", "ingeniero"], ["enfermera", "mecanico"], ["hija-del-presidente", "martir"], ["espia-azul", "espia-rojo"], ["invencible", "inmunologo"], ["caballero-martes", "dr-boom"], ["eris", "cupido"]].concat(EXTRA_PAIRS).forEach(([x, y]) => link(x, y));
@@ -776,6 +789,7 @@ const EN_TPL = {
 };
 Object.assign(EN_CARDS, EXTRA_EN);
 Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; });
+Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
 // ---------- traducción al inglés ----------
 (() => {
   const CN = {}, CNOTE = {};
@@ -919,7 +933,19 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     "En esta partida no se puede intercambiar solo el color.": "In this game you can't share only the color.", "No se pudo: la carta o una condición de alguno de los dos no lo permite.": "It didn't work: the card or a condition of one of you doesn't allow it.",
     "No se completó el intercambio": "The share wasn't completed", "Te limpiaron: perdiste tus condiciones adquiridas.": "You were cleansed: you lost your acquired conditions.",
     "El Psicólogo te quitó las condiciones psicológicas.": "The Psychologist removed your psychological conditions.", "¡Se intercambiaron las cartas!": "The cards were swapped!",
-    "Dr. Boom hizo co-revelación con el Presidente: ¡explosión inmediata!": "Dr. Boom card shared with the President: instant explosion!", "El Caballero Martes hizo co-revelación con la Bomba: ¡gana el Equipo Azul!": "The Tuesday Knight card shared with the Bomber: the Blue Team wins!"
+    "Dr. Boom hizo co-revelación con el Presidente: ¡explosión inmediata!": "Dr. Boom card shared with the President: instant explosion!", "El Caballero Martes hizo co-revelación con la Bomba: ¡gana el Equipo Azul!": "The Tuesday Knight card shared with the Bomber: the Blue Team wins!",
+    "El Cazador se quedó con tu carta.": "The Hunter kept your card.", "Tu poder de Cazador te protegió y te quedaste con su carta.": "Your Hunter power protected you and you kept their card.",
+    "El Leal te quitó la condición «traidor».": "The Loyalist removed your “traitor” condition.", "Le diste tu carta de Xenomorfo.": "You gave them your Xenomorph card.",
+    "El Alguacil atrapó al Fugitivo: ¡gana el Equipo Azul!": "The Marshal caught the Fugitive: the Blue Team wins!", "El Fugitivo encontró al Manco: ¡gana el Equipo Rojo!": "The Fugitive found the One-armed Man: the Red Team wins!",
+    "El Manco encontró al Testigo: ¡gana el Equipo Azul!": "The One-armed Man found the Witness: the Blue Team wins!", "El Testigo encontró al Alguacil: ¡gana el Equipo Rojo!": "The Witness found the Marshal: the Red Team wins!",
+    "Bomba incendiaria: todos mueren, menos el cuarto del Presidente (protegido por el Bombero).": "Firebomb: everyone dies except the President's room (protected by the Firefighter).", "Bomba incendiaria: mueren todos, en los dos cuartos.": "Firebomb: everyone dies, in both rooms.",
+    "Eras traidor: jugabas para el otro equipo. Ganó tu equipo.": "You were a traitor: you played for the other team. Your team won.", "Eras traidor: jugabas para el otro equipo. Perdió tu equipo.": "You were a traitor: you played for the other team. Your team lost.",
+    "Según si terminaste como líder de tu cuarto.": "Based on whether you ended as your room's leader.", "Según si terminaste con el Presidente y la Bomba.": "Based on whether you ended with the President and the Bomber.",
+    "Según si terminaste con el Presidente y lejos de la Bomba.": "Based on whether you ended with the President and away from the Bomber.", "Según si terminaste lejos del Presidente y muerto.": "Based on whether you ended away from the President and dead.",
+    "Según si terminaste con las Tijeras y sin el Papel.": "Based on whether you ended with Scissors and without Paper.", "Según si terminaste con la Piedra y sin las Tijeras.": "Based on whether you ended with Rock and without Scissors.",
+    "Según si terminaste con el Papel y sin la Piedra.": "Based on whether you ended with Paper and without Rock.", "Según si alguien hizo co-revelación contigo.": "Based on whether someone card shared with you.",
+    "No terminaste en el cuarto del Flautista que te encantó.": "You didn't end in the room of the Piper who piped you.", "Murió el Líder de secta.": "The Cult Leader died.",
+    "Ganó el Illuminati: todos los demás pierden.": "The Illuminati won: everyone else loses.", "¡Ganó el Illuminati!": "The Illuminati won!"
   });
   I18N_RE.push(
     [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
@@ -939,6 +965,11 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     [/^El Francotirador le disparó a (.+?)( \(muere\))?\.$/, (_, n, d) => `The Sniper shot ${n}${d ? " (dies)" : ""}.`],
     [/^Apostaste por el (Equipo Azul|Equipo Rojo)\.$/, (_, t) => `You bet on the ${team(t)}.`], [/^Dijiste: (.+)\.$/, (_, c) => `You said: ${c === "nada" ? "nothing" : cn(c)}.`],
     [/^Le disparaste a (.+)\.$/, "You shot $1."],
+    [/^El (.+) se quedó con tu carta: ya no puedes mostrarla\.$/, (_, c) => `The ${cn(c)} kept your card: you can no longer show it.`],
+    [/^Tu carta cambió por una de (Equipo Rojo|Equipo Azul)\.$/, (_, t) => `Your card changed to a ${team(t)} card.`],
+    [/^Salió el Xenomorfo de (.+): muere todo su cuarto\.$/, "The Xenomorph burst out of $1: their whole room dies."],
+    [/^Ganó el (.+): los dos equipos pierden\.$/, (_, c) => `The ${cn(c)} won: both teams lose.`], [/^¡Ganó el (.+)!$/, (_, c) => `The ${cn(c)} won!`],
+    [/^Revelación privada \(Bully\) con (.+)$/, "Private reveal (Bully) with $1"],
     [/^Adquiriste la condición «(.+)»\.$/, (_, c) => `You acquired the “${cn(c)}” condition.`],
     [/^Co-revelación con (.+)$/, "Card share with $1"], [/^Intercambio de color con (.+)$/, "Color share with $1"], [/^Color de (.+)$/, "$1's color"],
     [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
@@ -1077,7 +1108,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 19;
+const APP_VERSION = 20;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1290,6 +1321,7 @@ function rulesFor(card, me) {
   if (set.has("discreto")) only(["color"]);
   if (set.has("astuto")) only(["full"]);
   if (set.has("exhibicionista")) only(["full"]);
+  if (set.has("sincarta")) only([]);
   if (set.has("paranoico")) { only(["full"]); if (me.paraUsed) can.full = false; }
   return { set, can, immune };
 }
@@ -1347,14 +1379,15 @@ function inPlayHTML(g) {
 const holderOf = (list, id) => list.find(p => p.card && p.card.id === id) || null;
 function endRoles(game, players) {
   const list = players.filter(p => p.card && p.round === game.round);
-  const pres = holderOf(list, "presidente") || holderOf(list, "hija-del-presidente");
-  const bomb = holderOf(list, "bomba") || holderOf(list, "martir");
-  const doc = holderOf(list, "doctor") || holderOf(list, "enfermera");
-  const eng = holderOf(list, "ingeniero") || holderOf(list, "mecanico");
+  // También la versión de Rey y Dragón (con Alquimista e Ingeniero del huevo).
+  const pres = holderOf(list, "presidente") || holderOf(list, "hija-del-presidente") || holderOf(list, "rey") || holderOf(list, "princesa-gorda");
+  const bomb = holderOf(list, "bomba") || holderOf(list, "martir") || holderOf(list, "dragon") || holderOf(list, "huevo-de-dragon");
+  const doc = holderOf(list, "doctor") || holderOf(list, "enfermera") || holderOf(list, "alquimista") || holderOf(list, "aprendiz");
+  const eng = holderOf(list, "ingeniero") || holderOf(list, "mecanico") || holderOf(list, "ingeniero-del-huevo") || holderOf(list, "fanatico");
   return { list, pres, bomb, doc, eng };
 }
 // Cartas grises que la página resuelve sola (por cuarto o por las respuestas).
-const AUTO_GREY = ["patata-caliente", "duende", "jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
+const AUTO_GREY = ["lider-nato", "heroe", "villano", "doble-de-riesgo", "piedra", "papel", "tijeras", "illuminati", "patata-caliente", "duende", "jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
 const SELF_COND = ["enamorado", "odio", "zombi"];
 function endQuestions(game, players, me) {
   if (!me.card || me.round !== game.round) return [];
@@ -1389,6 +1422,17 @@ function computeResult(game, players, manual) {
     const bomberShot = dead.has(R.bomb.id);
     const bombWorks = !bomberShot && (!engReq || engMet);
     if (bombWorks) R.list.filter(p => same(p, R.bomb)).forEach(p => dead.add(p.id));
+    // Pirotécnico: si hizo co-revelación con la Bomba, la explosión mata a todos (salvo el cuarto del Presidente si el Bombero lo protegió).
+    const pyro = holderOf(R.list, "pirotecnico"), firefighter = holderOf(R.list, "bombero");
+    if (bombWorks && pyro && sharedCard(R.bomb, pyro)) {
+      const proof = firefighter && sharedCard(R.pres, firefighter);
+      R.list.forEach(p => { if (!(proof && same(p, R.pres))) dead.add(p.id); });
+      lines.push(proof ? "Bomba incendiaria: todos mueren, menos el cuarto del Presidente (protegido por el Bombero)." : "Bomba incendiaria: mueren todos, en los dos cuartos.");
+    }
+    // Xenomorfo: mueren todos los del cuarto del azul impregnado.
+    R.list.filter(p => (p.acq || []).includes("impregnado")).forEach(x => { R.list.filter(p => same(p, x)).forEach(p => dead.add(p.id)); lines.push(`Salió el Xenomorfo de ${x.name}: muere todo su cuarto.`); });
+    const cult = holderOf(R.list, "lider-de-secta");
+    if (cult && dead.has(cult.id)) R.list.filter(p => (p.acq || []).includes("sectario")).forEach(p => dead.add(p.id));
     const heart = docReq && !docMet;
     winner = (heart || dead.has(R.pres.id)) ? "r" : "a";
     if (bomberShot) lines.push("La Bomba murió antes de explotar.");
@@ -1402,7 +1446,10 @@ function computeResult(game, players, manual) {
   R.list.forEach(p => {
     const id = p.card.id, a = A(p);
     if (a.self) return win(p, a.self === "y", a.self === "y" ? "Dijiste que cumpliste tu objetivo." : "Dijiste que no cumpliste tu objetivo.");
-    if (p.card.team === "a" || p.card.team === "r") return win(p, winner === p.card.team, winner === p.card.team ? "Ganó tu equipo." : "Perdió tu equipo.");
+    if (p.card.team === "a" || p.card.team === "r") {
+      const t = (p.acq || []).includes("traidor") ? (p.card.team === "a" ? "r" : "a") : p.card.team;
+      return win(p, winner === t, (t !== p.card.team ? "Eras traidor: jugabas para el otro equipo. " : "") + (winner === t ? "Ganó tu equipo." : "Perdió tu equipo."));
+    }
     const pr = R.pres, bo = R.bomb, h = cid => holderOf(R.list, cid);
     switch (id) {
       case "jugador": return win(p, a.gamble === winner, `Apostaste por el ${a.gamble === "a" ? "Equipo Azul" : "Equipo Rojo"}.`);
@@ -1411,6 +1458,14 @@ function computeResult(game, players, manual) {
       case "objetivo": return win(p, !shotP || shotP.id !== p.id, "Según el disparo del Francotirador.");
       case "senuelo": return win(p, shotP && shotP.id === p.id, "Según el disparo del Francotirador.");
       case "patata-caliente": return win(p, false, "Terminaste con la Patata caliente.");
+      case "lider-nato": return win(p, game["leader" + p.room] === p.id, "Según si terminaste como líder de tu cuarto.");
+      case "heroe": return win(p, same(p, pr) && same(p, bo), "Según si terminaste con el Presidente y la Bomba.");
+      case "villano": return win(p, same(p, pr) && !same(p, bo), "Según si terminaste con el Presidente y lejos de la Bomba.");
+      case "doble-de-riesgo": return win(p, !same(p, pr) && dead.has(p.id), "Según si terminaste lejos del Presidente y muerto.");
+      case "piedra": return win(p, same(p, h("tijeras")) && !same(p, h("papel")), "Según si terminaste con las Tijeras y sin el Papel.");
+      case "papel": return win(p, same(p, h("piedra")) && !same(p, h("tijeras")), "Según si terminaste con la Piedra y sin las Tijeras.");
+      case "tijeras": return win(p, same(p, h("papel")) && !same(p, h("piedra")), "Según si terminaste con el Papel y sin la Piedra.");
+      case "illuminati": return win(p, (p.shares || []).some(x => x.kind === "card"), "Según si alguien hizo co-revelación contigo.");
       case "duende": return win(p, true, "Terminaste con el Duende.");
       case "mi6": return win(p, a.mi6 === "y" || (sharedCard(p, pr) && sharedCard(p, bo)), "Según tus co-revelaciones.");
       case "becaria": return win(p, same(p, pr), "Según si terminaste con el Presidente.");
@@ -1436,6 +1491,16 @@ function computeResult(game, players, manual) {
     if (p.card.id === "clon" && !a.self) res[p.id] = { win: !!(t && t.win), why: first ? "Ganas si ganó tu primera co-revelación." : "No compartiste con nadie." };
     if (p.card.id === "robot" && !a.self) res[p.id] = { win: !!(t && !t.win), why: first ? "Ganas si perdió tu primera co-revelación." : "No compartiste con nadie." };
   });
+  // Encantados por el Flautista: pierden si no terminan con él. Sectarios: pierden si el Líder de secta muere.
+  R.list.forEach(p => {
+    if ((p.acq || []).includes("encantado") && res[p.id] && !same(p, R.list.find(q => q.id === p.piper))) res[p.id] = { win: false, why: "No terminaste en el cuarto del Flautista que te encantó." };
+    const cl = holderOf(R.list, "lider-de-secta");
+    if ((p.acq || []).includes("sectario") && cl && dead.has(cl.id) && res[p.id]) res[p.id] = { win: false, why: "Murió el Líder de secta." };
+  });
+  // Héroe o Villano ganadores: pierden los dos equipos. Illuminati ganador: pierden todos los demás.
+  ["heroe", "villano"].forEach(cid => { const x = holderOf(R.list, cid); if (x && res[x.id] && res[x.id].win) { R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: false, why: `Ganó el ${x.card.name}: los dos equipos pierden.` }; }); lines.push(`¡Ganó el ${x.card.name}!`); } });
+  const ill = holderOf(R.list, "illuminati");
+  if (ill && res[ill.id] && res[ill.id].win) { Object.keys(res).forEach(k => { if (k !== ill.id) res[k] = { win: false, why: "Ganó el Illuminati: todos los demás pierden." }; }); lines.push("¡Ganó el Illuminati!"); }
   const tyr = holderOf(R.list, "tirano-nuclear");
   if (tyr && res[tyr.id] && res[tyr.id].win) { Object.keys(res).forEach(k => { if (k !== tyr.id) res[k] = { win: false, why: "Ganó el Tirano nuclear: todos los demás pierden." }; }); lines.push("¡Ganó el Tirano nuclear!"); }
   const ann = [];
@@ -1474,19 +1539,42 @@ function shareBlocked(game, A, B, kind) {
   return "";
 }
 function applyShare(game, A, B, kind) {
+  // Bully (Estafador): el intercambio de color se vuelve revelación privada de los dos (no cuenta como co-revelación).
+  if (kind === "color" && (A.card.id.startsWith("estafador") || B.card.id.startsWith("estafador"))) kind = "reveal";
   const pa = { acq: [...(A.acq || [])], cured: [...(A.cured || [])] }, pb = { acq: [...(B.acq || [])], cured: [...(B.cured || [])] };
   const notes = { [A.id]: [], [B.id]: [] }, ca = A.card, cb = B.card;
   const give = (from, to, pt, k) => { if (rulesFor(to.card, to).immune) return; if (!pt.acq.includes(k)) { pt.acq.push(k); notes[to.id].push(`Adquiriste la condición «${COND[k].name}».`); } };
   const cleanse = (to, pt) => { if (pt.acq.length) notes[to.id].push("Te limpiaron: perdiste tus condiciones adquiridas."); pt.acq = []; };
   const psy = (to, pt) => { const ps = Object.keys(COND).filter(k => COND[k].psy); pt.acq = pt.acq.filter(k => !ps.includes(k)); pt.cured = [...new Set([...pt.cured, ...(to.card.conds || []).filter(k => ps.includes(k))])]; notes[to.id].push("El Psicólogo te quitó las condiciones psicológicas."); };
-  const pair = [[A, ca, B, pb], [B, cb, A, pa]];
-  if (kind === "card") pair.forEach(([X, cx, Y, py]) => {
+  const pair = [[A, ca, B, pb, pa], [B, cb, A, pa, pb]];
+  const base = id => id.replace(/-(a|r)$/, ""), PRIMARY = ["presidente", "bomba", "hija-del-presidente", "martir", "rey", "dragon", "princesa-gorda", "huevo-de-dragon", "puno-rojo", "pie-rojo", "petardo-azul"];
+  const POWERED = id => GIVE_COND[id] || CLEANSERS.includes(id) || ["psicologo", "vampiro", "hipnotista", "conspirador", "flautista", "alienigena", "ladron-de-cuerpos", "leal"].includes(base(id)) || ["socialista", "capitalista"].includes(id);
+  const aligned = c => (c.team === "a" || c.team === "r") && !PRIMARY.includes(c.id);
+  if (kind === "card") pair.forEach(([X, cx, Y, py, px]) => {
+    // Cazador: el poder no le afecta y se queda con la carta de quien lo usó.
+    if (base(Y.card.id) === "cazador" && POWERED(cx.id)) { if (!px.acq.includes("sincarta")) { px.acq.push("sincarta"); notes[X.id].push("El Cazador se quedó con tu carta."); notes[Y.id].push("Tu poder de Cazador te protegió y te quedaste con su carta."); } return; }
     if (GIVE_COND[cx.id]) give(X, Y, py, GIVE_COND[cx.id]);
     if (CLEANSERS.includes(cx.id)) cleanse(Y, py);
-    if (cx.id.startsWith("psicologo")) psy(Y, py);
+    if (base(cx.id) === "psicologo") psy(Y, py);
+    if (base(cx.id) === "hipnotista") give(X, Y, py, "hipnotizado");
+    if (cx.id === "gorgona") give(X, Y, py, "petrificado");
+    if (base(cx.id) === "vampiro" && Y.card.color !== cx.color) give(X, Y, py, "seducido");
+    if (base(cx.id) === "conspirador" && aligned(Y.card) && Y.card.team !== cx.team && base(Y.card.id) !== "leal") give(X, Y, py, "traidor");
+    if (base(cx.id) === "leal" && py.acq.includes("traidor")) { py.acq = py.acq.filter(k => k !== "traidor"); notes[Y.id].push("El Leal te quitó la condición «traidor»."); }
+    if (base(cx.id) === "flautista") { give(X, Y, py, "encantado"); if (!rulesFor(Y.card, Y).immune) py.piper = X.id; }
+    if (["alienigena", "ladron-de-cuerpos"].includes(base(cx.id)) && !rulesFor(Y.card, Y).immune && !py.acq.includes("sincarta")) { py.acq.push("sincarta"); notes[Y.id].push(`El ${cx.name} se quedó con tu carta: ya no puedes mostrarla.`); }
+    if ((cx.id === "socialista" || cx.id === "capitalista") && aligned(Y.card) && !rulesFor(Y.card, Y).immune) { py.card = cardOf(byId(cx.id === "socialista" ? "rojo" : "azul")); py.acq = []; notes[Y.id].push(`Tu carta cambió por una de ${cx.id === "socialista" ? "Equipo Rojo" : "Equipo Azul"}.`); }
   });
-  // Zombi: contagia con co-revelación o intercambio de color.
-  pair.forEach(([X, cx, Y, py]) => { if ((cx.id === "zombi" || (X.acq || []).includes("zombi")) && !(Y.card.id === "zombi")) give(X, Y, py, "zombi"); });
+  // Contagios con co-revelación o intercambio de color: Zombi, Hombre lobo, Líder de secta.
+  pair.forEach(([X, cx, Y, py]) => {
+    if ((cx.id === "zombi" || (X.acq || []).includes("zombi")) && Y.card.id !== "zombi") give(X, Y, py, "zombi");
+    if (base(cx.id) === "hombre-lobo" || (X.acq || []).includes("mordido")) { if (base(Y.card.id) !== "hombre-lobo") give(X, Y, py, "mordido"); }
+    if (cx.id === "lider-de-secta" || (X.acq || []).includes("sectario") || (cx.conds || []).includes("sectario")) give(X, Y, py, "sectario");
+  });
+  // Xenomorfo: el primer azul que comparte con él queda impregnado y se lleva la carta del Xenomorfo.
+  pair.forEach(([X, cx, Y, py, px]) => {
+    if (base(cx.id) === "xenomorfo" && !X.xenoUsed && Y.card.team === "a" && !rulesFor(Y.card, Y).immune) { give(X, Y, py, "impregnado"); px.xenoUsed = true; if (!px.acq.includes("sincarta")) px.acq.push("sincarta"); notes[X.id].push("Le diste tu carta de Xenomorfo."); }
+  });
   if (kind === "card") [[A, pa], [B, pb]].forEach(([X, pt]) => { if (rulesFor(X.card, X).set.has("paranoico")) pt.paraUsed = true; });
   // Intercambio de cartas (Patata caliente, Duende, Ladrón de identidad): la carta llega limpia.
   const thief = kind === "card" && (ca.id.startsWith("ladron-de-identidad") || cb.id.startsWith("ladron-de-identidad"));
@@ -1500,6 +1588,11 @@ function applyShare(game, A, B, kind) {
   if (kind === "card") {
     if ((ca.id === "dr-boom" && cb.id === "presidente") || (cb.id === "dr-boom" && ca.id === "presidente")) instant = { w: "r", line: "Dr. Boom hizo co-revelación con el Presidente: ¡explosión inmediata!" };
     if ((ca.id === "caballero-martes" && cb.id === "bomba") || (cb.id === "caballero-martes" && ca.id === "bomba")) instant = { w: "a", line: "El Caballero Martes hizo co-revelación con la Bomba: ¡gana el Equipo Azul!" };
+    const dup = (x, y) => (ca.id === x && cb.id === y) || (ca.id === y && cb.id === x);
+    if (dup("alguacil", "fugitivo")) instant = { w: "a", line: "El Alguacil atrapó al Fugitivo: ¡gana el Equipo Azul!" };
+    if (dup("fugitivo", "manco")) instant = { w: "r", line: "El Fugitivo encontró al Manco: ¡gana el Equipo Rojo!" };
+    if (dup("manco", "testigo")) instant = { w: "a", line: "El Manco encontró al Testigo: ¡gana el Equipo Azul!" };
+    if (dup("testigo", "alguacil")) instant = { w: "r", line: "El Testigo encontró al Alguacil: ¡gana el Equipo Rojo!" };
   }
   const at = Date.now(), id = rid(8), r = (game.timer && game.timer.r) || 0;
   pa.shares = [...(A.shares || []), { with: B.id, kind, myCard: ca.id, theirCard: cb.id, r }];
@@ -1526,7 +1619,7 @@ function showShareResult(ls_key, me) {
   ls.set(ls_key, s.id);
   const c = s.card, d = document.createElement("div");
   d.className = "full " + (s.kind === "color" ? c.color : "priv"); d.setAttribute("role", "dialog"); d.tabIndex = 0;
-  d.innerHTML = `<div><span class="stamp">${s.kind === "color" ? "Intercambio de color" : "Co-revelación"} con ${esc(s.name)}</span>
+  d.innerHTML = `<div><span class="stamp">${s.kind === "color" ? "Intercambio de color" : s.kind === "reveal" ? "Revelación privada (Bully)" : "Co-revelación"} con ${esc(s.name)}</span>
     ${s.kind === "color" ? `<span class="lbl">Color de ${esc(s.name)}</span><b>${COLOR[c.color]}</b>` : `<span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] + " · carta " + COLOR[c.color].toLowerCase() : TEAM[c.team]}</span><b class="t-${c.color}">${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}`}
     ${(s.notes || []).length ? `<p>${s.notes.map(n => `<b>${esc(n)}</b>`).join(" ")}</p>` : ""}
     <small>Toca para cerrar</small></div>`;
@@ -1559,7 +1652,7 @@ function roomState(game, players, room) {
   const members = players.filter(p => inGame(game, p) && p.room === room).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
   let leader = game["leader" + room] || null; if (!members.some(p => p.id === leader)) leader = null;
   const need = Math.floor(members.length / 2) + 1;
-  const tally = {}; members.forEach(p => { if (p.vote && members.some(m => m.id === p.vote)) tally[p.vote] = (tally[p.vote] || 0) + 1; });
+  const tally = {}; members.forEach(p => { if (p.vote && !(p.acq || []).includes("petrificado") && members.some(m => m.id === p.vote)) tally[p.vote] = (tally[p.vote] || 0) + 1; });
   return { room, members, leader, need, tally, picks: game["picks" + room] || null, offer: game["offer" + room] || null };
 }
 const hostageCount = (game, st) => Math.max(0, Math.min(hostages(game.timer || newTimer("basic", 0)), st.members.length - 1));
@@ -2092,7 +2185,7 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const order = shuffle(ids), half = Math.ceil(ids.length / 2);
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null });
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
       await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
