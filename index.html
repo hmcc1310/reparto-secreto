@@ -157,6 +157,9 @@ body.has-timer { padding-top: 64px; }
 .modal .row { justify-content: flex-end; }
 .forgot { font-weight: 600; }
 .update { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 70; display: flex; gap: 12px; align-items: center; justify-content: space-between; background: var(--surface); color: var(--fg); border: 2px solid var(--fg); border-radius: var(--r); padding: 10px 14px; box-shadow: 0 8px 30px rgba(0,0,0,.3); font-weight: 600; }
+#lang { position: fixed; top: max(10px, env(safe-area-inset-top)); right: 10px; z-index: 45; font-family: var(--mono); font-size: .78rem; padding: 5px 9px; border-radius: 999px; background: var(--surface); color: var(--muted); }
+#lang b { color: var(--fg); }
+body.has-timer #lang { top: 66px; }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -358,6 +361,336 @@ const ls = {
   get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
   set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+
+// ---------- idioma (cada quien elige en su celular) ----------
+// La página está escrita en español; en inglés se traduce lo que se muestra en pantalla.
+let LANG = (() => { const v = ls.get("rs-lang"); if (v === "es" || v === "en") return v; return String(navigator.language || "es").toLowerCase().startsWith("es") ? "es" : "en"; })();
+document.documentElement.lang = LANG;
+const I18N_EXACT = {}, I18N_RE = [];
+const I18N_MISS = new Set(); window.__i18nMiss = I18N_MISS;
+function tr(s) {
+  if (LANG !== "en" || s == null) return s;
+  const k = String(s).replace(/\s+/g, " ").trim();
+  if (!k || !/[A-Za-zÁÉÍÓÚÑáéíóúñ¿¡]/.test(k)) return s;
+  let out = I18N_EXACT[k];
+  if (out == null) for (const [re, rep] of I18N_RE) { const m = k.match(re); if (m) { out = typeof rep === "function" ? rep(...m) : k.replace(re, rep); break; } }
+  if (out == null) { if (I18N_MISS.size < 3000) I18N_MISS.add(k); return s; }
+  const lead = String(s).match(/^\s*/)[0], trail = String(s).match(/\s*$/)[0];
+  return lead + out + trail;
+}
+const TR_ATTRS = ["placeholder", "aria-label", "title"];
+function trNode(n) {
+  if (n.nodeType === 3) { const p = n.parentNode; if (p && (p.closest?.("[data-notr],script,style") )) return; const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; return; }
+  if (n.nodeType !== 1 || n.matches("script,style,[data-notr]")) return;
+  TR_ATTRS.forEach(a => { if (n.hasAttribute(a)) { const v = tr(n.getAttribute(a)); if (v !== n.getAttribute(a)) n.setAttribute(a, v); } });
+  n.childNodes.forEach(trNode);
+}
+if (LANG === "en") {
+  new MutationObserver(ms => ms.forEach(m => {
+    if (m.type === "characterData") trNode(m.target);
+    else if (m.type === "attributes") trNode(m.target);
+    else m.addedNodes.forEach(trNode);
+  })).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+}
+function langSwitch() {
+  let b = $("#lang"); if (b) return;
+  b = document.createElement("button"); b.id = "lang"; b.type = "button"; b.setAttribute("data-notr", "");
+  b.setAttribute("aria-label", LANG === "en" ? "Cambiar a español" : "Switch to English");
+  b.innerHTML = LANG === "en" ? "<b>EN</b> · ES" : "<b>ES</b> · EN";
+  b.onclick = () => { ls.set("rs-lang", LANG === "en" ? "es" : "en"); location.reload(); };
+  document.body.appendChild(b);
+}
+// ---------- textos en inglés de las cartas ----------
+const EN_CARDS = {
+  "agente-a": { "name": "Agent", "note": "Once per round, privately reveal your card to another player and tell them you are using your power. That player must card share with you." },
+  "agente-r": { "name": "Agent", "note": "Once per round, privately reveal your card to another player and tell them you are using your power. That player must card share with you." },
+  "agorafobico": { "name": "Agoraphobe", "note": "You win if you never leave the room you started in. You lose if you ever change rooms, whether as a hostage or through a power, even if you later return." },
+  "ahab": { "name": "Ahab", "note": "You win if Moby ends up in the Bomber's room and you end up in the other room. Play with Moby." },
+  "embajador-a": { "name": "Ambassador", "note": "When you receive your card, announce that you are an Ambassador and keep it visible all game. You may walk between rooms. You are immune to powers and conditions, you do not vote, cannot be leader or hostage, and do not count toward room size or for Zombie. Use both Ambassador cards." },
+  "embajador-r": { "name": "Ambassador", "note": "When you receive your card, announce that you are an Ambassador and keep it visible all game. You may walk between rooms. You are immune to powers and conditions, you do not vote, cannot be leader or hostage, and do not count toward room size or for Zombie. Use both Ambassador cards." },
+  "anarquista": { "name": "Anarchist", "note": "You win if your vote helps successfully usurp a leader in the majority of rounds. You need 2 of 3 rounds or 3 of 5. Each round counts only once." },
+  "angel-a": { "name": "Angel", "note": "You start with the “honest” condition. When you speak, you must tell the truth. You may mislead without speaking. If you also acquire the “liar” condition, both cancel out." },
+  "angel-r": { "name": "Angel", "note": "You start with the “honest” condition. When you speak, you must tell the truth. You may mislead without speaking. If you also acquire the “liar” condition, both cancel out." },
+  "ciego-a": { "name": "Blind", "note": "Do your best to keep your eyes closed the whole game. You may still talk, receive conditions and be targeted by powers. If a power or condition is applied to you, you must be told honestly." },
+  "ciego-r": { "name": "Blind", "note": "Do your best to keep your eyes closed the whole game. You may still talk, receive conditions and be targeted by powers. If a power or condition is applied to you, you must be told honestly." },
+  "azul": { "name": "Blue Team", "note": "Basic card with no special power. You win with the Blue Team if the President survives. In the basic game, help him end in a different room from the Bomber." },
+  "bomba-bot": { "name": "Bomb Bot", "note": "You win if you end in the Bomber's room and the President is in the other. Check where all three are after the last exchange. Your goal is personal and the Bomber is a different card." },
+  "bomba": { "name": "Bomber", "note": "You are the main red character. At the end of the game, every player in your room gains the “dead” condition. In the basic game, the Red Team wins if the President dies. If you die before detonating, your bomb does not go off." },
+  "puerta-a": { "name": "Bouncer", "note": "If your room has more players than the other, you may privately reveal your card to a player and order them out. They change rooms immediately. You may repeat the power while the size difference remains. Not used in the last round or between rounds." },
+  "puerta-r": { "name": "Bouncer", "note": "If your room has more players than the other, you may privately reveal your card to a player and order them out. They change rooms immediately. You may repeat the power while the size difference remains. Not used in the last round or between rounds." },
+  "mayordomo": { "name": "Butler", "note": "You win if you end in the same room as the Maid and the President. Include the Maid when setting up, since you need all three to end together." },
+  "clon": { "name": "Clone", "note": "Your result depends on the first player you card share or color share with. You win if that player wins. If you never share with anyone, you lose. If you and Robot share with each other first, you both lose." },
+  "payaso-a": { "name": "Clown", "note": "This is an acting role. Do your best to smile the whole time. You keep your team's goal." },
+  "payaso-r": { "name": "Clown", "note": "This is an acting role. Do your best to smile the whole time. You keep your team's goal." },
+  "estafador-a": { "name": "Conman", "note": "When someone agrees to color share with you, privately reveal your whole card and demand that they also privately reveal to you. The power turns the color deal into two private reveals. It does not count as a card share for other powers." },
+  "estafador-r": { "name": "Conman", "note": "When someone agrees to color share with you, privately reveal your whole card and demand that they also privately reveal to you. The power turns the color deal into two private reveals. It does not count as a card share for other powers." },
+  "discreto-a": { "name": "Coy Boy", "note": "You start with the “coy” condition. You may only color share voluntarily. The Psychologist can remove the condition. “Foolish” and “coy” cancel each other out." },
+  "discreto-r": { "name": "Coy Boy", "note": "You start with the “coy” condition. You may only color share voluntarily. The Psychologist can remove the condition. “Foolish” and “coy” cancel each other out." },
+  "criminal-a": { "name": "Criminal", "note": "Anyone who card shares with you gains the “shy” condition and from then on cannot voluntarily show any part of their card. The Psychologist can remove the condition. “Shy” and “foolish” cancel each other out." },
+  "criminal-r": { "name": "Criminal", "note": "Anyone who card shares with you gains the “shy” condition and from then on cannot voluntarily show any part of their card. The Psychologist can remove the condition. “Shy” and “foolish” cancel each other out." },
+  "cupido": { "name": "Cupid", "note": "Once per game, privately reveal your card to two players other than yourself and tell them they are in love with each other. Their goal becomes ending in the same room. If one of them also gains “in hate”, both conditions cancel out for that player." },
+  "camello-a": { "name": "Dealer", "note": "Anyone who card shares with you gains the “foolish” condition. From then on they must accept any card share or color share offers allowed in the game. “Foolish” cancels if it conflicts with “shy” or “coy”." },
+  "camello-r": { "name": "Dealer", "note": "Anyone who card shares with you gains the “foolish” condition. From then on they must accept any card share or color share offers allowed in the game. “Foolish” cancels if it conflicts with “shy” or “coy”." },
+  "senuelo": { "name": "Decoy", "note": "You win if the Sniper picks you as their final shot. Include the Sniper and the Target in the same game. Your goal is to draw the shot toward you." },
+  "demonio-a": { "name": "Demon", "note": "You start with the “liar” condition. When you speak, you must lie. You may convey true information without speaking. If you also acquire the “honest” condition, both cancel out." },
+  "demonio-r": { "name": "Demon", "note": "You start with the “liar” condition. When you speak, you must lie. You may convey true information without speaking. If you also acquire the “honest” condition, both cancel out." },
+  "doctor": { "name": "Doctor", "note": "The Blue Team can only win if the President card shares with you before the end, in addition to meeting its usual goal. If the President card changes hands, the new President must share again. At the end, both confirm whether they did." },
+  "dr-boom": { "name": "Dr. Boom", "note": "If you card share with the original President, you detonate immediately, the players in your room die and the game ends. The card means an immediate red win. The power does not trigger with the President's Daughter or if the President was buried." },
+  "borracho": { "name": "Drunk", "note": "Before dealing, randomly set aside one card face down and put the Drunk in the deck. At the start of the last round, swap the Drunk for that “sober” card and take its team, power and goal. The sober card comes in clean." },
+  "sicario-a": { "name": "Enforcer", "note": "Once per round, privately reveal your card to two players and order them to card share with each other. Neither has to reveal their card to you. You cannot choose yourself." },
+  "sicario-r": { "name": "Enforcer", "note": "Once per round, privately reveal your card to two players and order them to card share with each other. Neither has to reveal their card to you. You cannot choose yourself." },
+  "ingeniero": { "name": "Engineer", "note": "The Red Team can only win if the Bomber card shares with you before the end, in addition to meeting its usual goal. If the Bomber card changes hands, its new player must share again. At the end, both confirm whether they did." },
+  "eris": { "name": "Eris", "note": "Once per game, privately reveal your card to two players other than yourself and tell them they hate each other. Their goal becomes ending in different rooms. If one of them also gains “in love”, both conditions cancel out for that player." },
+  "jugador": { "name": "Gambler", "note": "After the last exchange and before cards are revealed, announce whether you think the Blue Team, the Red Team or neither won. You win if you are right." },
+  "patata-caliente": { "name": "Hot Potato", "note": "As soon as someone card shares or color shares with you, you both physically and permanently swap cards. Each takes on the new character, its team and powers, and loses any acquired conditions. Whoever holds the Hot Potato at the end loses." },
+  "invencible": { "name": "Invincible", "note": "You start immune to all powers and conditions. You keep the Blue Team's goal." },
+  "inmunologo": { "name": "Immunologist", "note": "You start immune to all powers and conditions. You keep the Red Team's goal. If a power tries to give you a condition, your immunity prevents the effect." },
+  "becaria": { "name": "Intern", "note": "You win if you end in the same room as the President. Check where both ended after the last exchange. Your goal depends on location, regardless of the Blue Team's result." },
+  "julieta": { "name": "Juliet", "note": "You win if at the end you are in the same room as Romeo and the Bomber. Include Romeo when setting up." },
+  "duende": { "name": "Leprechaun", "note": "You start “foolish”, so you must accept any allowed card share or color share offers. Each time you share, you permanently swap cards with the other player. Whoever holds the Leprechaun at the end wins. Each player may receive the role once per game and must say so if someone tries to give it back." },
+  "criada": { "name": "Maid", "note": "You win if you end in the same room as the Butler and the President. Include the Butler when setting up." },
+  "martir": { "name": "Martyr", "note": "You are the Bomber's backup when playing with a buried card. If the Bomber was buried, you take on its detonation, its red goal and the card share with the Engineer if in play. If the Bomber is in play, you keep the normal red goal. Dr. Boom and Tuesday Knight have their own triggers." },
+  "cerebro": { "name": "Mastermind", "note": "You win if you end as leader of your room and you led the other room at some point during the game. Only having led the room you end in is not enough." },
+  "alcalde-a": { "name": "Mayor", "note": "If your room has an even number of players, you may publicly reveal your card when trying to usurp the leader. Your usurp vote counts as two, unless the opposing Mayor also reveals their card." },
+  "alcalde-r": { "name": "Mayor", "note": "If your room has an even number of players, you may publicly reveal your card when trying to usurp the leader. Your usurp vote counts as two, unless the opposing Mayor also reveals their card." },
+  "medico-a": { "name": "Medic", "note": "When someone card shares with you, you remove their acquired conditions. For example, you remove the curse the Mummy put on them. Your power does not make you immune or cure you. To remove a condition from yourself, you can share with the other Medic." },
+  "medico-r": { "name": "Medic", "note": "When someone card shares with you, you remove their acquired conditions. For example, you remove the curse the Mummy put on them. Your power does not make you immune or cure you. To remove a condition from yourself, you can share with the other Medic." },
+  "mi6": { "name": "MI6", "note": "You win if you card share with the President and with the Bomber before the game ends. Completing both meetings at different times is enough. Seeing only a color or receiving a one-way reveal does not count." },
+  "mimo-a": { "name": "Mime", "note": "This is an acting role. Do your best to stay silent the whole game. You may communicate with gestures. You keep your team's goal." },
+  "mimo-r": { "name": "Mime", "note": "This is an acting role. Do your best to stay silent the whole game. You may communicate with gestures. You keep your team's goal." },
+  "esbirro": { "name": "Minion", "note": "You win if a leader is never usurped in the room you are in when the usurping happens. You care about what happens in whichever room you are in at any moment." },
+  "amante": { "name": "Mistress", "note": "You win if you end in the President's room and the Wife is in the other. Include the Wife in the game." },
+  "moby": { "name": "Moby", "note": "You win if Ahab ends up in the Bomber's room and you end up in the other room. Play with Ahab." },
+  "momia-a": { "name": "Mummy", "note": "Anyone who card shares with you becomes “cursed” and must do their best to stay silent from then on. While they keep the condition, powers that require a verbal phrase or announcement are blocked. The Medic can remove an acquired curse." },
+  "momia-r": { "name": "Mummy", "note": "Anyone who card shares with you becomes “cursed” and must do their best to stay silent from then on. While they keep the condition, powers that require a verbal phrase or announcement are blocked. The Medic can remove an acquired curse." },
+  "negociador-a": { "name": "Negotiator", "note": "You start with the “savvy” condition. You may only card share (full card). You cannot color share or make one-way private or public reveals. If another condition also forbids card sharing, you are left with no voluntary way to share." },
+  "negociador-r": { "name": "Negotiator", "note": "You start with the “savvy” condition. You may only card share (full card). You cannot color share or make one-way private or public reveals. If another condition also forbids card sharing, you are left with no voluntary way to share." },
+  "tirano-nuclear": { "name": "Nuclear Tyrant", "note": "You start “foolish” and must accept card share offers. Your card's aim is to avoid sharing with both main characters. For this deck, you win if neither the President nor the Bomber shared with you before the end. If you win, everyone else loses." },
+  "enfermera": { "name": "Nurse", "note": "You are the Doctor's backup when playing with a buried card. If the Doctor was buried, the President must card share with you to meet the Blue Team's requirement. If the Doctor is in play, you keep the normal blue goal." },
+  "paparazzi-a": { "name": "Paparazzo", "note": "Try to find out about private conversations and exchanges by watching, without touching players or handling their cards." },
+  "paparazzi-r": { "name": "Paparazzo", "note": "Try to find out about private conversations and exchanges by watching, without touching players or handling their cards." },
+  "paranoico-a": { "name": "Paranoid", "note": "You start “paranoid”. You may only card share, and you get one voluntary share per game. The Psychologist can remove the condition. “Foolish” and “paranoid” cancel out." },
+  "paranoico-r": { "name": "Paranoid", "note": "You start “paranoid”. You may only card share, and you get one voluntary share per game. The Psychologist can remove the condition. “Foolish” and “paranoid” cancel out." },
+  "presidente": { "name": "President", "note": "You are the main blue character. Your team wins if you survive and it meets any additional requirement in play. In the basic game, try to end in a different room from the Bomber." },
+  "hija-del-presidente": { "name": "President's Daughter", "note": "You are the President's backup when playing with a buried card. If the President was buried, you take on their role and must survive. If the Doctor is in play, you must also share with them. If the President is in play, you keep the normal blue goal. Dr. Boom does not trigger with you." },
+  "detective": { "name": "Private Eye", "note": "Play only if there is a buried card. After the last exchange and before everyone reveals, announce the exact identity of the buried card. If you are right, you win." },
+  "psicologo-a": { "name": "Psychologist", "note": "Privately reveal your card to someone with a psychological condition, such as “shy”, “coy” or “paranoid”. If that player immediately card shares with you, you remove that condition. This power allows the card share needed to treat the Shy Guy or Coy Boy." },
+  "psicologo-r": { "name": "Psychologist", "note": "Privately reveal your card to someone with a psychological condition, such as “shy”, “coy” or “paranoid”. If that player immediately card shares with you, you remove that condition. This power allows the card share needed to treat the Shy Guy or Coy Boy." },
+  "reina": { "name": "Queen", "note": "You win if at the end you are in a room with neither the President nor the Bomber. In a two-room game, both must end together in the other room." },
+  "rojo": { "name": "Red Team", "note": "Basic card with no special power. You win with the Red Team if the President dies. In the basic game, help the Bomber end in the same room as the President." },
+  "rival": { "name": "Rival", "note": "You win if you end in a different room from the President. What matters is the location after the last hostage exchange." },
+  "robot": { "name": "Robot", "note": "You win if the first player you card share or color share with loses. If you share with no one, you lose. If your first share is with the Clone and you are also its first share, you both lose." },
+  "romeo": { "name": "Romeo", "note": "You win if you end in the same room as Juliet and the Bomber. Include Juliet when setting up." },
+  "guardia-de-seguridad-a": { "name": "Security", "note": "Once per game, publicly reveal your card, choose another player in your room and tell them they stay. That player cannot leave as a hostage that round. Your card stays visible until the end." },
+  "guardia-de-seguridad-r": { "name": "Security", "note": "Once per game, publicly reveal your card, choose another player in your room and tell them they stay. That player cannot leave as a hostage that round. Your card stays visible until the end." },
+  "timido-a": { "name": "Shy Guy", "note": "You start “shy”. You cannot voluntarily show your card or its color. The Psychologist can give you an immediate card share to remove the condition. “Shy” and “foolish” cancel out." },
+  "timido-r": { "name": "Shy Guy", "note": "You start “shy”. You cannot voluntarily show your card or its color. The Psychologist can give you an immediate card share to remove the condition. “Shy” and “foolish” cancel out." },
+  "francotirador": { "name": "Sniper", "note": "After the last exchange, before cards are revealed, publicly announce who you shoot. Play with the Target and the Decoy." },
+  "espia-azul": { "name": "Blue Spy", "note": "Your real team is Blue but your card looks red. If you show only the color, you seem to be on the other team. If you show the whole card, your loyalty is revealed. You win with the Blue Team." },
+  "espia-rojo": { "name": "Red Spy", "note": "Your real team is Red but your card looks blue. If you show only the color, you seem to be on the other team. If you show the whole card, your loyalty is revealed. You win with the Red Team." },
+  "superviviente": { "name": "Survivor", "note": "You win if you end in a different room from the Bomber. Your position is checked after the last exchange." },
+  "objetivo": { "name": "Target", "note": "You win if the Sniper does not pick you for their final shot. Include the Sniper and the Decoy. If the Sniper picks the Decoy, both the Decoy and you meet your goals." },
+  "maton-a": { "name": "Thug", "note": "Anyone who card shares with you gains the “coy” condition and may only color share. The Psychologist can remove it. “Foolish” and “coy” cancel out." },
+  "maton-r": { "name": "Thug", "note": "Anyone who card shares with you gains the “coy” condition and may only color share. The Psychologist can remove it. “Foolish” and “coy” cancel out." },
+  "mecanico": { "name": "Tinkerer", "note": "You are the Engineer's backup when playing with a buried card. If the Engineer was buried, the Bomber must card share with you to meet the Red Team's requirement. If the Engineer is in play, you keep the normal red goal." },
+  "viajero": { "name": "Traveler", "note": "You win if you change rooms as a hostage at the end of the majority of rounds. You need 2 of 3 or 3 of 5. Moves by powers outside the hostage exchange do not count." },
+  "caballero-martes": { "name": "Tuesday Knight", "note": "If you card share with the original Bomber, the game ends immediately. The card means an immediate blue win. The power does not trigger with the Martyr or if the Bomber was buried." },
+  "usurpador-a": { "name": "Usurper", "note": "Once per game and before the last round, publicly reveal your card and take leadership of the room. Keep it visible until the end. No one can usurp you during the round you used the power. If both Usurpers use it in the same room and round, the first one keeps the position." },
+  "usurpador-r": { "name": "Usurper", "note": "Once per game and before the last round, publicly reveal your card and take leadership of the room. Keep it visible until the end. No one can usurp you during the round you used the power. If both Usurpers use it in the same room and round, the first one keeps the position." },
+  "victima": { "name": "Victim", "note": "You win if you end in the same room as the Bomber. This is checked after the last exchange, regardless of which team wins." },
+  "esposa": { "name": "Wife", "note": "You win if you are in the President's room at the end and the Mistress is in the other. Include the Mistress in the game." },
+  "zombi": { "name": "Zombie", "note": "You start on the Zombie team. Each time a Zombie card shares or color shares, they infect the other player. Infected players keep their card and powers but take on the Zombie goal and say so when sharing. They win if at the end every living player counts as a Zombie. Ambassadors are left out of that count." }
+};
+
+const EN_COND = {
+  "timido": { "name": "Shy", "desc": "You cannot voluntarily show your card or its color." },
+  "discreto": { "name": "Coy", "desc": "You may only color share." },
+  "astuto": { "name": "Savvy", "desc": "You may only card share (full card)." },
+  "paranoico": { "name": "Paranoid", "desc": "Card shares only, and just one voluntary share per game." },
+  "imprudente": { "name": "Foolish", "desc": "You must accept card share and color share offers." },
+  "maldito": { "name": "Cursed", "desc": "You must stay silent." },
+  "enamorado": { "name": "In love", "desc": "Your goal: end in the same room as your partner." },
+  "odio": { "name": "In hate", "desc": "Your goal: end in a different room from the other player." },
+  "honesto": { "name": "Honest", "desc": "When you speak, you must tell the truth." },
+  "mentiroso": { "name": "Liar", "desc": "When you speak, you must lie." },
+  "zombi": { "name": "Zombie", "desc": "Infected: your goal becomes the Zombies' goal and you say so when sharing." },
+  "inmune": { "name": "Immune", "desc": "No power or condition affects you." }
+};
+
+const EN_TPL = {
+  "b0": "Basic (learning)",
+  "b1": "1 · My first buried card",
+  "b2": "2 · My first card share",
+  "b3": "3 · Practicing the card share",
+  "b4": "4 · Card share with sudden death",
+  "b5": "5 · My first color share",
+  "b6": "6 · Practicing the color share",
+  "b7": "7 · My first acting role",
+  "b8": "9 · My first cleansing",
+  "b9": "10 · Private and public reveals",
+  "b10": "11 · Introduction to grays",
+  "b11": "Introduction to advanced roles",
+  "b12": "Mystery for six",
+  "b13": "Six players and at least one loser",
+  "b14": "Love and hate for six",
+  "b15": "Two rooms, two booms and a shot",
+  "b16": "The standard game",
+  "b17": "Murder mystery (12+)",
+  "b18": "Don't speak ill (12+)",
+  "b19": "Valentine's Day (12+)",
+  "b20": "Bipolar (12+)",
+  "b21": "Antitrust (13+)",
+  "b22": "Shy party (14+)",
+  "b23": "Random infection",
+  "b24": "The cover-up (16+)"
+};
+// ---------- traducción al inglés ----------
+(() => {
+  const CN = {}, CNOTE = {};
+  CATALOG.forEach(c => { const e = EN_CARDS[c.id]; if (!e) return; CN[c.name] = e.name; if (c.note) CNOTE[c.note.replace(/\s+/g, " ").trim()] = e.note; });
+  Object.entries(COND).forEach(([k, c]) => { const e = EN_COND[k]; if (!e) return; CN[c.name] = CN[c.name] || e.name; if (c.desc) CNOTE[c.desc.replace(/\s+/g, " ").trim()] = e.desc; });
+  const TPL = {}; BUILTIN_TEMPLATES.forEach(t => { if (EN_TPL[t.id]) TPL[t.name] = EN_TPL[t.id]; });
+  const COL = { azul: "blue", rojo: "red", roja: "red", gris: "grey", verde: "green", "¿¿??": "???" };
+  const COLC = { Azul: "Blue", Rojo: "Red", Gris: "Grey", Verde: "Green", "¿¿??": "???" };
+  // Nombre de carta en inglés (acepta "Ciego rojo" → "Blind (red)").
+  const cn = s => { if (CN[s]) return CN[s]; const m = s.match(/^(.+) (azul|rojo|roja|gris|verde)$/); if (m && CN[m[1]]) return `${CN[m[1]]} (${COL[m[2]]})`; return s; };
+  const list = s => s.split(/, | y /).map(cn).join(", ");
+  const team = s => ({ "Equipo Azul": "Blue Team", "Equipo Rojo": "Red Team" })[s] || (s.startsWith("Lealtad ") ? (COL[s.slice(8)] ? COL[s.slice(8)][0].toUpperCase() + COL[s.slice(8)].slice(1) : s.slice(8)) + " allegiance" : s);
+  const pl = (n, one, many) => `${n} ${+n === 1 ? one : many}`;
+  Object.assign(I18N_EXACT, CNOTE, TPL, CN, {
+    "Reparto Secreto": "Secret Deal",
+    "Modo de prueba: todo se guarda solo en este navegador. Abre otra pestaña para simular a otro jugador. Para jugar con varios celulares hay que conectar Firebase.": "Test mode: everything is saved only in this browser. Open another tab to simulate another player. To play with several phones, Firebase must be connected.",
+    "Unirme a una partida": "Join a game", "Código de la partida": "Game code", "Entrar": "Enter", "Soy el anfitrión": "I'm the host",
+    "Crear partida nueva": "Create new game", "Cerrar mis partidas abiertas": "Close my open games", "Tu PIN de anfitrión": "Your host PIN",
+    "Buscar": "Search", "Recuperar mi panel en otro celular": "Recover my panel on another phone", "Código": "Code", "PIN": "PIN", "Recuperar": "Recover",
+    "El PIN son 4 números.": "The PIN is 4 digits.", "El código tiene 4 letras.": "The code has 4 letters.",
+    "No encontré esa partida. Revisa el código.": "I couldn't find that game. Check the code.", "El código o el PIN no coinciden.": "The code or the PIN doesn't match.",
+    "No hay partidas abiertas con ese PIN.": "There are no open games with that PIN.", "PIN maestro:": "Master PIN:",
+    "Cerrar": "Close", "Abrir": "Open", "¿Cerrar todas?": "Close all?", "Sí, cerrar todas": "Yes, close all", "Partidas cerradas": "Games closed",
+    "Esa partida ya no existe.": "That game no longer exists.", "El anfitrión te quitó de la partida. Puedes volver a entrar con el código.": "The host removed you from the game. You can join again with the code.",
+    "← Volver": "← Back", "← Inicio": "← Home", "← Volver a la sala": "← Back to the lobby", "Nueva partida": "New game", "Elige las cartas": "Choose the cards",
+    "Plantillas": "Templates", "Mazos del reglamento y tus plantillas guardadas": "Rulebook decks and your saved templates", "Elige una plantilla…": "Choose a template…",
+    "Del reglamento": "From the rulebook", "Mis plantillas": "My templates", "Cargar": "Load", "Nombre para guardar estas cartas como plantilla": "Name to save these cards as a template",
+    "Guardar plantilla": "Save template", "Escribe un nombre para la plantilla": "Type a name for the template", "Plantilla guardada": "Template saved", "Plantilla borrada": "Template deleted",
+    "Reglas de la partida": "Game rules", "Completar con Equipo Azul y Equipo Rojo hasta el número de jugadores": "Fill up with Blue Team and Red Team cards to the number of players",
+    "(la plantilla sirve igual para 8 que para 20)": "(the same template works for 8 or 20 players)", "Si quedan impares, agregar a Jugador (gris)": "If the count is odd, add the Gambler (grey)",
+    "Agregar las parejas automáticamente": "Add pairs automatically", "(al elegir Mimo azul se agrega Mimo rojo, Doctor con Ingeniero, etc.)": "(picking the blue Mime adds the red Mime, Doctor with Engineer, etc.)",
+    "Jugar con carta enterrada": "Play with a buried card", "Mostrar solo el color": "Showing only the color", "Según el reglamento: solo con 11 jugadores o más": "As the rulebook says: only with 11 or more players",
+    "Permitido siempre": "Always allowed", "No permitido": "Not allowed", "Cartas": "Cards", "Buscar carta por nombre…": "Search a card by name…", "Buscar carta": "Search card",
+    "Ver más ▾": "Show more ▾", "Ver menos ▴": "Show less ▴", "Agregar un personaje que no está en la lista": "Add a character that isn't on the list", "Nombre de la carta": "Card name",
+    "Lealtad": "Allegiance", "Lealtad azul": "Blue allegiance", "Lealtad roja": "Red allegiance", "Gris": "Grey", "Verde": "Green", "Azul": "Blue", "Rojo": "Red", "¿¿??": "???",
+    "Color impreso": "Printed color", "Mismo color": "Same color", "Carta azul": "Blue card", "Carta roja": "Red card", "Carta gris": "Grey card", "Qué hace (opcional)": "What it does (optional)",
+    "Agregar": "Add", "Ver": "Show", "Ocultar": "Hide", "Todavía no eliges cartas.": "You haven't chosen any cards yet.",
+    "Al repartir se completa con Equipo Azul y Equipo Rojo hasta el número de jugadores.": "When dealing, it fills up with Blue Team and Red Team cards to the number of players.",
+    "Tu PIN de anfitrión (4 números)": "Your host PIN (4 digits)", "Para recuperar el panel si cambias de celular": "To recover the panel if you change phones",
+    "Crear partida y abrir la sala": "Create game and open the lobby", "Pon un PIN de 4 números.": "Enter a 4-digit PIN.", "Guardar cambios": "Save changes", "Cartas actualizadas": "Cards updated",
+    "Falta el Presidente.": "The President is missing.", "Falta la Bomba.": "The Bomber is missing.", "Detective necesita jugar con carta enterrada.": "Private Eye needs a buried card.",
+    "Hija del presidente, Mártir, Enfermera y Mecánico son reservas para jugar con carta enterrada.": "President's Daughter, Martyr, Nurse and Tinkerer are backups for games with a buried card.",
+    "Enfermera es reserva del Doctor.": "Nurse is the Doctor's backup.", "Mecánico es reserva del Ingeniero.": "Tinkerer is the Engineer's backup.",
+    "Se apartará una carta sobria para el Borracho. Desde la sala lo despiertas al empezar la última ronda.": "A sober card will be set aside for the Drunk. Wake them from the lobby when the last round starts.",
+    "Se reparte una carta de más y una queda enterrada al azar (nunca una de los personajes que juegan en pareja o trío).": "One extra card is dealt and one is buried at random (never one of the characters that play as a pair or trio).",
+    "Abriendo la sala…": "Opening the lobby…", "Que cada quien abra": "Everyone opens", "en su celular y escriba este código.": "on their phone and types this code.",
+    "Temporizador": "Timer", "Primero reparte las cartas (más abajo, botón «Iniciar y repartir»). Después aquí inicias cada ronda y a todos les aparece el reloj arriba de la pantalla.": "Deal the cards first (below, “Start and deal” button). Then start each round here and everyone sees the clock at the top of their screen.",
+    "Jugadores": "Players", "Todavía no entra nadie. Comparte el código.": "Nobody has joined yet. Share the code.", "Mazo": "Deck", "Cambiar cartas": "Change cards",
+    "Esperando jugadores": "Waiting for players", "Listo para repartir": "Ready to deal", "Iniciar y repartir": "Start and deal", "Repartir otra vez (nueva partida)": "Deal again (new game)",
+    "Las cartas aparecen solas en el celular de cada jugador.": "Cards appear on each player's phone by themselves.", "Al repartir de nuevo, todos reciben una carta nueva al instante.": "When you deal again, everyone gets a new card instantly.",
+    "Terminar partida": "End game", "¿Terminar la partida? Los jugadores ya no verán sus cartas.": "End the game? Players won't see their cards anymore.", "Sí, terminar": "Yes, end it", "Cancelar": "Cancel",
+    "Ver qué le tocó a cada uno": "See what everyone got", "Ocultar cartas": "Hide cards", "Tiene carta": "Has a card", "Sin carta, entra en el próximo reparto": "No card, joins on the next deal",
+    "Carta enterrada:": "Buried card:", "Carta sobria del Borracho:": "Drunk's sober card:", "Cartas repartidas": "Cards dealt", "Jugador quitado": "Player removed",
+    "Durante el juego": "During the game", "Al empezar la última ronda:": "When the last round starts:", "Despertar al Borracho": "Wake the Drunk",
+    "Intercambiar cartas entre dos jugadores": "Swap cards between two players", "(Patata caliente, Duende)": "(Hot Potato, Leprechaun)", "Jugador…": "Player…", "Intercambiar": "Swap",
+    "Al intercambiar, cada carta llega limpia: se borran las condiciones que habían adquirido.": "When swapping, each card arrives clean: acquired conditions are erased.",
+    "Elige dos jugadores distintos": "Choose two different players", "No hay suficientes cartas que se puedan apartar": "There aren't enough cards that can be set aside",
+    "Siguiente ronda →": "Next round →", "Reiniciar esta ronda": "Restart this round", "⏸ Pausar": "⏸ Pause", "▶ Reanudar": "▶ Resume", "Rondas": "Rounds",
+    "Al final de esta ronda cada líder envía": "At the end of this round each leader sends",
+    "3 rondas: 3, 2 y 1 minutos (reglamento)": "3 rounds: 3, 2 and 1 minutes (rulebook)", "5 rondas: 5, 4, 3, 2 y 1 minutos (avanzado, 11 jugadores o más)": "5 rounds: 5, 4, 3, 2 and 1 minutes (advanced, 11 or more players)",
+    "3 rondas de 3 minutos (variante del reglamento)": "3 rounds of 3 minutes (rulebook variant)", "3 rondas: 2, 1 y 1 minutos (rápida, no es del reglamento)": "3 rounds: 2, 1 and 1 minutes (quick, not in the rulebook)",
+    "El reloj aparece arriba en el celular de todos. Al llegar a cero, a todos les sale el aviso con los pasos del fin de ronda. Según el reglamento, se juegan 3 rondas; 5 rondas solo con 11 jugadores o más.": "The clock shows at the top of everyone's phone. When it hits zero, everyone gets the end-of-round steps. By the rulebook, 3 rounds are played; 5 rounds only with 11 or more players.",
+    "Esperando al anfitrión": "Waiting for the host", "En pausa": "Paused", "¡Tiempo! Rehenes": "Time! Hostages", "Fin del juego": "Game over", "¡Tiempo!": "Time!", "¡Última ronda terminada!": "Last round over!",
+    "Cada líder anuncia a su sala a quién envía:": "Each leader announces to their room who they're sending:", "(el líder nunca puede ser rehén). Ya no se puede cambiar.": "(the leader can never be a hostage). It can't be changed afterwards.",
+    "Los líderes se reúnen en el pasillo y el anfitrión inicia la siguiente ronda.": "The leaders meet in the hallway and the host starts the next round.", "Los rehenes cambian de sala.": "The hostages switch rooms.",
+    "Si hay Jugador (gris), anuncia en voz alta qué equipo cree que ganó.": "If there's a Gambler (grey), they announce out loud which team they think won.",
+    "Todos revelan sus cartas: si la Bomba está en la misma sala que el Presidente, gana el Equipo Rojo; si no, gana el Equipo Azul.": "Everyone reveals their cards: if the Bomber is in the same room as the President, the Red Team wins; otherwise, the Blue Team wins.",
+    "Toca para cerrar": "Tap to close",
+    "¿Quién eres?": "Who are you?", "Tu nombre": "Your name", "Como te conocen en el grupo": "What the group calls you", "Entrar a la partida": "Join the game", "Escribe tu nombre.": "Type your name.",
+    "¿Ya estabas en la partida?": "Were you already in the game?", "Toca tu nombre para volver a tu carta.": "Tap your name to get back to your card.", "Soy nuevo": "I'm new", "Toca otra vez para confirmar.": "Tap again to confirm.",
+    "Ese nombre ya está en la partida. Si eres tú, tócalo en la lista de arriba; si no, usa otro nombre (por ejemplo, con tu apellido).": "That name is already in the game. If it's you, tap it in the list above; if not, use another name (for example, add your last name).",
+    "Cargando tu partida…": "Loading your game…", "Esperando a que el anfitrión reparta": "Waiting for the host to deal", "Esperando la siguiente partida": "Waiting for the next game",
+    "Tu carta aparece aquí sola. No hace falta recargar.": "Your card will appear here by itself. No need to reload.", "En la sala": "In the lobby", "Salir de esta pantalla": "Leave this screen",
+    "Carta oculta": "Hidden card", "Usa los botones de abajo": "Use the buttons below", "🔒 ¿Se te olvidó tu carta?": "🔒 Forgot your card?", "Mostrar a otra persona": "Show another person",
+    "Color": "Color", "Solo rol": "Role only", "Carta completa": "Full card",
+    "En esta partida no se puede mostrar solo el color: el reglamento lo permite desde 11 jugadores. El anfitrión puede cambiarlo en las reglas de la partida.": "In this game you can't show only the color: the rulebook allows it from 11 players. The host can change it in the game rules.",
+    "Mis condiciones": "My conditions", "No tienes condiciones.": "You have no conditions.", "Eres inmune: no puedes adquirir condiciones.": "You're immune: you can't acquire conditions.",
+    "Me aplicaron una condición": "I was given a condition", "Me limpió el Médico": "The Medic cleansed me", "Me trató el Psicólogo": "The Psychologist treated me",
+    "Condiciones adquiridas quitadas": "Acquired conditions removed", "Condiciones psicológicas quitadas": "Psychological conditions removed",
+    "Cartas en esta partida": "Cards in this game", "Una carta está apartada para el Borracho.": "One card is set aside for the Drunk.",
+    "¡Tienes carta nueva!": "You have a new card!", "El anfitrión repartió las cartas. Mírala en secreto, sin que nadie vea tu pantalla.": "The host dealt the cards. Look at it in secret, without anyone seeing your screen.",
+    "El anfitrión repartió las cartas otra vez. Mírala en secreto, sin que nadie vea tu pantalla.": "The host dealt the cards again. Look at it in secret, without anyone seeing your screen.",
+    "Aceptar y ver mi carta": "OK, show my card", "Tu carta cambió": "Your card changed", "Te cambiaron la carta (por un intercambio o porque el Borracho despertó). Mírala en secreto.": "Your card was changed (by a swap or because the Drunk woke up). Look at it in secret.",
+    "🔒 Vista privada · no es una revelación": "🔒 Private view · not a reveal", "Toca para ocultar · se oculta sola en 20 segundos": "Tap to hide · hides by itself in 20 seconds",
+    "¿Ver tu carta otra vez?": "See your card again?", "Esto es": "This is", "solo para ti": "only for you", ", en secreto. La pantalla dirá «Vista privada» y": ", in secret. The screen will say “Private view” and",
+    "no cuenta como revelación": "it doesn't count as a reveal", ": no se la enseñes a nadie. Para mostrarle algo a otra persona usa los botones «Mostrar a otra persona».": ": don't show it to anyone. To show something to another person, use the “Show another person” buttons.",
+    "Sí, ver en secreto": "Yes, view in secret", "Revelación": "Reveal", "Mi color": "My color", "Mi rol": "My role", "Toca para ocultar": "Tap to hide",
+    "Sin conexión con la base de datos": "No connection to the database", "Hay una versión nueva de la página.": "There's a new version of the page.", "Actualizar": "Update",
+    "Equipo Azul": "Blue Team", "Equipo Rojo": "Red Team"
+  });
+  I18N_RE.push(
+    [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
+    [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
+    [/^(\d+) elegidas$/, "$1 selected"],
+    [/^(Equipo Azul|Equipo Rojo|Lealtad \S+) · (\d+) cartas$/, (_, t, n) => `${team(t)} · ${pl(n, "card", "cards")}`],
+    [/^(Equipo Azul|Equipo Rojo|Lealtad \S+) · (\d+)$/, (_, t, n) => `${team(t)} · ${n}`],
+    [/^Resumen · (\d+) cartas?$/, (_, n) => `Summary · ${pl(n, "card", "cards")}`],
+    [/^Plantilla «(.+)» cargada$/, (_, t) => `Template “${TPL[t] || t}” loaded`],
+    [/^Borrar plantilla (.+)$/, "Delete template $1"],
+    [/^Quitar uno de (.+)$/, (_, c) => `Remove one ${cn(c)}`],
+    [/^Quitar «(.+)»$/, "Remove “$1”"],
+    [/^Quitar a (.+)$/, "Remove $1"],
+    [/^Quitar (.+)$/, (_, c) => `Remove ${cn(c)}`],
+    [/^Agregar (.+)$/, (_, c) => `Add ${cn(c)}`],
+    [/^carta (\S+)$/, (_, c) => `${COL[c] || c} card`],
+    [/^Lealtad: (\S+) · carta (\S+)$/, (_, a, c) => `Allegiance: ${COLC[a] || a} · ${COL[c] || c} card`],
+    [/^Lealtad: (\S+)$/, (_, a) => `Allegiance: ${COLC[a] || a}`],
+    [/^Lealtad (\S+)$/, (_, c) => team("Lealtad " + c)],
+    [/^Color (\S+)$/, (_, c) => `${(COL[c] || c)[0].toUpperCase() + (COL[c] || c).slice(1)} color`],
+    [/^También se agregó: (.+)$/, (_, l) => `Also added: ${list(l)}`],
+    [/^También se quitó: (.+)$/, (_, l) => `Also removed: ${list(l)}`],
+    [/^(.+?) (azul|rojo|roja|gris|verde) y (.+?) (azul|rojo|roja|gris|verde) no están parejos\.$/, (_, a, ca, b, cb) => `${cn(a + " " + ca)} and ${cn(b + " " + cb)} aren't balanced.`],
+    [/^(.+) necesitan? a (.+)\.$/, (_, a, b) => `${list(a)} need${a.includes(",") || a.includes(" y ") ? "" : "s"} ${list(b)}.`],
+    [/^(\d+) dentro$/, "$1 in"],
+    [/^(\d+) jugador(es)?$/, (_, n) => pl(n, "player", "players")],
+    [/^(\d+) cartas?$/, (_, n) => pl(n, "card", "cards")],
+    [/^Faltan (\d+) cartas$/, (_, n) => `${pl(n, "card", "cards")} missing`],
+    [/^Sobran (\d+) cartas: quita algunas o espera más jugadores$/, (_, n) => `${pl(n, "card", "cards")} too many: remove some or wait for more players`],
+    [/^Mostrar solo color: (permitido|no permitido)( \(según el número de jugadores\))?\.$/, (_, a, b) => `Show only color: ${a === "permitido" ? "allowed" : "not allowed"}${b ? " (based on the number of players)" : ""}.`],
+    [/^Volver al panel de la partida (\w+)$/, "Back to the panel of game $1"],
+    [/^Volver a mi carta · (\w+)$/, "Back to my card · $1"],
+    [/^Partida (\w+) · Reparto (\d+)$/, "Game $1 · Deal $2"],
+    [/^Partida (\w+) cerrada$/, "Game $1 closed"],
+    [/^Partida (\w+)$/, "Game $1"],
+    [/^Estás dentro, (.+)$/, "You're in, $1"],
+    [/^Sí, soy (.+) · entrar$/, "Yes, I'm $1 · enter"],
+    [/^Reparto (\d+) hecho$/, "Deal $1 done"],
+    [/^Ronda (\d+) de (\d+)$/, "Round $1 of $2"], [/^Ronda (\d+)\/(\d+)$/, "Round $1/$2"],
+    [/^▶ Iniciar ronda (\d+)$/, "▶ Start round $1"],
+    [/^(\d+) rehén(es)? al final$/, (_, n) => `${pl(n, "hostage", "hostages")} at the end`],
+    [/^(\d+) rehén(es)?$/, (_, n) => pl(n, "hostage", "hostages")],
+    [/^(\d+) jugador(es)? sin carta\. Reparte otra vez para incluirlos\.$/, (_, n) => `${pl(n, "player", "players")} without a card. Deal again to include them.`],
+    [/^(.+) · volvió a ver su carta (\d+) (vez|veces)$/, (_, c, n) => `${c === "Tiene carta" ? "Has a card" : cn(c)} · looked at their card again ${pl(n, "time", "times")}`],
+    [/^Hay (\d+) carta enterrada: está en la lista pero nadie la tiene\.$/, "There is $1 buried card: it's on the list but nobody has it."],
+    [/^Mis condiciones · (\d+)$/, "My conditions · $1"],
+    [/^(.+) y (.+) intercambiaron cartas$/, "$1 and $2 swapped cards"],
+    [/^(.+) ya tiene su carta sobria$/, "$1 now has their sober card"],
+    [/^Cerrar todas \((\d+)\)$/, "Close all ($1)"],
+    [/^Se borrarán (\d+) partidas? con sus jugadores\. Nadie podrá volver a entrar a ellas\.$/, (_, n) => `${pl(n, "game", "games")} will be deleted with their players. Nobody will be able to join them again.`],
+    [/^ves todas las partidas abiertas \((\d+)\)\.$/, "you see all open games ($1)."],
+    [/^(.*) · (\d+) repartos?$/, (_, d, n) => `${d} · ${pl(n, "deal", "deals")}`],
+    [/^(.*) · sin repartir$/, "$1 · not dealt"], [/^(.*) · terminada$/, "$1 · ended"],
+    [/^(.+):$/, (_, c) => cn(c) + ":"],
+    [/^(.+) ×(\d+)$/, (_, c, n) => `${cn(c)} ×${n}`],
+    [/^(.+) (azul|rojo|roja|gris|verde)$/, (_, c, k) => CN[c] ? cn(c + " " + k) : _]
+  );
+})();
 let toastT;
 function toast(m) { let t = $(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); } t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2400); }
 const clean = o => JSON.parse(JSON.stringify(o)); // quita undefined (Firestore no los acepta)
@@ -439,7 +772,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -526,7 +859,7 @@ const demoNote = () => api.demo ? `<p class="demo">Modo de prueba: todo se guard
 function home(msg) {
   const ps = ls.get("rs-player"), hs = ls.get("rs-host");
   app().innerHTML = `<div class="narrow">
-    <div style="display:grid;gap:8px">
+    <div style="display:grid;gap:8px;padding-right:72px">
       <span class="eyebrow">Roles ocultos · dos habitaciones · versión ${APP_VERSION}</span>
       <h1>Reparto Secreto</h1>
     </div>
@@ -578,7 +911,7 @@ function home(msg) {
     const boss = await isBoss(pin);
     const list = (await api.listGames().catch(() => [])).filter(g => boss || g.hostPin === pin).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     if (!list.length) { box.innerHTML = `<p class="muted small">No hay partidas abiertas con ese PIN.</p>`; return; }
-    const when = t => t ? new Date(t).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+    const when = t => t ? new Date(t).toLocaleString(LANG === "en" ? "en-US" : "es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
     box.innerHTML = `${boss ? `<p class="small"><b>PIN maestro:</b> ves todas las partidas abiertas (${list.length}).</p>` : ""}<ul class="plist">${list.map(g => `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${esc(g.code)}</div><div class="rl">${esc(when(g.createdAt))}${g.ended ? " · terminada" : g.round ? ` · ${g.round} reparto${g.round > 1 ? "s" : ""}` : " · sin repartir"}</div></div>${boss ? `<button type="button" class="ghost" data-open="${esc(g.code)}">Abrir</button>` : ""}<button type="button" data-close="${esc(g.code)}">Cerrar</button></li>`).join("")}</ul>
       <button type="button" class="primary wide" id="closeAll">Cerrar todas (${list.length})</button>`;
     const closeOne = async code => { await api.deleteGame(code); const hs = ls.get("rs-host"); if (hs && hs.code === code) ls.set("rs-host", null); };
@@ -851,6 +1184,7 @@ async function hostSetup(editCode) {
     if (nq) $$(".teamsec").forEach(d => d.open = true);
   }
   function render() {
+    if (!editCode) ls.set("rs-builder2", B);
     const deck = expand(B), tc = tcount(deck);
     const roleCard = r => {
       const n = B.counts[r.id] || 0, cap = r.id === "azul" || r.id === "rojo" ? 99 : (r.max || 1);
@@ -1107,6 +1441,7 @@ function hostLobby() {
 }
 
 // ---------- arranque ----------
+langSwitch();
 if (ls.get("rs-player")) go(playerView); else go(home);
 })();
 </script>
