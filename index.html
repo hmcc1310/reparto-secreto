@@ -57,7 +57,7 @@ p { margin: 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .count { font-family: var(--mono); color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
 input[type=text], input[type=tel], input[type=search], select { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; width: 100%; min-width: 0; }
-input.code { font-family: var(--mono); font-size: 2rem; letter-spacing: .3em; text-align: center; text-transform: uppercase; padding: 12px; }
+input.code { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font-family: var(--mono); font-size: 2rem; letter-spacing: .3em; text-align: center; text-transform: uppercase; padding: 12px; }
 input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 label { font-weight: 500; display: grid; gap: 6px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -88,7 +88,10 @@ button.ghost:hover { color: var(--fg); }
 .role .bar { align-self: stretch; background: var(--tc); }
 .role .name { font-weight: 600; line-height: 1.2; }
 .role .tag { font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-left: 4px; }
-.role .note { font-size: .78rem; color: var(--muted); line-height: 1.3; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.role .note { font-size: .78rem; color: var(--muted); line-height: 1.3; margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.role .note.open { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.role .rinfo[data-exp] { cursor: pointer; min-width: 0; }
+.role .more { font-size: .74rem; font-weight: 600; color: var(--fg); text-decoration: underline; }
 .stepper { display: flex; align-items: center; gap: 2px; }
 .stepper button { width: 32px; height: 32px; padding: 0; border-radius: 6px; font-weight: 600; }
 .stepper output { min-width: 22px; text-align: center; font-family: var(--mono); }
@@ -142,6 +145,15 @@ details[open] > summary { margin-bottom: 10px; }
 body.has-timer { padding-top: 64px; }
 .tover .tnext { margin-top: 22px; background: #fff; color: #111; border-color: #fff; }
 .tover b { font-size: clamp(2.6rem, 13vw, 6rem); }
+.stamp { display: table; margin-left: auto; margin-right: auto; font-family: var(--mono); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; border: 2px solid currentColor; border-radius: 6px; padding: 4px 10px; margin-bottom: 18px; }
+.full.priv { background: repeating-linear-gradient(45deg, #1b1f2a 0 18px, #232838 18px 36px); }
+.full.priv .stamp { color: #ffd166; }
+.full.priv b.t-a { color: #8fb0ff; } .full.priv b.t-r { color: #ff8f86; } .full.priv b.t-g { color: #c9cdd6; } .full.priv b.t-v { color: #7ee2a6; } .full.priv b.t-x { color: #c7a8ff; }
+.modal { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 20px; }
+.modal .box { background: var(--surface); color: var(--fg); border-radius: var(--r); padding: 22px; max-width: 420px; width: 100%; display: grid; gap: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+.modal .box p { margin: 0; }
+.modal .row { justify-content: flex-end; }
+.forgot { font-weight: 600; }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -376,7 +388,9 @@ function firebaseApi(cfg) {
     },
     async listTemplates() { const q = await fs.collection("templates").get(); return q.docs.map(d => ({ id: d.id, ...d.data() })); },
     async saveTemplate(t) { const id = rid(); await fs.collection("templates").doc(id).set(clean(t)); return id; },
-    deleteTemplate: id => fs.collection("templates").doc(id).delete()
+    deleteTemplate: id => fs.collection("templates").doc(id).delete(),
+    async listGames() { const q = await fs.collection("games").get(); return q.docs.map(d => ({ code: d.id, ...d.data() })); },
+    async deleteGame(code) { const q = await P(code).get(); const b = fs.batch(); q.docs.forEach(d => b.delete(d.ref)); b.delete(G(code)); await b.commit(); }
   };
 }
 function localApi() {
@@ -406,7 +420,9 @@ function localApi() {
     async batch(code, gamePatch, playerPatches) { const db = read(); const g = db.games[code]; if (gamePatch) Object.assign(g, clean(gamePatch)); Object.entries(playerPatches).forEach(([pid, p]) => { if (g.players[pid]) Object.assign(g.players[pid], clean(p)); }); write(db); },
     async listTemplates() { return Object.entries(read().templates).map(([id, t]) => ({ id, ...t })); },
     async saveTemplate(t) { const db = read(); const id = rid(); db.templates[id] = clean(t); write(db); return id; },
-    async deleteTemplate(id) { const db = read(); delete db.templates[id]; write(db); }
+    async deleteTemplate(id) { const db = read(); delete db.templates[id]; write(db); },
+    async listGames() { return Object.entries(read().games).map(([code, g]) => ({ code, ...gameOf(g) })); },
+    async deleteGame(code) { const db = read(); delete db.games[code]; write(db); }
   };
 }
 let api;
@@ -464,7 +480,7 @@ function home(msg) {
   const ps = ls.get("rs-player"), hs = ls.get("rs-host");
   app().innerHTML = `<div class="narrow">
     <div style="display:grid;gap:8px">
-      <span class="eyebrow">Roles ocultos · dos habitaciones · versión 11</span>
+      <span class="eyebrow">Roles ocultos · dos habitaciones · versión 12</span>
       <h1>Reparto Secreto</h1>
     </div>
     <div class="stripe"></div>
@@ -482,6 +498,13 @@ function home(msg) {
       <h2>Soy el anfitrión</h2>
       ${hs ? `<button class="wide" id="backHost">Volver al panel de la partida ${esc(hs.code)}</button>` : ""}
       <button class="wide" id="newGame">Crear partida nueva</button>
+      <details><summary>Cerrar mis partidas abiertas</summary>
+        <form id="mine" class="row">
+          <input type="tel" id="mPin" maxlength="4" placeholder="Tu PIN de anfitrión" inputmode="numeric" style="flex:1 1 140px">
+          <button type="submit">Buscar</button>
+        </form>
+        <div id="mineList"></div>
+      </details>
       <details><summary>Recuperar mi panel en otro celular</summary>
         <form id="recover" class="row">
           <input type="text" id="rCode" maxlength="4" placeholder="Código" autocapitalize="characters" style="flex:1 1 90px;text-transform:uppercase">
@@ -503,6 +526,19 @@ function home(msg) {
     if (!g) { $("#joinErr").textContent = "No encontré esa partida. Revisa el código."; return; }
     go(joinView, code);
   };
+  const showMine = async pin => {
+    const box = $("#mineList");
+    const list = (await api.listGames().catch(() => [])).filter(g => g.hostPin === pin).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (!list.length) { box.innerHTML = `<p class="muted small">No hay partidas abiertas con ese PIN.</p>`; return; }
+    const when = t => t ? new Date(t).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+    box.innerHTML = `<ul class="plist">${list.map(g => `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${esc(g.code)}</div><div class="rl">${esc(when(g.createdAt))}${g.ended ? " · terminada" : g.round ? ` · ${g.round} reparto${g.round > 1 ? "s" : ""}` : " · sin repartir"}</div></div><button type="button" data-close="${esc(g.code)}">Cerrar</button></li>`).join("")}</ul>
+      <button type="button" class="primary wide" id="closeAll">Cerrar todas (${list.length})</button>`;
+    const closeOne = async code => { await api.deleteGame(code); const hs = ls.get("rs-host"); if (hs && hs.code === code) ls.set("rs-host", null); };
+    $$("[data-close]", box).forEach(b => b.onclick = async () => { b.disabled = true; await closeOne(b.dataset.close); toast("Partida " + b.dataset.close + " cerrada"); showMine(pin); });
+    $("#closeAll").onclick = () => modal("¿Cerrar todas?", `Se borrarán ${list.length} partida${list.length > 1 ? "s" : ""} con sus jugadores. Nadie podrá volver a entrar a ellas.`,
+      [{ label: "Cancelar" }, { label: "Sí, cerrar todas", primary: true, fn: async () => { for (const g of list) await closeOne(g.code); toast("Partidas cerradas"); go(home); } }]);
+  };
+  $("#mine").onsubmit = e => { e.preventDefault(); const pin = $("#mPin").value.trim(); if (!/^\d{4}$/.test(pin)) { $("#mineList").innerHTML = `<p class="err">El PIN son 4 números.</p>`; return; } showMine(pin); };
   $("#recover").onsubmit = async e => {
     e.preventDefault();
     const code = $("#rCode").value.trim().toUpperCase(), pin = $("#rPin").value.trim();
@@ -571,22 +607,42 @@ function rulesFor(card, me) {
 }
 
 // ---------- vista del jugador ----------
-function cardFront(c) {
-  const spy = c.color !== c.team;
-  return `<div class="face front ${c.color}"><div class="emblem"></div>
-    <div class="team">${spy ? `Lealtad: ${COLOR[c.team]} · carta ${COLOR[c.color].toLowerCase()}` : TEAM[c.team]}</div>
-    <div class="rname">${esc(c.name)}</div>${c.note ? `<div class="rnote">${esc(c.note)}</div>` : ""}</div>`;
-}
 function fullScreen(mode, c) {
   const d = document.createElement("div");
-  if (mode === "color") { d.className = "full " + c.color; d.innerHTML = `<div><span class="lbl">Mi color</span><b>${COLOR[c.color]}</b><small>Toca para ocultar</small></div>`; }
-  else if (mode === "role") { d.className = "full n"; d.innerHTML = `<div><span class="lbl">Mi rol</span><b>${esc(c.name)}</b><small>Toca para ocultar</small></div>`; }
-  else { d.className = "full " + c.color; d.innerHTML = `<div><span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] : TEAM[c.team]}</span><b>${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}<small>Toca para ocultar</small></div>`; }
+  const stamp = `<span class="stamp">Revelación</span>`;
+  if (mode === "color") { d.className = "full " + c.color; d.innerHTML = `<div>${stamp}<span class="lbl">Mi color</span><b>${COLOR[c.color]}</b><small>Toca para ocultar</small></div>`; }
+  else if (mode === "role") { d.className = "full n"; d.innerHTML = `<div>${stamp}<span class="lbl">Mi rol</span><b>${esc(c.name)}</b><small>Toca para ocultar</small></div>`; }
+  else { d.className = "full " + c.color; d.innerHTML = `<div>${stamp}<span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] : TEAM[c.team]}</span><b>${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}<small>Toca para ocultar</small></div>`; }
   d.setAttribute("role", "dialog"); d.tabIndex = 0;
   const opened = Date.now();
   const close = () => { if (Date.now() - opened > 400) d.remove(); }; // evita que el mismo toque la cierre
   d.onclick = close; d.onkeydown = e => { if (["Escape", "Enter", " "].includes(e.key)) close(); };
   document.body.appendChild(d); d.focus();
+}
+// Vista privada: se ve claramente distinta a una revelación, para que no sirva para enseñarla.
+function privateView(c) {
+  const d = document.createElement("div");
+  d.className = "full priv"; d.setAttribute("role", "dialog"); d.tabIndex = 0;
+  d.innerHTML = `<div><span class="stamp">🔒 Vista privada · no es una revelación</span>
+    <span class="lbl">${c.color !== c.team ? "Lealtad: " + COLOR[c.team] + " · carta " + COLOR[c.color].toLowerCase() : TEAM[c.team]}</span>
+    <b class="t-${c.color}">${esc(c.name)}</b>${c.note ? `<p>${esc(c.note)}</p>` : ""}
+    <small>Toca para ocultar · se oculta sola en 20 segundos</small></div>`;
+  const opened = Date.now();
+  const close = () => { if (Date.now() - opened > 400) d.remove(); };
+  d.onclick = close; d.onkeydown = e => { if (["Escape", "Enter", " "].includes(e.key)) close(); };
+  setTimeout(() => d.remove(), 20000);
+  $$(".full").forEach(x => x.remove());
+  document.body.appendChild(d); d.focus();
+}
+// Ventana con botones (Aceptar, Cancelar…).
+function modal(title, body, buttons) {
+  $$(".modal").forEach(x => x.remove());
+  const d = document.createElement("div");
+  d.className = "modal"; d.setAttribute("role", "alertdialog"); d.setAttribute("aria-modal", "true");
+  d.innerHTML = `<div class="box"><h2>${title}</h2><p>${body}</p><div class="row">${buttons.map((b, i) => `<button type="button" data-b="${i}" class="${b.primary ? "primary big" : ""}">${b.label}</button>`).join("")}</div></div>`;
+  $$("[data-b]", d).forEach(el => el.onclick = () => { d.remove(); const f = buttons[+el.dataset.b].fn; if (f) f(); });
+  document.body.appendChild(d); const pb = $(".primary", d); if (pb) pb.focus();
+  return d;
 }
 function inPlayHTML(g) {
   const by = {}; TEAM_ORDER.forEach(t => by[t] = []);
@@ -627,9 +683,10 @@ function playerView() {
     const removable = active.filter(k => (me.acq || []).includes(k) || COND[k]?.psy);
     app().innerHTML = `<div class="stage">
       <div style="display:grid;gap:4px"><span class="eyebrow">Partida ${esc(ps.code)} · Reparto ${game.round}</span><h1 style="font-size:clamp(2rem,9vw,2.6rem)">${esc(me.name)}</h1></div>
-      <button type="button" class="card" id="card" aria-label="Ver u ocultar mi carta">
-        <div class="inner"><div class="face back"><div class="seal"><b>Carta oculta</b><span>Toca para verla tú</span></div></div>${cardFront(c)}</div>
-      </button>
+      <div class="card" aria-hidden="true">
+        <div class="inner"><div class="face back"><div class="seal"><b>Carta oculta</b><span>Usa los botones de abajo</span></div></div></div>
+      </div>
+      <button type="button" class="ghost forgot" id="forgot">🔒 ¿Se te olvidó tu carta?</button>
       <div style="display:grid;gap:8px;width:100%">
         <span class="eyebrow">Mostrar a otra persona</span>
         <div class="reveal">
@@ -652,15 +709,24 @@ function playerView() {
       ${inPlayHTML(game)}
       <button class="ghost" id="leave">Salir de esta pantalla</button>
     </div>`;
-    const card = $("#card");
-    card.onclick = () => card.classList.toggle("flipped");
+    // Aviso de carta nueva (reparto, intercambio o Borracho): solo hay que tocar "Aceptar" y la ve una vez en privado.
+    const seenKey = `${ps.code}|${ps.pid}|${me.round}|${c.id}`, prev = ls.get("rs-seen") || "";
+    if (prev !== seenKey && !$(".modal")) {
+      const changed = prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`);
+      try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {}
+      modal(changed ? "Tu carta cambió" : "¡Tienes carta nueva!",
+        changed ? "Te cambiaron la carta (por un intercambio o porque el Borracho despertó). Mírala en secreto." : `El anfitrión repartió las cartas${game.round > 1 ? " otra vez" : ""}. Mírala en secreto, sin que nadie vea tu pantalla.`,
+        [{ label: "Aceptar y ver mi carta", primary: true, fn: () => { ls.set("rs-seen", seenKey); privateView(c); } }]);
+    }
+    $("#forgot").onclick = () => modal("¿Ver tu carta otra vez?",
+      "Esto es <b>solo para ti</b>, en secreto. La pantalla dirá «Vista privada» y <b>no cuenta como revelación</b>: no se la enseñes a nadie. Para mostrarle algo a otra persona usa los botones «Mostrar a otra persona».",
+      [{ label: "Cancelar" }, { label: "Sí, ver en secreto", primary: true, fn: () => { privateView(c); api.updatePlayer(ps.code, ps.pid, { peeks: (me.peeks || 0) + 1 }); } }]);
     // Si la carta no permite mostrar algo, el botón se ve igual pero no hace nada.
     $$("[data-m]").forEach(b => b.onclick = async () => {
       const m = b.dataset.m;
       if (m === "color" && !showColor) return;
       const now = rulesFor(c, me);
       if (!now.can[m]) return;
-      card.classList.remove("flipped");
       fullScreen(m, c);
       if (m === "full" && now.set.has("paranoico") && !me.paraUsed) await api.updatePlayer(ps.code, ps.pid, { paraUsed: true });
     });
@@ -726,6 +792,7 @@ async function hostSetup(editCode) {
   B.counts = B.counts || {}; B.custom = B.custom || [];
   B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true, pairs: true }, B);
   let templates = [], tplName = "", pin = "", err = "", q = "", sumOpen = false;
+  const expanded = new Set();
   const open = new Set(["a", "r"]);
   const loadT = async () => { try { templates = await api.listTemplates(); } catch (e) { templates = []; } render(); };
 
@@ -740,7 +807,7 @@ async function hostSetup(editCode) {
       const n = B.counts[r.id] || 0, cap = r.id === "azul" || r.id === "rojo" ? 99 : (r.max || 1);
       const tag = r.color !== r.team ? `carta ${COLOR[r.color].toLowerCase()}` : "";
       return `<div class="role ${r.color}${n ? " on" : ""}" data-name="${esc(norm(r.name + " " + COLOR[r.team]))}"><div class="bar"></div>
-      <div><div class="name">${esc(r.name)}${tag ? `<span class="tag">${tag}</span>` : ""}</div>${r.note ? `<div class="note">${esc(r.note)}</div>` : ""}</div>
+      <div class="rinfo" ${r.note ? `data-exp="${esc(r.id)}" role="button" tabindex="0" aria-expanded="${expanded.has(r.id)}"` : ""}><div class="name">${esc(r.name)}${tag ? `<span class="tag">${tag}</span>` : ""}</div>${r.note ? `<div class="note${expanded.has(r.id) ? " open" : ""}">${esc(r.note)}</div>${r.note.length > 90 ? `<span class="more">${expanded.has(r.id) ? "Ver menos ▴" : "Ver más ▾"}</span>` : ""}` : ""}</div>
       <div class="stepper"><button type="button" data-dec="${esc(r.id)}" aria-label="Quitar ${esc(r.name)}" ${n ? "" : "disabled"}>−</button><output>${n}</output><button type="button" data-inc="${esc(r.id)}" aria-label="Agregar ${esc(r.name)}" ${n >= cap ? "disabled" : ""}>+</button></div></div>`;
     };
     const group = t => {
@@ -819,6 +886,9 @@ async function hostSetup(editCode) {
       </section>
     </div>`;
     $("#back").onclick = () => go(editCode ? hostLobby : home);
+    $$("[data-exp]").forEach(el => { const t = () => { const id = el.dataset.exp, open = !expanded.has(id); open ? expanded.add(id) : expanded.delete(id);
+      el.setAttribute("aria-expanded", open); $(".note", el).classList.toggle("open", open); const m = $(".more", el); if (m) m.textContent = open ? "Ver menos ▴" : "Ver más ▾"; };
+      el.onclick = t; el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); t(); } }; });
     $("#sumbar").ontoggle = e => { sumOpen = e.target.open; $(".sum-more").textContent = sumOpen ? "Ocultar" : "Ver"; };
     $$(".teamsec[data-team]").forEach(d => d.ontoggle = () => { d.open ? open.add(d.dataset.team) : open.delete(d.dataset.team); });
     // Si "parejas" está activo, las parejas quedan con el mismo número de cartas.
@@ -916,7 +986,7 @@ function hostLobby() {
       <section class="panel">
         <div class="panel-head"><h2>Jugadores</h2>
           <div class="row">${started ? `<button class="ghost" id="reveal">${reveal ? "Ocultar cartas" : "Ver qué le tocó a cada uno"}</button>` : ""}<span class="count">${n} dentro</span></div></div>
-        ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (reveal ? esc(p.card.name) : "Tiene carta") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
+        ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (reveal ? esc(p.card.name) : "Tiene carta") + (p.peeks ? ` · volvió a ver su carta ${p.peeks} ${p.peeks > 1 ? "veces" : "vez"}` : "") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
         ${started && reveal && (game.buriedCard || game.sober) ? `<p class="small muted">${game.buriedCard ? `Carta enterrada: <b style="color:var(--fg)">${esc(game.buriedCard.name)}</b>. ` : ""}${game.sober ? `Carta sobria del Borracho: <b style="color:var(--fg)">${esc(game.sober.name)}</b>.` : ""}</p>` : ""}
       </section>
       <section class="panel">
@@ -956,7 +1026,7 @@ function hostLobby() {
       const sober = (S.counts.borracho || 0) ? takeAside() : null;
       const buried = S.bury ? takeAside() : null;
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false });
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0 });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
       await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, timer: newTimer(ids.length >= 11 ? 5 : 3) }, patches);
       toast("Cartas repartidas");
