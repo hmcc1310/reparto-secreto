@@ -165,6 +165,19 @@ body.has-timer #lang { top: 66px; }
 .roompanel .plist li .row button { padding: 6px 10px; font-size: .85rem; }
 .hpick { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
 .roomcall { font-size: 1.2rem; margin: 0; }
+#endscreen { position: fixed; inset: 0; z-index: 55; overflow: auto; background: var(--bg); padding: max(70px, env(safe-area-inset-top)) 16px 40px; }
+.endbox { max-width: 460px; margin: 0 auto; display: grid; gap: 16px; }
+.endq { gap: 10px; }
+.endres { display: grid; gap: 12px; }
+.endres h3 { margin: 6px 0 0; font-family: var(--display); text-transform: uppercase; letter-spacing: .04em; }
+.endres .winner { border-radius: var(--r); padding: 18px; color: #fff; text-align: center; background: var(--neutral); }
+.endres .winner.a { background: var(--blue); } .endres .winner.r { background: var(--red); }
+.endres .winner .lbl { font-family: var(--mono); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; opacity: .85; display: block; }
+.endres .winner b { font-family: var(--display); font-size: clamp(1.8rem, 8vw, 2.6rem); text-transform: uppercase; line-height: 1; }
+.endres .me { border: 2px solid; border-radius: var(--r); padding: 12px 14px; display: grid; gap: 2px; }
+.endres .me.w { border-color: var(--ok); } .endres .me.l { border-color: var(--red); }
+.endres .me b { font-size: 1.3rem; }
+.res { font-weight: 700; font-size: .85rem; } .res.w { color: var(--ok); } .res.l { color: var(--red); }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -863,7 +876,38 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     "Sin líder. Rehenes anunciados ✓": "No leader. Hostages announced ✓", "Sin líder. Rehenes: pendientes": "No leader. Hostages: pending",
     "Cada jugador ve su cuarto en su celular. Ahí nombran líder, votan para cambiarlo y el líder anuncia sus rehenes; cuando los dos líderes anuncian, la página cambia de cuarto a los rehenes. Con 👑 pones líder tú y con ⇄ mueves a alguien de cuarto (por ejemplo, por el poder de una carta).": "Each player sees their room on their phone. There they nominate a leader, vote to change it, and the leader announces their hostages; when both leaders have announced, the page moves the hostages. With 👑 you set a leader yourself and with ⇄ you move someone to the other room (for example, because of a card's power).",
     "¿Reacomodar cuartos?": "Shuffle rooms?", "Se reparten otra vez todos los jugadores en dos cuartos al azar y se borran los líderes.": "All players are split again into two random rooms and leaders are cleared.",
-    "Sí, reacomodar": "Yes, shuffle", "Cuartos reacomodados": "Rooms shuffled"
+    "Sí, reacomodar": "Yes, shuffle", "Cuartos reacomodados": "Rooms shuffled",
+    "Antes de revelar: ¿qué equipo crees que ganó?": "Before the reveal: which team do you think won?", "¿Cuál es la carta enterrada?": "What is the buried card?", "¿A quién le disparas?": "Who do you shoot?",
+    "¿Hiciste co-revelación (carta completa) con el Doctor?": "Did you card share with the Doctor?", "¿Hiciste co-revelación (carta completa) con la Enfermera?": "Did you card share with the Nurse?",
+    "¿Hiciste co-revelación (carta completa) con el Presidente?": "Did you card share with the President?", "¿Hiciste co-revelación (carta completa) con el Ingeniero?": "Did you card share with the Engineer?",
+    "¿Hiciste co-revelación (carta completa) con el Mecánico?": "Did you card share with the Tinkerer?", "¿Hiciste co-revelación (carta completa) con la Bomba?": "Did you card share with the Bomber?",
+    "¿Hiciste co-revelación con el Presidente y también con la Bomba?": "Did you card share with the President and also with the Bomber?", "¿El Presidente y la Bomba hicieron co-revelación contigo (los dos)?": "Did both the President and the Bomber card share with you?",
+    "¿Con quién fue tu primera co-revelación o intercambio de color?": "Who was your first card share or color share with?", "Tu objetivo cambió por una condición. ¿Lo cumpliste?": "Your goal changed because of a condition. Did you achieve it?",
+    "¿Cumpliste el objetivo de tu carta?": "Did you achieve your card's goal?", "Sí": "Yes", "No": "No", "Sí, con los dos": "Yes, with both", "Sí, los dos": "Yes, both", "Con nadie": "With nobody",
+    "Reúnanse": "Gather", "Júntense todos en un mismo lugar,": "Everyone gather in one place,", "sin mezclarse": "without mixing",
+    ": el Cuarto 1 de un lado y el Cuarto 2 del otro.": ": Room 1 on one side and Room 2 on the other.", ": el Cuarto 1 de un lado y el Cuarto 2 del otro. Tú vas con el": ": Room 1 on one side and Room 2 on the other. You go with",
+    "Solo tú ves esta pregunta.": "Only you can see this question.", "Listo.": "Done.", "Esperando a que el anfitrión revele los resultados…": "Waiting for the host to reveal the results…",
+    "Resultado": "Result", "¡Ganó el Equipo Azul!": "The Blue Team won!", "¡Ganó el Equipo Rojo!": "The Red Team won!", "¡Ganaste!": "You won!", "Perdiste": "You lost", "Ganó": "Won", "Perdió": "Lost",
+    "Ganó tu equipo.": "Your team won.", "Perdió tu equipo.": "Your team lost.", "Dijiste que cumpliste tu objetivo.": "You said you achieved your goal.", "Dijiste que no cumpliste tu objetivo.": "You said you didn't achieve your goal.",
+    "No disparaste.": "You didn't shoot.", "Según el disparo del Francotirador.": "Based on the Sniper's shot.", "Según tus co-revelaciones.": "Based on your card shares.",
+    "Según si terminaste con el Presidente.": "Based on whether you ended with the President.", "Según si terminaste con la Bomba.": "Based on whether you ended with the Bomber.",
+    "Según si terminaste lejos de la Bomba.": "Based on whether you ended away from the Bomber.", "Según si terminaste lejos del Presidente.": "Based on whether you ended away from the President.",
+    "Según si terminaste sin el Presidente ni la Bomba.": "Based on whether you ended without the President or the Bomber.", "Según si terminaste con la Criada y el Presidente.": "Based on whether you ended with the Maid and the President.",
+    "Según si terminaste con el Mayordomo y el Presidente.": "Based on whether you ended with the Butler and the President.", "Según si terminaste con Julieta y la Bomba.": "Based on whether you ended with Juliet and the Bomber.",
+    "Según si terminaste con Romeo y la Bomba.": "Based on whether you ended with Romeo and the Bomber.", "Según si terminaste con el Presidente sin la Amante.": "Based on whether you ended with the President without the Mistress.",
+    "Según si terminaste con el Presidente sin la Esposa.": "Based on whether you ended with the President without the Wife.", "Según quién murió.": "Based on who died.",
+    "Según dónde terminaron la Bomba y el Presidente.": "Based on where the Bomber and the President ended.", "Ganas si ganó tu primera co-revelación.": "You win if your first share won.",
+    "Ganas si perdió tu primera co-revelación.": "You win if your first share lost.", "No compartiste con nadie.": "You didn't share with anyone.",
+    "Ganó el Tirano nuclear: todos los demás pierden.": "The Nuclear Tyrant won: everyone else loses.", "¡Ganó el Tirano nuclear!": "The Nuclear Tyrant won!",
+    "La Bomba murió antes de explotar.": "The Bomber died before exploding.", "La Bomba no hizo co-revelación con el Ingeniero: la bomba no explotó.": "The Bomber didn't card share with the Engineer: the bomb didn't go off.",
+    "La Bomba explotó en el mismo cuarto que el Presidente.": "The bomb went off in the same room as the President.", "La Bomba explotó en el otro cuarto: el Presidente sobrevivió.": "The bomb went off in the other room: the President survived.",
+    "El Presidente no hizo co-revelación con el Doctor: le falló el corazón.": "The President didn't card share with the Doctor: their heart failed.",
+    "Final del juego": "End of the game", "Después del último intercambio de rehenes, toca": "After the last hostage exchange, tap", "Iniciar el final": "Start the ending",
+    ": a todos les pide reunirse sin mezclar los cuartos, y a los que deben anunciar algo (Jugador, Detective, Francotirador, Presidente y Doctor, Bomba e Ingeniero…) les pregunta en su celular.": ": everyone is asked to gather without mixing rooms, and those who must announce something (Gambler, Private Investigator, Sniper, President and Doctor, Bomber and Engineer…) are asked on their phone.",
+    "Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)": "End now with a winner (Dr. Boom, Tuesday Knight, another version of the game…)", "Ganó el Equipo Azul": "The Blue Team won", "Ganó el Equipo Rojo": "The Red Team won",
+    "Faltan por responder:": "Still to answer:", "Ya respondieron todos.": "Everyone has answered.", "Revelar resultados": "Reveal results", "Cancelar el final": "Cancel the ending",
+    "No encuentro Presidente y Bomba: elige quién ganó.": "I can't find a President and a Bomber: choose who won.", "Ocultar resultados": "Hide results", "¿Revelar ya?": "Reveal now?",
+    "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».": "Some answers are still missing. If you reveal now, they count as “no”.", "Esperar": "Wait", "Revelar": "Reveal"
   });
   I18N_RE.push(
     [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
@@ -878,6 +922,11 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     [/^¡Ve al Cuarto (\d)!$/, "Go to Room $1!"], [/^(.+) te ofrece el liderazgo del Cuarto (\d)\.$/, "$1 offers you the leadership of Room $2."],
     [/^(.+) → Cuarto (\d)$/, "$1 → Room $2"], [/^Hacer líder a (.+)$/, "Make $1 leader"], [/^Mover a (.+) al otro cuarto$/, "Move $1 to the other room"],
     [/^Cuarto (\d) · (.+)$/, (_, r, rest) => `Room ${r} · ${tr(rest)}`], [/^Cuarto (\d)$/, "Room $1"], [/^👑 (.+)$/, (_, n) => "👑 " + n],
+    [/^(.+) \(Jugador\) apostó por el (Equipo Azul|Equipo Rojo)\.$/, (_, n, t) => `${n} (Gambler) bet on the ${team(t)}.`],
+    [/^(.+) \(Detective\) dijo que la carta enterrada es: (.+)\.$/, (_, n, c) => `${n} (Private Investigator) said the buried card is: ${cn(c)}.`],
+    [/^El Francotirador le disparó a (.+?)( \(muere\))?\.$/, (_, n, d) => `The Sniper shot ${n}${d ? " (dies)" : ""}.`],
+    [/^Apostaste por el (Equipo Azul|Equipo Rojo)\.$/, (_, t) => `You bet on the ${team(t)}.`], [/^Dijiste: (.+)\.$/, (_, c) => `You said: ${c === "nada" ? "nothing" : cn(c)}.`],
+    [/^Le disparaste a (.+)\.$/, "You shot $1."],
     [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
     [/^(\d+) elegidas$/, "$1 selected"],
     [/^(Equipo Azul|Equipo Rojo|Lealtad \S+) · (\d+) cartas$/, (_, t, n) => `${team(t)} · ${pl(n, "card", "cards")}`],
@@ -1014,7 +1063,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 17;
+const APP_VERSION = 18;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1279,6 +1328,117 @@ function inPlayHTML(g) {
     ${g.buried ? `<p class="muted small">Hay ${g.buried} carta enterrada: está en la lista pero nadie la tiene.</p>` : ""}
     ${g.sober ? `<p class="muted small">Una carta está apartada para el Borracho.</p>` : ""}</section>`;
 }
+// ---------- final automático ----------
+// game.endPhase: "pre" (preguntas antes de revelar) → "done" (resultados en game.result). Respuestas en player.endAns.
+const holderOf = (list, id) => list.find(p => p.card && p.card.id === id) || null;
+function endRoles(game, players) {
+  const list = players.filter(p => p.card && p.round === game.round);
+  const pres = holderOf(list, "presidente") || holderOf(list, "hija-del-presidente");
+  const bomb = holderOf(list, "bomba") || holderOf(list, "martir");
+  const doc = holderOf(list, "doctor") || holderOf(list, "enfermera");
+  const eng = holderOf(list, "ingeniero") || holderOf(list, "mecanico");
+  return { list, pres, bomb, doc, eng };
+}
+// Cartas grises que la página resuelve sola (por cuarto o por las respuestas).
+const AUTO_GREY = ["jugador", "detective", "francotirador", "objetivo", "senuelo", "mi6", "tirano-nuclear", "clon", "robot", "becaria", "victima", "superviviente", "rival", "reina", "mayordomo", "criada", "romeo", "julieta", "esposa", "amante", "ahab", "moby", "bomba-bot"];
+const SELF_COND = ["enamorado", "odio", "zombi"];
+function endQuestions(game, players, me) {
+  if (!me.card || me.round !== game.round) return [];
+  const R = endRoles(game, players), id = me.card.id, qs = [];
+  const others = R.list.filter(p => p.id !== me.id).map(p => [p.id, p.name]);
+  if (id === "jugador") qs.push({ k: "gamble", q: "Antes de revelar: ¿qué equipo crees que ganó?", opts: [["a", "Equipo Azul"], ["r", "Equipo Rojo"]] });
+  if (id === "detective") qs.push({ k: "buried", q: "¿Cuál es la carta enterrada?", opts: [...new Set((game.inPlay || []).map(x => x.name))].map(n => [n, n]) });
+  if (id === "francotirador") qs.push({ k: "shot", q: "¿A quién le disparas?", opts: others });
+  if (R.pres && R.doc && me.id === R.pres.id) qs.push({ k: "metDoc", q: `¿Hiciste co-revelación (carta completa) con ${R.doc.card.id === "doctor" ? "el Doctor" : "la Enfermera"}?`, opts: [["y", "Sí"], ["n", "No"]] });
+  if (R.pres && R.doc && me.id === R.doc.id) qs.push({ k: "metPres", q: "¿Hiciste co-revelación (carta completa) con el Presidente?", opts: [["y", "Sí"], ["n", "No"]] });
+  if (R.bomb && R.eng && me.id === R.bomb.id) qs.push({ k: "metEng", q: `¿Hiciste co-revelación (carta completa) con ${R.eng.card.id === "ingeniero" ? "el Ingeniero" : "el Mecánico"}?`, opts: [["y", "Sí"], ["n", "No"]] });
+  if (R.bomb && R.eng && me.id === R.eng.id) qs.push({ k: "metBomb", q: "¿Hiciste co-revelación (carta completa) con la Bomba?", opts: [["y", "Sí"], ["n", "No"]] });
+  if (id === "mi6") qs.push({ k: "mi6", q: "¿Hiciste co-revelación con el Presidente y también con la Bomba?", opts: [["y", "Sí, con los dos"], ["n", "No"]] });
+  if (id === "tirano-nuclear") qs.push({ k: "tyrant", q: "¿El Presidente y la Bomba hicieron co-revelación contigo (los dos)?", opts: [["y", "Sí, los dos"], ["n", "No"]] });
+  if (id === "clon" || id === "robot") qs.push({ k: "first", q: "¿Con quién fue tu primera co-revelación o intercambio de color?", opts: [["", "Con nadie"], ...others] });
+  const selfCond = (me.acq || []).some(k => SELF_COND.includes(k));
+  if (selfCond || (!["a", "r"].includes(me.card.team) && !AUTO_GREY.includes(id))) qs.push({ k: "self", q: selfCond ? "Tu objetivo cambió por una condición. ¿Lo cumpliste?" : "¿Cumpliste el objetivo de tu carta?", opts: [["y", "Sí"], ["n", "No"]], note: me.card.note });
+  return qs;
+}
+function computeResult(game, players, manual) {
+  const R = endRoles(game, players), A = p => (p && p.endAns) || {};
+  const roomOfP = p => p ? p.room : null, same = (a, b) => a && b && roomOfP(a) === roomOfP(b);
+  const sniper = holderOf(R.list, "francotirador"), shotP = sniper ? R.list.find(p => p.id === A(sniper).shot) : null;
+  const dead = new Set(), lines = [];
+  const shotSafe = shotP && ["objetivo", "senuelo"].includes(shotP.card.id);
+  if (shotP && !shotSafe) dead.add(shotP.id);
+  let winner = manual || null;
+  if (!winner && R.pres && R.bomb) {
+    const docReq = !!R.doc, docMet = docReq && A(R.pres).metDoc === "y" && A(R.doc).metPres === "y";
+    const engReq = !!R.eng, engMet = engReq && A(R.bomb).metEng === "y" && A(R.eng).metBomb === "y";
+    const bomberShot = dead.has(R.bomb.id);
+    const bombWorks = !bomberShot && (!engReq || engMet);
+    if (bombWorks) R.list.filter(p => same(p, R.bomb)).forEach(p => dead.add(p.id));
+    const heart = docReq && !docMet;
+    winner = (heart || dead.has(R.pres.id)) ? "r" : "a";
+    if (bomberShot) lines.push("La Bomba murió antes de explotar.");
+    else if (engReq && !engMet) lines.push("La Bomba no hizo co-revelación con el Ingeniero: la bomba no explotó.");
+    else lines.push(same(R.pres, R.bomb) ? "La Bomba explotó en el mismo cuarto que el Presidente." : "La Bomba explotó en el otro cuarto: el Presidente sobrevivió.");
+    if (heart) lines.push("El Presidente no hizo co-revelación con el Doctor: le falló el corazón.");
+  }
+  if (shotP) lines.push(`El Francotirador le disparó a ${shotP.name}${shotSafe ? "" : " (muere)"}.`);
+  if (!winner) winner = "?";
+  const res = {}, win = (p, w, why) => res[p.id] = { win: !!w, why };
+  R.list.forEach(p => {
+    const id = p.card.id, a = A(p);
+    if (a.self) return win(p, a.self === "y", a.self === "y" ? "Dijiste que cumpliste tu objetivo." : "Dijiste que no cumpliste tu objetivo.");
+    if (p.card.team === "a" || p.card.team === "r") return win(p, winner === p.card.team, winner === p.card.team ? "Ganó tu equipo." : "Perdió tu equipo.");
+    const pr = R.pres, bo = R.bomb, h = cid => holderOf(R.list, cid);
+    switch (id) {
+      case "jugador": return win(p, a.gamble === winner, `Apostaste por el ${a.gamble === "a" ? "Equipo Azul" : "Equipo Rojo"}.`);
+      case "detective": return win(p, game.buriedCard && a.buried === game.buriedCard.name, `Dijiste: ${a.buried || "nada"}.`);
+      case "francotirador": return win(p, shotP && shotP.card.id === "objetivo", shotP ? `Le disparaste a ${shotP.name}.` : "No disparaste.");
+      case "objetivo": return win(p, !shotP || shotP.id !== p.id, "Según el disparo del Francotirador.");
+      case "senuelo": return win(p, shotP && shotP.id === p.id, "Según el disparo del Francotirador.");
+      case "mi6": return win(p, a.mi6 === "y", "Según tus co-revelaciones.");
+      case "becaria": return win(p, same(p, pr), "Según si terminaste con el Presidente.");
+      case "victima": return win(p, same(p, bo), "Según si terminaste con la Bomba.");
+      case "superviviente": return win(p, !same(p, bo), "Según si terminaste lejos de la Bomba.");
+      case "rival": return win(p, !same(p, pr), "Según si terminaste lejos del Presidente.");
+      case "reina": return win(p, !same(p, pr) && !same(p, bo), "Según si terminaste sin el Presidente ni la Bomba.");
+      case "mayordomo": return win(p, same(p, h("criada")) && same(p, pr), "Según si terminaste con la Criada y el Presidente.");
+      case "criada": return win(p, same(p, h("mayordomo")) && same(p, pr), "Según si terminaste con el Mayordomo y el Presidente.");
+      case "romeo": return win(p, same(p, h("julieta")) && same(p, bo), "Según si terminaste con Julieta y la Bomba.");
+      case "julieta": return win(p, same(p, h("romeo")) && same(p, bo), "Según si terminaste con Romeo y la Bomba.");
+      case "esposa": return win(p, same(p, pr) && !same(h("amante"), pr), "Según si terminaste con el Presidente sin la Amante.");
+      case "amante": return win(p, same(p, pr) && !same(h("esposa"), pr), "Según si terminaste con el Presidente sin la Esposa.");
+      case "ahab": { const m = h("moby"); return win(p, m && dead.has(m.id) && !dead.has(p.id), "Según quién murió."); }
+      case "moby": { const m = h("ahab"); return win(p, m && dead.has(m.id) && !dead.has(p.id), "Según quién murió."); }
+      case "bomba-bot": return win(p, same(p, bo) && !same(pr, bo), "Según dónde terminaron la Bomba y el Presidente.");
+      case "tirano-nuclear": return win(p, a.tyrant !== "y", "Según tus co-revelaciones.");
+    }
+  });
+  // Clon y Robot dependen del resultado de otro jugador.
+  R.list.forEach(p => {
+    const a = A(p), t = res[a.first];
+    if (p.card.id === "clon" && !a.self) res[p.id] = { win: !!(t && t.win), why: a.first ? "Ganas si ganó tu primera co-revelación." : "No compartiste con nadie." };
+    if (p.card.id === "robot" && !a.self) res[p.id] = { win: !!(t && !t.win), why: a.first ? "Ganas si perdió tu primera co-revelación." : "No compartiste con nadie." };
+  });
+  const tyr = holderOf(R.list, "tirano-nuclear");
+  if (tyr && res[tyr.id] && res[tyr.id].win) { Object.keys(res).forEach(k => { if (k !== tyr.id) res[k] = { win: false, why: "Ganó el Tirano nuclear: todos los demás pierden." }; }); lines.push("¡Ganó el Tirano nuclear!"); }
+  const ann = [];
+  R.list.forEach(p => { const a = A(p); if (p.card.id === "jugador" && a.gamble) ann.push(`${p.name} (Jugador) apostó por el ${a.gamble === "a" ? "Equipo Azul" : "Equipo Rojo"}.`); if (p.card.id === "detective" && a.buried) ann.push(`${p.name} (Detective) dijo que la carta enterrada es: ${a.buried}.`); });
+  return { winner, lines, ann, dead: [...dead], res, presId: R.pres?.id || null, bombId: R.bomb?.id || null, manual: !!manual };
+}
+function resultHTML(game, players, meId) {
+  const r = game.result; if (!r) return "";
+  const list = players.filter(p => p.card && p.round === game.round);
+  const mine = meId && r.res[meId];
+  const row = p => { const x = r.res[p.id]; return `<li><span class="dot ${p.card.color}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}${r.dead.includes(p.id) ? " ☠" : ""}${p.id === meId ? " (tú)" : ""}</div><div class="rl">${esc(p.card.name)}</div></div><span class="res ${x ? (x.win ? "w" : "l") : ""}">${x ? (x.win ? "Ganó" : "Perdió") : ""}</span></li>`; };
+  return `<div class="endres">
+    <div class="winner ${r.winner}"><span class="lbl">Resultado</span><b>${r.winner === "a" ? "¡Ganó el Equipo Azul!" : r.winner === "r" ? "¡Ganó el Equipo Rojo!" : "Fin del juego"}</b></div>
+    ${mine ? `<div class="me ${mine.win ? "w" : "l"}"><b>${mine.win ? "¡Ganaste!" : "Perdiste"}</b><span>${esc(mine.why)}</span></div>` : ""}
+    ${r.lines.length || r.ann.length ? `<div class="notes">${r.ann.concat(r.lines).map(x => `<span>${esc(x)}</span>`).join("")}</div>` : ""}
+    ${ROOMS.map(rm => `<h3>Cuarto ${rm}</h3><ul class="plist">${list.filter(p => p.room === rm).map(row).join("")}</ul>`).join("")}
+    ${list.some(p => !p.room) ? `<ul class="plist">${list.filter(p => !p.room).map(row).join("")}</ul>` : ""}
+    ${game.buriedCard ? `<p class="small">Carta enterrada: <b>${esc(game.buriedCard.name)}</b></p>` : ""}
+  </div>`;
+}
 // ---------- cuartos y líderes ----------
 // Jugador: room "1"|"2", vote (a quién apoya como líder). Partida: leader1/2, picks1/2 (rehenes anunciados), offer1/2 (ceder liderazgo).
 const ROOMS = ["1", "2"];
@@ -1474,9 +1634,34 @@ function playerView() {
     $("#leave").onclick = () => go(home);
   };
   app().innerHTML = `<div class="narrow"><div class="panel wait"><div class="pulse"></div><p>Cargando tu partida…</p></div></div>`;
-  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); }));
-  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); }));
-  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); }));
+  // Pantalla del final: reunirse, responder antes de revelar y ver resultados.
+  let endKeyLast = "", endHidden = "";
+  const renderEnd = () => {
+    let ov = $("#endscreen");
+    if (!game || !me || !game.endPhase) { if (ov) ov.remove(); endKeyLast = ""; return; }
+    const qs = endQuestions(game, players, me), ans = me.endAns || {};
+    const k = JSON.stringify([game.endPhase, game.result, ans, qs.map(q => q.k), players.map(p => [p.id, p.room, p.card?.id])]);
+    if (k === endKeyLast && ov) return; endKeyLast = k;
+    if (!ov) { ov = document.createElement("div"); ov.id = "endscreen"; ov.setAttribute("role", "dialog"); document.body.appendChild(ov); try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {} }
+    if (game.endPhase === "done") {
+      if (endHidden === JSON.stringify(game.result)) { ov.remove(); return; }
+      ov.innerHTML = `<div class="endbox">${resultHTML(game, players, me.id)}<button type="button" class="ghost" id="endClose">Cerrar</button></div>`;
+      $("#endClose", ov).onclick = () => { endHidden = JSON.stringify(game.result); ov.remove(); };
+      return;
+    }
+    const pending = qs.filter(q => ans[q.k] == null);
+    ov.innerHTML = `<div class="endbox">
+      <span class="eyebrow">Fin del juego</span><h1>Reúnanse</h1>
+      <p>Júntense todos en un mismo lugar, <b>sin mezclarse</b>: el Cuarto 1 de un lado y el Cuarto 2 del otro.${me.room ? ` Tú vas con el <b>Cuarto ${esc(me.room)}</b>.` : ""}</p>
+      ${pending.length ? pending.slice(0, 1).map(q => `<div class="panel endq"><b>${esc(q.q)}</b>${q.note ? `<p class="muted small">${esc(q.note)}</p>` : ""}<div class="names">${q.opts.map(([v, l]) => `<button type="button" data-ans="${esc(q.k)}" data-v="${esc(v)}">${esc(l)}</button>`).join("")}</div><p class="muted small">Solo tú ves esta pregunta.</p></div>`).join("")
+        : `<div class="panel wait"><div class="pulse"></div><p><b>Listo.</b> Esperando a que el anfitrión revele los resultados…</p></div>`}
+    </div>`;
+    $$("[data-ans]", ov).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { endAns: { ...(me.endAns || {}), [b.dataset.ans]: b.dataset.v } }));
+  };
+  unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
+  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderEnd(); }));
+  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderEnd(); }));
+  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderEnd(); }));
 }
 
 // ---------- mazo ----------
@@ -1689,6 +1874,8 @@ function hostLobby() {
     const withCard = list.filter(p => p.card && p.round === game.round);
     const url = location.href.split("#")[0];
     const T = game.timer || newTimer("basic", n);
+    const R0 = endRoles(game, list);
+    const pend = game.endPhase === "pre" ? R0.list.filter(p => endQuestions(game, list, p).some(q => (p.endAns || {})[q.k] == null)) : [];
     app().innerHTML = `<div class="wrap">
       <button class="ghost" id="home" style="justify-self:start">← Inicio</button>
       ${demoNote()}
@@ -1730,6 +1917,16 @@ function hostLobby() {
         ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (p.room ? `Cuarto ${p.room} · ` : "") + (reveal ? esc(p.card.name) : "Tiene carta") + (p.peeks ? ` · volvió a ver su carta ${p.peeks} ${p.peeks > 1 ? "veces" : "vez"}` : "") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
         ${started && reveal && (game.buriedCard || game.sober) ? `<p class="small muted">${game.buriedCard ? `Carta enterrada: <b style="color:var(--fg)">${esc(game.buriedCard.name)}</b>. ` : ""}${game.sober ? `Carta sobria del Borracho: <b style="color:var(--fg)">${esc(game.sober.name)}</b>.` : ""}</p>` : ""}
       </section>
+      ${started ? `<section class="panel endpanel">
+        <div class="panel-head"><h2>Final del juego</h2></div>
+        ${!game.endPhase ? `<p class="small">Después del último intercambio de rehenes, toca <b>Iniciar el final</b>: a todos les pide reunirse sin mezclar los cuartos, y a los que deben anunciar algo (Jugador, Detective, Francotirador, Presidente y Doctor, Bomba e Ingeniero…) les pregunta en su celular.</p>
+          <button class="primary big" id="endStart">Iniciar el final</button>
+          <details><summary class="small">Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)</summary><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div></details>`
+        : game.endPhase === "pre" ? `${pend.length ? `<p class="small">Faltan por responder: <b>${pend.map(p => esc(p.name)).join(", ")}</b></p>` : `<p class="small">Ya respondieron todos.</p>`}
+          <div class="row"><button class="primary big" id="endReveal">Revelar resultados</button><button class="ghost" id="endCancel">Cancelar el final</button></div>
+          ${R0.pres && R0.bomb ? "" : `<p class="small" style="color:var(--warn)">No encuentro Presidente y Bomba: elige quién ganó.</p><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div>`}`
+        : `${resultHTML(game, list, null)}<button class="ghost" id="endCancel">Ocultar resultados</button>`}
+      </section>` : ""}
       <section class="panel">
         <div class="panel-head"><h2>Mazo</h2><button id="edit">Cambiar cartas</button></div>
         <div class="row"><span class="pill">${n} jugadores</span><span class="pill">${deck.length} cartas</span><span class="pill ${cls}">${st}</span></div>
@@ -1769,9 +1966,9 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const order = shuffle(ids), half = Math.ceil(ids.length / 2);
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null });
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
@@ -1782,6 +1979,11 @@ function hostLobby() {
     const tr = $("#tReset"); if (tr) tr.onclick = () => setT({ state: "idle", endsAt: null, left: T.mins[T.r - 1] * 60 });
     const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(e.target.value, n) });
     if (started && game.picks1 && game.picks2) doExchange(code, game, list);
+    const es = $("#endStart"); if (es) es.onclick = () => api.updateGame(code, { endPhase: "pre", result: null });
+    const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual) });
+    const er = $("#endReveal"); if (er) er.onclick = () => pend.length ? modal("¿Revelar ya?", "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».", [{ label: "Esperar" }, { label: "Revelar", primary: true, fn: () => doReveal() }]) : doReveal();
+    $$("[data-force]").forEach(b => b.onclick = () => doReveal(b.dataset.force));
+    const ec = $("#endCancel"); if (ec) ec.onclick = () => api.updateGame(code, { endPhase: null, result: null });
     $$("[data-lead]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.lead); setLeader(code, game, list, p.room, p.id); });
     $$("[data-move]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.move); const to = otherRoom(p.room);
       const gp = {}; if (game["leader" + p.room] === p.id) gp["leader" + p.room] = null;
