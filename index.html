@@ -340,9 +340,10 @@ const COND = {
 const ACQUIRABLE = ["timido", "discreto", "imprudente", "maldito", "enamorado", "odio", "zombi"];
 const LINK_NAMES = { ahab: ["ahab", "moby"], mayordomo: ["mayordomo", "criada"], romeo: ["romeo", "julieta"], esposa: ["esposa", "amante"], sniper: ["francotirador", "objetivo", "senuelo"] };
 // Parejas azul/roja: al agregar o quitar una, se agrega o quita la otra.
+const EXTRA_CATALOG = [], EXTRA_EN = {}, EXTRA_COND = {}, EXTRA_PAIRS = [], EXTRA_LINKS = {}; /*EXTRA_DATA*/
 const PAIRS = (() => {
   const m = {}, link = (x, y) => { m[x] = [y]; m[y] = [x]; };
-  [["presidente", "bomba"], ["doctor", "ingeniero"], ["enfermera", "mecanico"], ["hija-del-presidente", "martir"], ["espia-azul", "espia-rojo"], ["invencible", "inmunologo"], ["caballero-martes", "dr-boom"], ["eris", "cupido"]].forEach(([x, y]) => link(x, y));
+  [["presidente", "bomba"], ["doctor", "ingeniero"], ["enfermera", "mecanico"], ["hija-del-presidente", "martir"], ["espia-azul", "espia-rojo"], ["invencible", "inmunologo"], ["caballero-martes", "dr-boom"], ["eris", "cupido"]].concat(EXTRA_PAIRS).forEach(([x, y]) => link(x, y));
   CATALOG.forEach(r => { if (r.id.endsWith("-a")) { const o = r.id.slice(0, -2) + "-r"; if (CATALOG.some(c => c.id === o)) link(r.id, o); } });
   Object.values(LINK_NAMES).forEach(g => g.forEach(id => m[id] = g.filter(x => x !== id)));
   return m;
@@ -632,10 +633,12 @@ const EN_TPL = {
     "no cuenta como revelación": "it doesn't count as a reveal", ": no se la enseñes a nadie. Para mostrarle algo a otra persona usa los botones «Mostrar a otra persona».": ": don't show it to anyone. To show something to another person, use the “Show another person” buttons.",
     "Sí, ver en secreto": "Yes, view in secret", "Revelación": "Reveal", "Mi color": "My color", "Mi rol": "My role", "Toca para ocultar": "Tap to hide",
     "Sin conexión con la base de datos": "No connection to the database", "Hay una versión nueva de la página.": "There's a new version of the page.", "Actualizar": "Update",
-    "Equipo Azul": "Blue Team", "Equipo Rojo": "Red Team"
+    "Equipo Azul": "Blue Team", "Equipo Rojo": "Red Team",
+    "Mostrar personajes extra": "Show extra characters"
   });
   I18N_RE.push(
     [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
+    [/^\((\d+) cartas más de la guía ampliada: Alienígena, Vampiro, Ninja, Rey y Dragón…\)$/, "($1 more cards from the extended guide: Alien, Vampire, Ninja, King and Dragon…)"],
     [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
     [/^(\d+) elegidas$/, "$1 selected"],
     [/^(Equipo Azul|Equipo Rojo|Lealtad \S+) · (\d+) cartas$/, (_, t, n) => `${team(t)} · ${pl(n, "card", "cards")}`],
@@ -984,6 +987,7 @@ function rulesFor(card, me) {
   if (set.has("timido")) only([]);
   if (set.has("discreto")) only(["color"]);
   if (set.has("astuto")) only(["full"]);
+  if (set.has("exhibicionista")) only(["full"]);
   if (set.has("paranoico")) { only(["full"]); if (me.paraUsed) can.full = false; }
   return { set, can, immune };
 }
@@ -1175,6 +1179,7 @@ async function hostSetup(editCode) {
   B = Object.assign({ autofill: true, bury: false, colorRule: "auto", gamblerOdd: true, pairs: true }, B);
   let templates = [], tplName = "", pin = "", err = "", q = "", sumOpen = false;
   const expanded = new Set();
+  let showExtra = !!ls.get("rs-showextra");
   const open = new Set(["a", "r"]);
   const loadT = async () => { try { templates = await api.listTemplates(); } catch (e) { templates = []; } render(); };
 
@@ -1194,7 +1199,7 @@ async function hostSetup(editCode) {
       <div class="stepper"><button type="button" data-dec="${esc(r.id)}" aria-label="Quitar ${esc(r.name)}" ${n ? "" : "disabled"}>−</button><output>${n}</output><button type="button" data-inc="${esc(r.id)}" aria-label="Agregar ${esc(r.name)}" ${n >= cap ? "disabled" : ""}>+</button></div></div>`;
     };
     const group = t => {
-      const l = allRoles(B).filter(r => r.team === t);
+      const l = allRoles(B).filter(r => r.team === t && (!r.extra || showExtra || B.counts[r.id]));
       if (!l.length) return "";
       return `<details class="teamsec" data-team="${t}" ${open.has(t) ? "open" : ""}><summary><span class="team-label"><span class="dot ${t}"></span>${t === "a" || t === "r" ? TEAM[t] : "Lealtad " + COLOR[t].toLowerCase()} · ${l.length} cartas</span><span class="count">${tc[t]} elegidas</span></summary><div class="deck">${l.map(roleCard).join("")}</div></details>`;
     };
@@ -1238,6 +1243,7 @@ async function hostSetup(editCode) {
       <section class="panel">
         <div class="panel-head"><h2>Cartas</h2><span class="count">${deck.length} elegidas</span></div>
         ${W.w.length || W.i.length ? `<div class="notes">${W.w.map(x => `<span class="w">${esc(x)}</span>`).join("")}${W.i.map(x => `<span class="i">${esc(x)}</span>`).join("")}</div>` : ""}
+        <label class="check"><input type="checkbox" id="showExtra" ${showExtra ? "checked" : ""}><span>Mostrar personajes extra <span class="muted small">(${EXTRA_CATALOG.length} cartas más de la guía ampliada: Alienígena, Vampiro, Ninja, Rey y Dragón…)</span></span></label>
         <input type="search" id="q" placeholder="Buscar carta por nombre…" value="${esc(q)}" aria-label="Buscar carta">
         ${TEAM_ORDER.map(group).join("")}
         <details class="teamsec"><summary><span class="team-label">Agregar un personaje que no está en la lista</span></summary>
@@ -1293,6 +1299,7 @@ async function hostSetup(editCode) {
     $("#tplName").oninput = e => tplName = e.target.value;
     $("#saveTpl").onsubmit = async e => { e.preventDefault(); const n = tplName.trim(); if (!n) { toast("Escribe un nombre para la plantilla"); return; } await api.saveTemplate({ name: n, counts: B.counts, custom: B.custom, autofill: B.autofill, bury: B.bury, colorRule: B.colorRule, gamblerOdd: B.gamblerOdd }); tplName = ""; toast("Plantilla guardada"); loadT(); };
     $("#q").oninput = e => { q = e.target.value; applyFilter(); };
+    $("#showExtra").onchange = e => { showExtra = e.target.checked; ls.set("rs-showextra", showExtra); keepScroll(render); };
     $("#addCustom").onsubmit = e => { e.preventDefault(); const name = $("#cName").value.trim(); if (!name) return; const id = "c" + rid(6); const team = $("#cTeam").value; B.custom.push({ id, name, team, color: $("#cColor").value || team, note: $("#cNote").value.trim(), max: 9 }); B.counts[id] = 1; render(); };
     $$("[data-delc]").forEach(b => b.onclick = () => { const id = b.dataset.delc; B.custom = B.custom.filter(c => c.id !== id); delete B.counts[id]; render(); });
     if (editCode) {
