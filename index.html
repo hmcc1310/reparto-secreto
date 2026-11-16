@@ -422,8 +422,8 @@ const EN_CARDS = {
   "clon": { "name": "Clone", "note": "Your result depends on the first player you card share or color share with. You win if that player wins. If you never share with anyone, you lose. If you and Robot share with each other first, you both lose." },
   "payaso-a": { "name": "Clown", "note": "This is an acting role. Do your best to smile the whole time. You keep your team's goal." },
   "payaso-r": { "name": "Clown", "note": "This is an acting role. Do your best to smile the whole time. You keep your team's goal." },
-  "estafador-a": { "name": "Conman", "note": "When someone agrees to color share with you, privately reveal your whole card and demand that they also privately reveal to you. The power turns the color deal into two private reveals. It does not count as a card share for other powers." },
-  "estafador-r": { "name": "Conman", "note": "When someone agrees to color share with you, privately reveal your whole card and demand that they also privately reveal to you. The power turns the color deal into two private reveals. It does not count as a card share for other powers." },
+  "estafador-a": { "name": "Bully", "note": "When someone agrees to color share with you, privately reveal your whole card and demand that they also privately reveal to you. The power turns the color deal into two private reveals. It does not count as a card share for other powers." },
+  "estafador-r": { "name": "Bully", "note": "When someone agrees to color share with you, privately reveal your whole card and demand that they also privately reveal to you. The power turns the color deal into two private reveals. It does not count as a card share for other powers." },
   "discreto-a": { "name": "Coy Boy", "note": "You start with the “coy” condition. You may only color share voluntarily. The Psychologist can remove the condition. “Foolish” and “coy” cancel each other out." },
   "discreto-r": { "name": "Coy Boy", "note": "You start with the “coy” condition. You may only color share voluntarily. The Psychologist can remove the condition. “Foolish” and “coy” cancel each other out." },
   "criminal-a": { "name": "Criminal", "note": "Anyone who card shares with you gains the “shy” condition and from then on cannot voluntarily show any part of their card. The Psychologist can remove the condition. “Shy” and “foolish” cancel each other out." },
@@ -473,7 +473,7 @@ const EN_CARDS = {
   "paranoico-r": { "name": "Paranoid", "note": "You start “paranoid”. You may only card share, and you get one voluntary share per game. The Psychologist can remove the condition. “Foolish” and “paranoid” cancel out." },
   "presidente": { "name": "President", "note": "You are the main blue character. Your team wins if you survive and it meets any additional requirement in play. In the basic game, try to end in a different room from the Bomber." },
   "hija-del-presidente": { "name": "President's Daughter", "note": "You are the President's backup when playing with a buried card. If the President was buried, you take on their role and must survive. If the Doctor is in play, you must also share with them. If the President is in play, you keep the normal blue goal. Dr. Boom does not trigger with you." },
-  "detective": { "name": "Private Eye", "note": "Play only if there is a buried card. After the last exchange and before everyone reveals, announce the exact identity of the buried card. If you are right, you win." },
+  "detective": { "name": "Private Investigator", "note": "Play only if there is a buried card. After the last exchange and before everyone reveals, announce the exact identity of the buried card. If you are right, you win." },
   "psicologo-a": { "name": "Psychologist", "note": "Privately reveal your card to someone with a psychological condition, such as “shy”, “coy” or “paranoid”. If that player immediately card shares with you, you remove that condition. This power allows the card share needed to treat the Shy Guy or Coy Boy." },
   "psicologo-r": { "name": "Psychologist", "note": "Privately reveal your card to someone with a psychological condition, such as “shy”, “coy” or “paranoid”. If that player immediately card shares with you, you remove that condition. This power allows the card share needed to treat the Shy Guy or Coy Boy." },
   "reina": { "name": "Queen", "note": "You win if at the end you are in a room with neither the President nor the Bomber. In a two-room game, both must end together in the other room." },
@@ -486,8 +486,8 @@ const EN_CARDS = {
   "timido-a": { "name": "Shy Guy", "note": "You start “shy”. You cannot voluntarily show your card or its color. The Psychologist can give you an immediate card share to remove the condition. “Shy” and “foolish” cancel out." },
   "timido-r": { "name": "Shy Guy", "note": "You start “shy”. You cannot voluntarily show your card or its color. The Psychologist can give you an immediate card share to remove the condition. “Shy” and “foolish” cancel out." },
   "francotirador": { "name": "Sniper", "note": "After the last exchange, before cards are revealed, publicly announce who you shoot. Play with the Target and the Decoy." },
-  "espia-azul": { "name": "Blue Spy", "note": "Your real team is Blue but your card looks red. If you show only the color, you seem to be on the other team. If you show the whole card, your loyalty is revealed. You win with the Blue Team." },
-  "espia-rojo": { "name": "Red Spy", "note": "Your real team is Red but your card looks blue. If you show only the color, you seem to be on the other team. If you show the whole card, your loyalty is revealed. You win with the Red Team." },
+  "espia-azul": { "name": "Spy", "note": "Your real team is Blue but your card looks red. If you show only the color, you seem to be on the other team. If you show the whole card, your loyalty is revealed. You win with the Blue Team." },
+  "espia-rojo": { "name": "Spy", "note": "Your real team is Red but your card looks blue. If you show only the color, you seem to be on the other team. If you show the whole card, your loyalty is revealed. You win with the Red Team." },
   "superviviente": { "name": "Survivor", "note": "You win if you end in a different room from the Bomber. Your position is checked after the last exchange." },
   "objetivo": { "name": "Target", "note": "You win if the Sniper does not pick you for their final shot. Include the Sniper and the Decoy. If the Sniper picks the Decoy, both the Decoy and you meet your goals." },
   "maton-a": { "name": "Thug", "note": "Anyone who card shares with you gains the “coy” condition and may only color share. The Psychologist can remove it. “Foolish” and “coy” cancel out." },
@@ -584,7 +584,7 @@ const EN_TPL = {
     "Al repartir se completa con Equipo Azul y Equipo Rojo hasta el número de jugadores.": "When dealing, it fills up with Blue Team and Red Team cards to the number of players.",
     "Tu PIN de anfitrión (4 números)": "Your host PIN (4 digits)", "Para recuperar el panel si cambias de celular": "To recover the panel if you change phones",
     "Crear partida y abrir la sala": "Create game and open the lobby", "Pon un PIN de 4 números.": "Enter a 4-digit PIN.", "Guardar cambios": "Save changes", "Cartas actualizadas": "Cards updated",
-    "Falta el Presidente.": "The President is missing.", "Falta la Bomba.": "The Bomber is missing.", "Detective necesita jugar con carta enterrada.": "Private Eye needs a buried card.",
+    "Falta el Presidente.": "The President is missing.", "Falta la Bomba.": "The Bomber is missing.", "Detective necesita jugar con carta enterrada.": "Private Investigator needs a buried card.",
     "Hija del presidente, Mártir, Enfermera y Mecánico son reservas para jugar con carta enterrada.": "President's Daughter, Martyr, Nurse and Tinkerer are backups for games with a buried card.",
     "Enfermera es reserva del Doctor.": "Nurse is the Doctor's backup.", "Mecánico es reserva del Ingeniero.": "Tinkerer is the Engineer's backup.",
     "Se apartará una carta sobria para el Borracho. Desde la sala lo despiertas al empezar la última ronda.": "A sober card will be set aside for the Drunk. Wake them from the lobby when the last round starts.",
@@ -772,7 +772,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
