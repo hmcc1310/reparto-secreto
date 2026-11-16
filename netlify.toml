@@ -1,3 +1,9 @@
 # Netlify publica esta carpeta tal cual (no hay paso de compilación).
 [build]
   publish = "."
+
+# Que los celulares siempre pidan la versión más reciente de la página.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache"

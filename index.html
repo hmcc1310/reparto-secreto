@@ -144,6 +144,8 @@ details[open] > summary { margin-bottom: 10px; }
 #timerbar.hot { background: var(--red); }
 body.has-timer { padding-top: 64px; }
 .tover .tnext { margin-top: 22px; background: #fff; color: #111; border-color: #fff; }
+.tover .steps { text-align: left; max-width: 36ch; margin: 16px auto 0; padding-left: 22px; display: grid; gap: 8px; font-size: 1rem; }
+.tover .steps b { font: inherit; font-weight: 700; display: inline; text-transform: none; }
 .tover b { font-size: clamp(2.6rem, 13vw, 6rem); }
 .stamp { display: table; margin-left: auto; margin-right: auto; font-family: var(--mono); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; border: 2px solid currentColor; border-radius: 6px; padding: 4px 10px; margin-bottom: 18px; }
 .full.priv { background: repeating-linear-gradient(45deg, #1b1f2a 0 18px, #232838 18px 36px); }
@@ -154,6 +156,7 @@ body.has-timer { padding-top: 64px; }
 .modal .box p { margin: 0; }
 .modal .row { justify-content: flex-end; }
 .forgot { font-weight: 600; }
+.update { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 70; display: flex; gap: 12px; align-items: center; justify-content: space-between; background: var(--surface); color: var(--fg); border: 2px solid var(--fg); border-radius: var(--r); padding: 10px 14px; box-shadow: 0 8px 30px rgba(0,0,0,.3); font-weight: 600; }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -429,12 +432,49 @@ let api;
 try { api = window.FIREBASE_CONFIG && window.firebase ? firebaseApi(window.FIREBASE_CONFIG) : localApi(); }
 catch (e) { console.error(e); api = localApi(); }
 
+// ---------- PIN maestro (ve y cierra todas las partidas) ----------
+// Se guarda solo la huella SHA-256 del PIN, no el PIN.
+const BOSS_HASH = "b3f47995ad4181d317ac9201a553f404901850c4841b282f434330629bcb903c";
+async function isBoss(pin) {
+  try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
+}
+// ---------- aviso de versión nueva ----------
+const APP_VERSION = 13;
+async function checkVersion() {
+  try {
+    const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
+    const m = t.match(/const APP_VERSION = (\d+);/);
+    if (m && +m[1] > APP_VERSION && !$(".update")) {
+      const d = document.createElement("div"); d.className = "update"; d.setAttribute("role", "status");
+      d.innerHTML = `<span>Hay una versión nueva de la página.</span><button type="button" class="primary">Actualizar</button>`;
+      $("button", d).onclick = () => location.reload();
+      document.body.appendChild(d);
+    }
+  } catch (e) {}
+}
+setInterval(checkVersion, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkVersion(); });
+
 // ---------- navegación ----------
 let unsubs = [];
 // ---------- temporizador de rondas ----------
-// game.timer = { n: rondas, mins: [min por ronda], r: ronda actual, state: "idle"|"run"|"pause", endsAt: ms, left: s }
-const TIMER_MODES = { 3: [2, 1, 1], 5: [5, 4, 3, 2, 1] };
-const newTimer = n => ({ n, mins: TIMER_MODES[n], r: 1, state: "idle", endsAt: null, left: TIMER_MODES[n][0] * 60 });
+// game.timer = { mode, n: rondas, mins: [min por ronda], r: ronda actual, state: "idle"|"run"|"pause", endsAt: ms, left: s, players }
+// Tiempos según el reglamento: juego básico 3 rondas (3, 2 y 1 min); avanzado hasta 5 rondas (5, 4, 3, 2 y 1) solo con 11 o más.
+const TIMER_MODES = {
+  basic: { label: "3 rondas: 3, 2 y 1 minutos (reglamento)", mins: [3, 2, 1] },
+  adv5: { label: "5 rondas: 5, 4, 3, 2 y 1 minutos (avanzado, 11 jugadores o más)", mins: [5, 4, 3, 2, 1], min: 11 },
+  three3: { label: "3 rondas de 3 minutos (variante del reglamento)", mins: [3, 3, 3] },
+  fast: { label: "3 rondas: 2, 1 y 1 minutos (rápida, no es del reglamento)", mins: [2, 1, 1] }
+};
+const newTimer = (mode, players) => { const m = TIMER_MODES[mode] || TIMER_MODES.basic; return { mode: TIMER_MODES[mode] ? mode : "basic", n: m.mins.length, mins: m.mins, r: 1, state: "idle", endsAt: null, left: m.mins[0] * 60, players: players || 0 }; };
+// Rehenes por ronda (tabla del reglamento). Se cuenta por la posición de la ronda aunque cambien los minutos.
+function hostages(t) {
+  const slot = (t.n === 5 ? [5, 4, 3, 2, 1] : [3, 2, 1])[t.r - 1], p = t.players || 0;
+  if (!slot || p < 6) return 1;
+  const row = p <= 10 ? { 3: 1, 2: 1, 1: 1 } : p <= 13 ? { 5: 2, 4: 2, 3: 2, 2: 1, 1: 1 } : p <= 17 ? { 5: 3, 4: 2, 3: 2, 2: 1, 1: 1 } : p <= 21 ? { 5: 4, 4: 3, 3: 2, 2: 1, 1: 1 } : { 5: 5, 4: 4, 3: 3, 2: 2, 1: 1 };
+  return row[slot] || 1;
+}
+const hostTxt = t => { const h = hostages(t); return `${h} rehén${h > 1 ? "es" : ""}`; };
 const tLeft = t => t.state === "run" ? Math.max(0, Math.ceil((t.endsAt - Date.now()) / 1000)) : t.left;
 const tOver = t => t.state === "run" && tLeft(t) === 0;
 const fmtT = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
@@ -447,8 +487,15 @@ function beep() {
 function roundOver(t) {
   const last = t.r >= t.n, d = document.createElement("div");
   d.className = "full n tover";
-  d.innerHTML = `<div><span class="lbl">Ronda ${t.r} de ${t.n}</span><b>${last ? "¡Fin del juego!" : "¡Tiempo!"}</b>
-    <p>${last ? "Todos revelen sus cartas. ¿La Bomba quedó en la misma habitación que el Presidente?" : "Se acabó la ronda. Los líderes envían a sus rehenes a la otra habitación. Luego el anfitrión inicia la siguiente ronda."}</p>
+  d.innerHTML = `<div><span class="lbl">Ronda ${t.r} de ${t.n}</span><b>${last ? "¡Última ronda terminada!" : "¡Tiempo!"}</b>
+    <ol class="steps">
+      <li>Cada líder anuncia a su sala a quién envía: <b>${hostTxt(t)}</b> (el líder nunca puede ser rehén). Ya no se puede cambiar.</li>
+      ${last ? `<li>Los rehenes cambian de sala.</li>
+      <li>Si hay Jugador (gris), anuncia en voz alta qué equipo cree que ganó.</li>
+      <li>Todos revelan sus cartas: si la Bomba está en la misma sala que el Presidente, gana el Equipo Rojo; si no, gana el Equipo Azul.</li>`
+      : `<li>Los líderes se reúnen en el pasillo y el anfitrión inicia la siguiente ronda.</li>
+      <li>Los rehenes cambian de sala.</li>`}
+    </ol>
     ${hostNext && !last ? `<button class="big tnext">Siguiente ronda →</button>` : ""}
     <small>Toca para cerrar</small></div>`;
   const opened = Date.now();
@@ -462,7 +509,7 @@ function tick() {
   if (!t) { if (bar) bar.hidden = true; document.body.classList.remove("has-timer"); return; }
   if (!bar) { bar = document.createElement("div"); bar.id = "timerbar"; bar.setAttribute("role", "timer"); document.body.appendChild(bar); }
   const s = tLeft(t), over = tOver(t);
-  const status = over ? (t.r >= t.n ? "Fin del juego" : "¡Tiempo! Intercambien rehenes") : t.state === "run" ? "En curso" : t.state === "pause" ? "En pausa" : "Esperando al anfitrión";
+  const status = over ? (t.r >= t.n ? "Fin del juego" : "¡Tiempo! Rehenes") : t.state === "run" ? hostTxt(t) + " al final" : t.state === "pause" ? "En pausa" : "Esperando al anfitrión";
   bar.hidden = false; document.body.classList.add("has-timer");
   bar.className = (t.state === "run" && s <= 10) ? "hot" : "";
   bar.innerHTML = `<span class="tr">Ronda ${t.r}/${t.n}</span><span class="tc">${fmtT(s)}</span><span class="ts">${status}</span>`;
@@ -480,7 +527,7 @@ function home(msg) {
   const ps = ls.get("rs-player"), hs = ls.get("rs-host");
   app().innerHTML = `<div class="narrow">
     <div style="display:grid;gap:8px">
-      <span class="eyebrow">Roles ocultos · dos habitaciones · versión 12</span>
+      <span class="eyebrow">Roles ocultos · dos habitaciones · versión ${APP_VERSION}</span>
       <h1>Reparto Secreto</h1>
     </div>
     <div class="stripe"></div>
@@ -528,13 +575,15 @@ function home(msg) {
   };
   const showMine = async pin => {
     const box = $("#mineList");
-    const list = (await api.listGames().catch(() => [])).filter(g => g.hostPin === pin).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const boss = await isBoss(pin);
+    const list = (await api.listGames().catch(() => [])).filter(g => boss || g.hostPin === pin).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     if (!list.length) { box.innerHTML = `<p class="muted small">No hay partidas abiertas con ese PIN.</p>`; return; }
     const when = t => t ? new Date(t).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-    box.innerHTML = `<ul class="plist">${list.map(g => `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${esc(g.code)}</div><div class="rl">${esc(when(g.createdAt))}${g.ended ? " · terminada" : g.round ? ` · ${g.round} reparto${g.round > 1 ? "s" : ""}` : " · sin repartir"}</div></div><button type="button" data-close="${esc(g.code)}">Cerrar</button></li>`).join("")}</ul>
+    box.innerHTML = `${boss ? `<p class="small"><b>PIN maestro:</b> ves todas las partidas abiertas (${list.length}).</p>` : ""}<ul class="plist">${list.map(g => `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${esc(g.code)}</div><div class="rl">${esc(when(g.createdAt))}${g.ended ? " · terminada" : g.round ? ` · ${g.round} reparto${g.round > 1 ? "s" : ""}` : " · sin repartir"}</div></div>${boss ? `<button type="button" class="ghost" data-open="${esc(g.code)}">Abrir</button>` : ""}<button type="button" data-close="${esc(g.code)}">Cerrar</button></li>`).join("")}</ul>
       <button type="button" class="primary wide" id="closeAll">Cerrar todas (${list.length})</button>`;
     const closeOne = async code => { await api.deleteGame(code); const hs = ls.get("rs-host"); if (hs && hs.code === code) ls.set("rs-host", null); };
-    $$("[data-close]", box).forEach(b => b.onclick = async () => { b.disabled = true; await closeOne(b.dataset.close); toast("Partida " + b.dataset.close + " cerrada"); showMine(pin); });
+    $$("[data-open]", box).forEach(b => b.onclick = () => { ls.set("rs-host", { code: b.dataset.open }); go(hostLobby); });
+        $$("[data-close]", box).forEach(b => b.onclick = async () => { b.disabled = true; await closeOne(b.dataset.close); toast("Partida " + b.dataset.close + " cerrada"); showMine(pin); });
     $("#closeAll").onclick = () => modal("¿Cerrar todas?", `Se borrarán ${list.length} partida${list.length > 1 ? "s" : ""} con sus jugadores. Nadie podrá volver a entrar a ellas.`,
       [{ label: "Cancelar" }, { label: "Sí, cerrar todas", primary: true, fn: async () => { for (const g of list) await closeOne(g.code); toast("Partidas cerradas"); go(home); } }]);
   };
@@ -543,7 +592,7 @@ function home(msg) {
     e.preventDefault();
     const code = $("#rCode").value.trim().toUpperCase(), pin = $("#rPin").value.trim();
     const g = await api.getGame(code).catch(() => null);
-    if (!g || g.hostPin !== pin) { $("#rErr").textContent = "El código o el PIN no coinciden."; return; }
+    if (!g || (g.hostPin !== pin && !(await isBoss(pin)))) { $("#rErr").textContent = "El código o el PIN no coinciden."; return; }
     ls.set("rs-host", { code }); go(hostLobby);
   };
 }
@@ -954,7 +1003,7 @@ function hostLobby() {
     const drunk = list.find(p => p.card && p.round === game.round && p.card.id === "borracho");
     const withCard = list.filter(p => p.card && p.round === game.round);
     const url = location.href.split("#")[0];
-    const T = game.timer || newTimer(3);
+    const T = game.timer || newTimer("basic", n);
     app().innerHTML = `<div class="wrap">
       <button class="ghost" id="home" style="justify-self:start">← Inicio</button>
       ${demoNote()}
@@ -976,12 +1025,12 @@ function hostLobby() {
           ${T.r < T.n ? `<button id="tNext">Siguiente ronda →</button>` : ""}
           <button class="ghost" id="tReset">Reiniciar esta ronda</button>
         </div>
+        <p class="small">Al final de esta ronda cada líder envía <b>${hostTxt(T)}</b>.</p>
         <label for="tMode" class="small">Rondas
           <select id="tMode">
-            <option value="3" ${T.n === 3 ? "selected" : ""}>3 rondas: 2, 1 y 1 minutos (menos de 11 jugadores)</option>
-            <option value="5" ${T.n === 5 ? "selected" : ""}>5 rondas: 5, 4, 3, 2 y 1 minutos (11 jugadores o más)</option>
+            ${Object.entries(TIMER_MODES).map(([k, m]) => `<option value="${k}" ${(T.mode || "basic") === k ? "selected" : ""} ${m.min && n < m.min ? "disabled" : ""}>${m.label}</option>`).join("")}
           </select></label>
-        <p class="muted small">El reloj aparece arriba en el celular de todos. Al llegar a cero, a todos les sale el aviso de fin de ronda.</p>
+        <p class="muted small">El reloj aparece arriba en el celular de todos. Al llegar a cero, a todos les sale el aviso con los pasos del fin de ronda. Según el reglamento, se juegan 3 rondas; 5 rondas solo con 11 jugadores o más.</p>
       </section>` : ""}
       <section class="panel">
         <div class="panel-head"><h2>Jugadores</h2>
@@ -1028,7 +1077,7 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0 });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, timer: newTimer(ids.length >= 11 ? 5 : 3) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
@@ -1037,7 +1086,7 @@ function hostLobby() {
     hostNext = T.r < T.n ? () => setT({ r: T.r + 1, state: "idle", endsAt: null, left: T.mins[T.r] * 60 }) : null;
     const tn = $("#tNext"); if (tn) tn.onclick = hostNext;
     const tr = $("#tReset"); if (tr) tr.onclick = () => setT({ state: "idle", endsAt: null, left: T.mins[T.r - 1] * 60 });
-    const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(+e.target.value) });
+    const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(e.target.value, n) });
     const wk = $("#wake"); if (wk) wk.onclick = async () => { await api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } }); toast(drunk.name + " ya tiene su carta sobria"); };
     const sa = $("#swapA"), sb = $("#swapB");
     if (sa) { sa.onchange = e => swapA = e.target.value; sb.onchange = e => swapB = e.target.value; }
