@@ -160,6 +160,11 @@ body.has-timer { padding-top: 64px; }
 #lang { position: absolute; top: max(10px, env(safe-area-inset-top)); right: 10px; z-index: 45; font-family: var(--mono); font-size: .78rem; padding: 5px 9px; border-radius: 999px; background: var(--surface); color: var(--muted); }
 #lang b { color: var(--fg); }
 body.has-timer #lang { top: 66px; }
+.rooms { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.roomcol h3 { margin: 0 0 6px; font-family: var(--display); text-transform: uppercase; letter-spacing: .04em; display: flex; gap: 8px; align-items: center; }
+.roompanel .plist li .row button { padding: 6px 10px; font-size: .85rem; }
+.hpick { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.roomcall { font-size: 1.2rem; margin: 0; }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -820,7 +825,7 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     "3 rondas de 3 minutos (variante del reglamento)": "3 rounds of 3 minutes (rulebook variant)", "3 rondas: 2, 1 y 1 minutos (rápida, no es del reglamento)": "3 rounds: 2, 1 and 1 minutes (quick, not in the rulebook)",
     "El reloj aparece arriba en el celular de todos. Al llegar a cero, a todos les sale el aviso con los pasos del fin de ronda. Según el reglamento, se juegan 3 rondas; 5 rondas solo con 11 jugadores o más.": "The clock shows at the top of everyone's phone. When it hits zero, everyone gets the end-of-round steps. By the rulebook, 3 rounds are played; 5 rounds only with 11 or more players.",
     "Esperando al anfitrión": "Waiting for the host", "En pausa": "Paused", "¡Tiempo! Rehenes": "Time! Hostages", "Fin del juego": "Game over", "¡Tiempo!": "Time!", "¡Última ronda terminada!": "Last round over!",
-    "Cada líder anuncia a su sala a quién envía:": "Each leader announces to their room who they're sending:", "(el líder nunca puede ser rehén). Ya no se puede cambiar.": "(the leader can never be a hostage). It can't be changed afterwards.",
+    "Cada líder anuncia a su sala a quién envía:": "Each leader announces to their room who they're sending:", "(el líder nunca puede ser rehén). Ya no se puede cambiar. En la página, el líder los marca en «Estás en el Cuarto».": "(the leader can never be a hostage). It can't be changed afterwards. On the page, the leader marks them under “You're in Room”.",
     "Los líderes se reúnen en el pasillo y el anfitrión inicia la siguiente ronda.": "The leaders meet in the hallway and the host starts the next round.", "Los rehenes cambian de sala.": "The hostages switch rooms.",
     "Si hay Jugador (gris), anuncia en voz alta qué equipo cree que ganó.": "If there's a Gambler (grey), they announce out loud which team they think won.",
     "Todos revelan sus cartas: si la Bomba está en la misma sala que el Presidente, gana el Equipo Rojo; si no, gana el Equipo Azul.": "Everyone reveals their cards: if the Bomber is in the same room as the President, the Red Team wins; otherwise, the Blue Team wins.",
@@ -846,11 +851,33 @@ Object.entries(EXTRA_COND).forEach(([k, c]) => { if (c.en) EN_COND[k] = c.en; })
     "Sí, ver en secreto": "Yes, view in secret", "Revelación": "Reveal", "Mi color": "My color", "Mi rol": "My role", "Toca para ocultar": "Tap to hide",
     "Sin conexión con la base de datos": "No connection to the database", "Hay una versión nueva de la página.": "There's a new version of the page.", "Actualizar": "Update",
     "Equipo Azul": "Blue Team", "Equipo Rojo": "Red Team",
-    "Mostrar personajes extra": "Show extra characters"
+    "Mostrar personajes extra": "Show extra characters",
+    "Nombrar líder": "Make leader", "Quitar mi voto": "Remove my vote", "Votar": "Vote", "Ceder": "Hand over", "Líder:": "Leader:",
+    "Todavía no hay líder: el primero que alguien nombre se queda como líder.": "No leader yet: the first person someone nominates becomes leader.",
+    "Anunciar rehenes": "Announce hostages", "Al anunciarlos ya no se pueden cambiar. Cuando los dos líderes anuncien, la página los cambia de cuarto.": "Once announced they can't be changed. When both leaders have announced, the page moves them to the other room.",
+    "Rehenes anunciados:": "Hostages announced:", "ninguno.": "none.", "Le ofreciste el liderazgo": "You offered the leadership", "Cambio de líder": "Leader changed",
+    "¿Anunciar rehenes?": "Announce hostages?", "Sí, anunciar": "Yes, announce", "Enviarás a": "You'll send", "al otro cuarto. Ya no podrás cambiarlo.": "to the other room. You won't be able to change it.",
+    "Tu líder te envió como rehén. Ve ahora al otro cuarto.": "Your leader sent you as a hostage. Go to the other room now.", "Aceptar": "OK",
+    "¿Quieres ser líder?": "Do you want to be leader?", "No, gracias": "No, thanks", "Sí, acepto": "Yes, I accept", "Ve al": "Go to",
+    "Cuartos": "Rooms", "Reacomodar al azar": "Shuffle rooms", "Rehenes anunciados ✓": "Hostages announced ✓", "Rehenes: pendientes": "Hostages: pending",
+    "Sin líder. Rehenes anunciados ✓": "No leader. Hostages announced ✓", "Sin líder. Rehenes: pendientes": "No leader. Hostages: pending",
+    "Cada jugador ve su cuarto en su celular. Ahí nombran líder, votan para cambiarlo y el líder anuncia sus rehenes; cuando los dos líderes anuncian, la página cambia de cuarto a los rehenes. Con 👑 pones líder tú y con ⇄ mueves a alguien de cuarto (por ejemplo, por el poder de una carta).": "Each player sees their room on their phone. There they nominate a leader, vote to change it, and the leader announces their hostages; when both leaders have announced, the page moves the hostages. With 👑 you set a leader yourself and with ⇄ you move someone to the other room (for example, because of a card's power).",
+    "¿Reacomodar cuartos?": "Shuffle rooms?", "Se reparten otra vez todos los jugadores en dos cuartos al azar y se borran los líderes.": "All players are split again into two random rooms and leaders are cleared.",
+    "Sí, reacomodar": "Yes, shuffle", "Cuartos reacomodados": "Rooms shuffled"
   });
   I18N_RE.push(
     [/^https?:\/\/\S+$/, s => s], [/^[A-Z]{4}$/, s => s],
     [/^\((\d+) cartas más de la guía ampliada: Alienígena, Vampiro, Ninja, Rey y Dragón…\)$/, "($1 more cards from the extended guide: Alien, Vampire, Ninja, King and Dragon…)"],
+    [/^Estás en el Cuarto (\d)$/, "You're in Room $1"], [/^(\d+) personas$/, "$1 people"], [/^(.+) \(tú\)$/, "$1 (you)"],
+    [/^(\d+) de (\d+) votos para ser líder$/, "$1 of $2 votes to become leader"], [/^(\d+) de (\d+) votos$/, "$1 of $2 votes"],
+    [/^Para cambiar de líder se necesitan (\d+) votos \(más de la mitad del cuarto\)\. Puedes votar por ti\.$/, "To change the leader, $1 votes are needed (more than half the room). You can vote for yourself."],
+    [/^Elige (\d+) rehén(es)? para enviar al Cuarto (\d)$/, (_, n, x, r) => `Choose ${pl(n, "hostage", "hostages")} to send to Room ${r}`],
+    [/^Elige exactamente (\d+) rehén(es)?$/, (_, n) => `Choose exactly ${pl(n, "hostage", "hostages")}`],
+    [/^(.*)\. Esperando al líder del otro cuarto…$/, (_, a) => `${a === "ninguno" ? "none" : a}. Waiting for the other room's leader…`],
+    [/^Cuarto (\d): (\d+) personas( · líder: (.+))?\.$/, (_, r, n, x, l) => `Room ${r}: ${n} people${l ? " · leader: " + l : ""}.`],
+    [/^¡Ve al Cuarto (\d)!$/, "Go to Room $1!"], [/^(.+) te ofrece el liderazgo del Cuarto (\d)\.$/, "$1 offers you the leadership of Room $2."],
+    [/^(.+) → Cuarto (\d)$/, "$1 → Room $2"], [/^Hacer líder a (.+)$/, "Make $1 leader"], [/^Mover a (.+) al otro cuarto$/, "Move $1 to the other room"],
+    [/^Cuarto (\d) · (.+)$/, (_, r, rest) => `Room ${r} · ${tr(rest)}`], [/^Cuarto (\d)$/, "Room $1"], [/^👑 (.+)$/, (_, n) => "👑 " + n],
     [/^Roles ocultos · dos habitaciones · versión (\d+)$/, "Hidden roles · two rooms · version $1"],
     [/^(\d+) elegidas$/, "$1 selected"],
     [/^(Equipo Azul|Equipo Rojo|Lealtad \S+) · (\d+) cartas$/, (_, t, n) => `${team(t)} · ${pl(n, "card", "cards")}`],
@@ -987,7 +1014,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 16;
+const APP_VERSION = 17;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1037,7 +1064,7 @@ function roundOver(t) {
   d.className = "full n tover";
   d.innerHTML = `<div><span class="lbl">Ronda ${t.r} de ${t.n}</span><b>${last ? "¡Última ronda terminada!" : "¡Tiempo!"}</b>
     <ol class="steps">
-      <li>Cada líder anuncia a su sala a quién envía: <b>${hostTxt(t)}</b> (el líder nunca puede ser rehén). Ya no se puede cambiar.</li>
+      <li>Cada líder anuncia a su sala a quién envía: <b>${hostTxt(t)}</b> (el líder nunca puede ser rehén). Ya no se puede cambiar. En la página, el líder los marca en «Estás en el Cuarto».</li>
       ${last ? `<li>Los rehenes cambian de sala.</li>
       <li>Si hay Jugador (gris), anuncia en voz alta qué equipo cree que ganó.</li>
       <li>Todos revelan sus cartas: si la Bomba está en la misma sala que el Presidente, gana el Equipo Rojo; si no, gana el Equipo Azul.</li>`
@@ -1252,9 +1279,110 @@ function inPlayHTML(g) {
     ${g.buried ? `<p class="muted small">Hay ${g.buried} carta enterrada: está en la lista pero nadie la tiene.</p>` : ""}
     ${g.sober ? `<p class="muted small">Una carta está apartada para el Borracho.</p>` : ""}</section>`;
 }
+// ---------- cuartos y líderes ----------
+// Jugador: room "1"|"2", vote (a quién apoya como líder). Partida: leader1/2, picks1/2 (rehenes anunciados), offer1/2 (ceder liderazgo).
+const ROOMS = ["1", "2"];
+const otherRoom = r => r === "1" ? "2" : "1";
+const inGame = (game, p) => p.card && p.round === game.round && p.room;
+function roomState(game, players, room) {
+  const members = players.filter(p => inGame(game, p) && p.room === room).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+  let leader = game["leader" + room] || null; if (!members.some(p => p.id === leader)) leader = null;
+  const need = Math.floor(members.length / 2) + 1;
+  const tally = {}; members.forEach(p => { if (p.vote && members.some(m => m.id === p.vote)) tally[p.vote] = (tally[p.vote] || 0) + 1; });
+  return { room, members, leader, need, tally, picks: game["picks" + room] || null, offer: game["offer" + room] || null };
+}
+const hostageCount = (game, st) => Math.max(0, Math.min(hostages(game.timer || newTimer("basic", 0)), st.members.length - 1));
+async function setLeader(code, game, players, room, pid) {
+  const st = roomState(game, players, room), patches = {};
+  st.members.forEach(p => { if (p.vote) patches[p.id] = { vote: null }; });
+  await api.batch(code, { ["leader" + room]: pid, ["offer" + room]: null }, patches);
+}
+async function castVote(code, game, players, me, target) {
+  await api.updatePlayer(code, me.id, { vote: target });
+  const now = players.map(p => p.id === me.id ? { ...p, vote: target } : p);
+  const st = roomState(game, now, me.room);
+  if (target && target !== st.leader && (st.tally[target] || 0) >= st.need) { await setLeader(code, game, now, me.room, target); toast("Cambio de líder"); }
+}
+// Los rehenes cambian de cuarto cuando los dos líderes ya anunciaron. Es idempotente: pone el cuarto destino, no lo alterna.
+async function doExchange(code, game, players) {
+  if (!game.picks1 || !game.picks2) return;
+  const patches = {};
+  game.picks1.forEach(id => { if (players.some(p => p.id === id)) patches[id] = { room: "2", vote: null }; });
+  game.picks2.forEach(id => { if (players.some(p => p.id === id)) patches[id] = { room: "1", vote: null }; });
+  await api.batch(code, { picks1: null, picks2: null, swaps: (game.swaps || 0) + 1 }, patches);
+}
+async function lockPicks(code, game, players, room, ids) {
+  await api.updateGame(code, { ["picks" + room]: ids });
+  const g = { ...game, ["picks" + room]: ids };
+  if (g.picks1 && g.picks2) await doExchange(code, g, players);
+}
+// Panel "Tu cuarto" del jugador.
+function roomPanelHTML(game, players, me) {
+  if (!me.room) return "";
+  const st = roomState(game, players, me.room), os = roomState(game, players, otherRoom(me.room));
+  const isLeader = st.leader === me.id, leaderP = st.members.find(p => p.id === st.leader);
+  const n = hostageCount(game, st);
+  const nameOf = id => (players.find(p => p.id === id) || {}).name || "?";
+  const row = p => {
+    const v = st.tally[p.id] || 0, lead = p.id === st.leader;
+    let btn = "";
+    if (!st.leader && p.id !== me.id) btn = `<button type="button" data-nom="${esc(p.id)}">Nombrar líder</button>`;
+    else if (st.leader && !lead) btn = me.vote === p.id ? `<button type="button" class="primary" data-vote="">Quitar mi voto</button>` : `<button type="button" data-vote="${esc(p.id)}">Votar</button>`;
+    if (isLeader && p.id !== me.id) btn += ` <button type="button" class="ghost" data-give="${esc(p.id)}">Ceder</button>`;
+    return `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${lead ? "👑 " : ""}${esc(p.name)}${p.id === me.id ? " (tú)" : ""}</div>${v && !lead ? `<div class="rl">${v} de ${st.need} votos para ser líder</div>` : ""}</div><div class="row">${btn}</div></li>`;
+  };
+  return `<section class="panel roompanel">
+    <div class="panel-head"><h2>Estás en el Cuarto ${esc(me.room)}</h2><span class="count">${st.members.length} personas</span></div>
+    <p class="small">${leaderP ? `Líder: <b>👑 ${esc(leaderP.name)}</b>` : "Todavía no hay líder: el primero que alguien nombre se queda como líder."}</p>
+    <ul class="plist">${st.members.map(row).join("")}</ul>
+    ${st.leader ? `<p class="muted small">Para cambiar de líder se necesitan ${st.need} votos (más de la mitad del cuarto). Puedes votar por ti.</p>` : ""}
+    ${isLeader ? (st.picks ? "" : `<div class="hpick"><b>Elige ${n} rehén${n === 1 ? "" : "es"} para enviar al Cuarto ${otherRoom(me.room)}</b>
+      <div class="names">${st.members.filter(p => p.id !== me.id).map(p => `<label class="check"><input type="checkbox" data-pick="${esc(p.id)}"><span>${esc(p.name)}</span></label>`).join("")}</div>
+      <button type="button" class="primary" id="lockPicks">Anunciar rehenes</button>
+      <p class="muted small">Al anunciarlos ya no se pueden cambiar. Cuando los dos líderes anuncien, la página los cambia de cuarto.</p></div>`) : ""}
+    ${st.picks ? `<p class="small"><b>Rehenes anunciados:</b> ${st.picks.map(id => esc(nameOf(id))).join(", ") || "ninguno"}.${os.picks ? "" : " Esperando al líder del otro cuarto…"}</p>` : ""}
+    <p class="muted small">Cuarto ${otherRoom(me.room)}: ${os.members.length} personas${os.leader ? ` · líder: ${esc(nameOf(os.leader))}` : ""}.</p>
+  </section>`;
+}
+function bindRoomPanel(code, game, players, me) {
+  $$("[data-nom]").forEach(b => b.onclick = () => { setLeader(code, game, players, me.room, b.dataset.nom); });
+  $$("[data-vote]").forEach(b => b.onclick = () => castVote(code, game, players, me, b.dataset.vote || null));
+  $$("[data-give]").forEach(b => b.onclick = () => { api.updateGame(code, { ["offer" + me.room]: b.dataset.give }); toast("Le ofreciste el liderazgo"); });
+  const lp = $("#lockPicks"); if (lp) lp.onclick = () => {
+    const st = roomState(game, players, me.room), n = hostageCount(game, st);
+    const ids = $$("[data-pick]").filter(x => x.checked).map(x => x.dataset.pick);
+    if (ids.length !== n) { toast(`Elige exactamente ${n} rehén${n === 1 ? "" : "es"}`); return; }
+    modal("¿Anunciar rehenes?", `Enviarás a <b>${ids.map(id => esc(players.find(p => p.id === id).name)).join(", ")}</b> al otro cuarto. Ya no podrás cambiarlo.`,
+      [{ label: "Cancelar" }, { label: "Sí, anunciar", primary: true, fn: () => lockPicks(code, game, players, me.room, ids) }]);
+  };
+}
 function playerView() {
   const ps = ls.get("rs-player"); if (!ps) return go(home);
   let game, me, players = [], lastKey = "", loaded = { g: false, m: false };
+  let roomKeyLast = "", offerShown = "";
+  const roomKey = () => `${ps.code}|${ps.pid}|${me.round}|${me.room || ""}`;
+  // El panel del cuarto se dibuja aparte para no cerrar lo demás cada vez que alguien vota.
+  const renderRoom = () => {
+    const box = $("#roompanel"); if (!box || !game || !me) return;
+    const k = JSON.stringify([me.room, me.vote, game.leader1, game.leader2, game.picks1, game.picks2, game.offer1, game.offer2, game.timer?.r, players.map(p => [p.id, p.name, p.room, p.vote, p.round])]);
+    if (k === roomKeyLast) return; roomKeyLast = k;
+    box.innerHTML = roomPanelHTML(game, players, me);
+    bindRoomPanel(ps.code, game, players, me);
+    // Te enviaron como rehén.
+    const prev = ls.get("rs-room:" + ps.pid) || "";
+    if (me.room && prev && prev !== roomKey() && prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`) && !$(".modal")) {
+      ls.set("rs-room:" + ps.pid, roomKey());
+      try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {}
+      modal(`¡Ve al Cuarto ${esc(me.room)}!`, "Tu líder te envió como rehén. Ve ahora al otro cuarto.", [{ label: "Aceptar", primary: true }]);
+    } else if (me.room && !prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`) && ls.get("rs-seen:" + ps.pid) === `${ps.code}|${ps.pid}|${me.round}|${me.card?.id}`) ls.set("rs-room:" + ps.pid, roomKey());
+    // Te ofrecieron ser líder.
+    const st = roomState(game, players, me.room || "");
+    if (me.room && st.offer === me.id && offerShown !== st.offer + st.leader && !$(".modal")) {
+      offerShown = st.offer + st.leader;
+      modal("¿Quieres ser líder?", `${esc((players.find(p => p.id === st.leader) || {}).name || "El líder")} te ofrece el liderazgo del Cuarto ${esc(me.room)}.`,
+        [{ label: "No, gracias", fn: () => api.updateGame(ps.code, { ["offer" + me.room]: null }) }, { label: "Sí, acepto", primary: true, fn: () => setLeader(ps.code, game, players, me.room, me.id) }]);
+    }
+  };
   const render = () => {
     if (!loaded.g || !loaded.m) return;
     if (!game) { ls.set("rs-player", null); return go(home, "Esa partida ya no existe."); }
@@ -1294,6 +1422,7 @@ function playerView() {
         </div>
         ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color: el reglamento lo permite desde 11 jugadores. El anfitrión puede cambiarlo en las reglas de la partida.</p>`}
       </div>
+      <div id="roompanel" style="width:100%"></div>
       <details class="conds panel">
         <summary>Mis condiciones${active.length ? ` · ${active.length}` : ""}</summary>
         ${active.length ? `<div class="chips">${active.map(k => `<span class="chip" title="${esc(COND[k]?.desc)}"><span>${esc(COND[k]?.name || k)}</span>${removable.includes(k) ? `<button type="button" data-rm="${k}" aria-label="Quitar ${esc(COND[k]?.name)}">×</button>` : ""}</span>`).join("")}</div>
@@ -1308,14 +1437,17 @@ function playerView() {
       <button class="ghost" id="leave">Salir de esta pantalla</button>
     </div>`;
     // Aviso de carta nueva (reparto, intercambio o Borracho): solo hay que tocar "Aceptar" y la ve una vez en privado.
-    const seenKey = `${ps.code}|${ps.pid}|${me.round}|${c.id}`, prev = ls.get("rs-seen") || "";
+    const seenKey = `${ps.code}|${ps.pid}|${me.round}|${c.id}`, prev = ls.get("rs-seen:" + ps.pid) || "";
     if (prev !== seenKey && !$(".modal")) {
       const changed = prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`);
       try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {}
       modal(changed ? "Tu carta cambió" : "¡Tienes carta nueva!",
         changed ? "Te cambiaron la carta (por un intercambio o porque el Borracho despertó). Mírala en secreto." : `El anfitrión repartió las cartas${game.round > 1 ? " otra vez" : ""}. Mírala en secreto, sin que nadie vea tu pantalla.`,
-        [{ label: "Aceptar y ver mi carta", primary: true, fn: () => { ls.set("rs-seen", seenKey); privateView(c); } }]);
+        [{ label: "Aceptar y ver mi carta", primary: true, fn: () => { ls.set("rs-seen:" + ps.pid, seenKey); ls.set("rs-room:" + ps.pid, roomKey()); privateView(c); } }]);
+      if (me.room && !changed) $(".modal .box p").insertAdjacentHTML("afterend", `<p class="roomcall">Ve al <b>Cuarto ${esc(me.room)}</b></p>`);
     }
+    roomKeyLast = "";
+    renderRoom();
     $("#forgot").onclick = () => modal("¿Ver tu carta otra vez?",
       "Esto es <b>solo para ti</b>, en secreto. La pantalla dirá «Vista privada» y <b>no cuenta como revelación</b>: no se la enseñes a nadie. Para mostrarle algo a otra persona usa los botones «Mostrar a otra persona».",
       [{ label: "Cancelar" }, { label: "Sí, ver en secreto", primary: true, fn: () => { privateView(c); api.updatePlayer(ps.code, ps.pid, { peeks: (me.peeks || 0) + 1 }); } }]);
@@ -1342,9 +1474,9 @@ function playerView() {
     $("#leave").onclick = () => go(home);
   };
   app().innerHTML = `<div class="narrow"><div class="panel wait"><div class="pulse"></div><p>Cargando tu partida…</p></div></div>`;
-  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); }));
-  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); }));
-  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); }));
+  unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); }));
+  unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); }));
+  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); }));
 }
 
 // ---------- mazo ----------
@@ -1585,10 +1717,17 @@ function hostLobby() {
           </select></label>
         <p class="muted small">El reloj aparece arriba en el celular de todos. Al llegar a cero, a todos les sale el aviso con los pasos del fin de ronda. Según el reglamento, se juegan 3 rondas; 5 rondas solo con 11 jugadores o más.</p>
       </section>` : ""}
+      ${started ? `<section class="panel">
+        <div class="panel-head"><h2>Cuartos</h2><button class="ghost" id="reroom">Reacomodar al azar</button></div>
+        <div class="rooms">${ROOMS.map(r => { const st = roomState(game, list, r); return `<div class="roomcol"><h3>Cuarto ${r} <span class="count">${st.members.length}</span></h3>
+          <ul class="plist">${st.members.map(p => `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${p.id === st.leader ? "👑 " : ""}${esc(p.name)}</div>${st.tally[p.id] && p.id !== st.leader ? `<div class="rl">${st.tally[p.id]} de ${st.need} votos</div>` : ""}</div><div class="row">${p.id === st.leader ? "" : `<button type="button" class="ghost" data-lead="${esc(p.id)}" aria-label="Hacer líder a ${esc(p.name)}">👑</button>`}<button type="button" class="ghost" data-move="${esc(p.id)}" aria-label="Mover a ${esc(p.name)} al otro cuarto">⇄</button></div></li>`).join("")}</ul>
+          <p class="small muted">${st.leader ? "" : "Sin líder. "}${st.picks ? "Rehenes anunciados ✓" : "Rehenes: pendientes"}</p></div>`; }).join("")}</div>
+        <p class="muted small">Cada jugador ve su cuarto en su celular. Ahí nombran líder, votan para cambiarlo y el líder anuncia sus rehenes; cuando los dos líderes anuncian, la página cambia de cuarto a los rehenes. Con 👑 pones líder tú y con ⇄ mueves a alguien de cuarto (por ejemplo, por el poder de una carta).</p>
+      </section>` : ""}
       <section class="panel">
         <div class="panel-head"><h2>Jugadores</h2>
           <div class="row">${started ? `<button class="ghost" id="reveal">${reveal ? "Ocultar cartas" : "Ver qué le tocó a cada uno"}</button>` : ""}<span class="count">${n} dentro</span></div></div>
-        ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (reveal ? esc(p.card.name) : "Tiene carta") + (p.peeks ? ` · volvió a ver su carta ${p.peeks} ${p.peeks > 1 ? "veces" : "vez"}` : "") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
+        ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (p.room ? `Cuarto ${p.room} · ` : "") + (reveal ? esc(p.card.name) : "Tiene carta") + (p.peeks ? ` · volvió a ver su carta ${p.peeks} ${p.peeks > 1 ? "veces" : "vez"}` : "") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
         ${started && reveal && (game.buriedCard || game.sober) ? `<p class="small muted">${game.buriedCard ? `Carta enterrada: <b style="color:var(--fg)">${esc(game.buriedCard.name)}</b>. ` : ""}${game.sober ? `Carta sobria del Borracho: <b style="color:var(--fg)">${esc(game.sober.name)}</b>.` : ""}</p>` : ""}
       </section>
       <section class="panel">
@@ -1628,9 +1767,11 @@ function hostLobby() {
       const sober = (S.counts.borracho || 0) ? takeAside() : null;
       const buried = S.bury ? takeAside() : null;
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0 });
+      const order = shuffle(ids), half = Math.ceil(ids.length / 2);
+      const roomFor = id => order.indexOf(id) < half ? "1" : "2";
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
@@ -1640,6 +1781,14 @@ function hostLobby() {
     const tn = $("#tNext"); if (tn) tn.onclick = hostNext;
     const tr = $("#tReset"); if (tr) tr.onclick = () => setT({ state: "idle", endsAt: null, left: T.mins[T.r - 1] * 60 });
     const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(e.target.value, n) });
+    if (started && game.picks1 && game.picks2) doExchange(code, game, list);
+    $$("[data-lead]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.lead); setLeader(code, game, list, p.room, p.id); });
+    $$("[data-move]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.move); const to = otherRoom(p.room);
+      const gp = {}; if (game["leader" + p.room] === p.id) gp["leader" + p.room] = null;
+      api.batch(code, Object.keys(gp).length ? gp : null, { [p.id]: { room: to, vote: null } }); toast(`${p.name} → Cuarto ${to}`); });
+    const rr = $("#reroom"); if (rr) rr.onclick = () => modal("¿Reacomodar cuartos?", "Se reparten otra vez todos los jugadores en dos cuartos al azar y se borran los líderes.",
+      [{ label: "Cancelar" }, { label: "Sí, reacomodar", primary: true, fn: () => { const ids = shuffle(withCard.map(p => p.id)), half = Math.ceil(ids.length / 2), pt = {};
+        ids.forEach((id, i) => pt[id] = { room: i < half ? "1" : "2", vote: null }); api.batch(code, { leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null }, pt); toast("Cuartos reacomodados"); } }]);
     const wk = $("#wake"); if (wk) wk.onclick = async () => { await api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } }); toast(drunk.name + " ya tiene su carta sobria"); };
     const sa = $("#swapA"), sb = $("#swapB");
     if (sa) { sa.onchange = e => swapA = e.target.value; sb.onchange = e => swapB = e.target.value; }
