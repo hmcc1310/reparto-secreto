@@ -1024,6 +1024,10 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     [/^Ganó el (.+): los dos equipos pierden\.$/, (_, c) => `The ${cn(c)} won: both teams lose.`], [/^¡Ganó el (.+)!$/, (_, c) => `The ${cn(c)} won!`],
     [/^Revelación privada \(Bully\) con (.+)$/, "Private reveal (Bully) with $1"],
     [/^Esperando acción de: (.+)\. En cuanto respondan, a todos les sale la cuenta regresiva y el resultado\.$/, "Waiting for action from: $1. As soon as they answer, everyone gets the countdown and the result."],
+    [/^(.+) (?:y|e) (.+): (sí|no) hicieron co-revelación (✓|✗)$/, (_, x, y, ok) => `${cn(x)} and ${cn(y)}: ${ok === "sí" ? "they card shared ✓" : "they did not card share ✗"}`],
+    [/^MI6: sí hizo co-revelación con el Presidente y con la Bomba ✓$/, "MI6: card shared with both the President and the Bomber ✓"], [/^MI6: no hizo co-revelación con los dos ✗$/, "MI6: did not card share with both ✗"],
+    [/^Tirano nuclear: el Presidente y la Bomba sí hicieron co-revelación con él ✗$/, "Nuclear Tyrant: both the President and the Bomber card shared with them ✗"], [/^Tirano nuclear: no hicieron co-revelación con él los dos ✓$/, "Nuclear Tyrant: the President and the Bomber did not both card share with them ✓"],
+    [/^(Clon|Robot): su primera co-revelación fue con (.+)$/, (_, c, n) => `${cn(c)}: their first share was with ${n}`], [/^(Clon|Robot): no compartió con nadie$/, (_, c) => `${cn(c)}: didn't share with anyone`],
     [/^Respuesta de (.+)$/, "Answer from $1"], [/^(.+) sale del juego$/, "$1 leaves the game"],
     [/^¡La Policía secreta \((.+)\) arrestó a (.+) jugando entre rondas!$/, "The Secret Police ($1) arrested $2 playing between rounds!"],
     [/^Tus hijos: (.+)\.$/, (_, l) => `Your children: ${l.replace(" y ", " and ")}.`], [/^Tu predicción: (.+)\.$/, "Your prediction: $1."],
@@ -1170,7 +1174,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1477,6 +1481,9 @@ function computeResult(game, players, manual) {
   if (!winner && R.pres && R.bomb) {
     const docReq = !!R.doc, docMet = docReq && (sharedAs(R.pres, R.doc) || (A(R.pres).metDoc === "y" && A(R.doc).metPres === "y"));
     const engReq = !!R.eng, engMet = engReq && (sharedAs(R.bomb, R.eng) || (A(R.bomb).metEng === "y" && A(R.eng).metBomb === "y"));
+    // Anuncio para todos de las co-revelaciones obligatorias (según el registro de códigos).
+    if (docReq) lines.push(`${R.pres.card.name} ${/^(i|hi)/i.test(R.doc.card.name) ? "e" : "y"} ${R.doc.card.name}: ${docMet ? "sí hicieron co-revelación ✓" : "no hicieron co-revelación ✗"}`);
+    if (engReq) lines.push(`${R.bomb.card.name} ${/^(i|hi)/i.test(R.eng.card.name) ? "e" : "y"} ${R.eng.card.name}: ${engMet ? "sí hicieron co-revelación ✓" : "no hicieron co-revelación ✗"}`);
     const bomberShot = dead.has(R.bomb.id);
     const bombWorks = !bomberShot && (!engReq || engMet);
     if (bombWorks) R.list.filter(p => same(p, R.bomb)).forEach(p => dead.add(p.id));
@@ -1587,6 +1594,12 @@ function computeResult(game, players, manual) {
   const tyr = holderOf(R.list, "tirano-nuclear");
   if (tyr && res[tyr.id] && res[tyr.id].win) { Object.keys(res).forEach(k => { if (k !== tyr.id) res[k] = { win: false, why: "Ganó el Tirano nuclear: todos los demás pierden." }; }); lines.push("¡Ganó el Tirano nuclear!"); }
   const ann = [];
+  R.list.forEach(p => {
+    const id = p.card.id, nm = id2 => (R.list.find(q => q.id === id2) || {}).name || "?";
+    if (id === "mi6") ann.push(`MI6: ${sharedCard(p, R.pres) && sharedCard(p, R.bomb) ? "sí hizo co-revelación con el Presidente y con la Bomba ✓" : "no hizo co-revelación con los dos ✗"}`);
+    if (id === "tirano-nuclear") ann.push(`Tirano nuclear: ${sharedCard(p, R.pres) && sharedCard(p, R.bomb) ? "el Presidente y la Bomba sí hicieron co-revelación con él ✗" : "no hicieron co-revelación con él los dos ✓"}`);
+    if (id === "clon" || id === "robot") { const f = ((p.shares || [])[0] || {}).with; ann.push(`${p.card.name}: ${f ? `su primera co-revelación fue con ${nm(f)}` : "no compartió con nadie"}`); }
+  });
   R.list.forEach(p => { const a = A(p); if (p.card.id === "jugador" && a.gamble) ann.push(`${p.name} (Jugador) apostó por el ${a.gamble === "a" ? "Equipo Azul" : "Equipo Rojo"}.`); if (p.card.id === "detective" && a.buried) ann.push(`${p.name} (Detective) dijo que la carta enterrada es: ${a.buried}.`); });
   return { winner, lines, ann, dead: [...dead], res, presId: R.pres?.id || null, bombId: R.bomb?.id || null, manual: !!manual };
 }
