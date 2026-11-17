@@ -930,7 +930,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "Intercambio de color. Cuando lo escriba, cada uno verá en su celular lo del otro.": "Color share. When they type it, each of you will see the other's on your phone.",
     "Co-revelación (carta completa). Cuando lo escriba, cada uno verá en su celular lo del otro.": "Card share (full card). When they type it, each of you will see the other's on your phone.",
     "Para compartir de verdad: uno genera un código y el otro lo escribe. La página les muestra la carta o el color del otro y aplica los efectos (Patata caliente, Criminal, Médico, Zombi…).": "To really share: one generates a code and the other types it. The page shows each of you the other's card or color and applies the effects (Hot Potato, Criminal, Medic, Zombie…).",
-    "Co-revelación": "Card share", "Intercambio de color": "Color share", "¿Te dieron un código?": "Were you given a code?", "Aceptar código": "Accept code", "El código son 4 números.": "The code is 4 digits.",
+    "Co-revelación": "Card share", "Intercambio de color": "Color share", "¿Te dieron un código?": "Were you given a code?", "Aceptar código": "Accept code", "El código son 3 números.": "The code is 3 digits.",
     "No encontré ese código. Revisa los números.": "I couldn't find that code. Check the digits.", "No puedes compartir contigo.": "You can't share with yourself.", "Tienen que estar en el mismo cuarto.": "You have to be in the same room.",
     "En esta partida no se puede intercambiar solo el color.": "In this game you can't share only the color.", "No se pudo: la carta o una condición de alguno de los dos no lo permite.": "It didn't work: the card or a condition of one of you doesn't allow it.",
     "No se completó el intercambio": "The share wasn't completed", "Te limpiaron: perdiste tus condiciones adquiridas.": "You were cleansed: you lost your acquired conditions.",
@@ -1146,7 +1146,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1714,7 +1714,7 @@ function sharePanelHTML(game, me) {
       <button type="button" class="ghost" id="shCancel">Cancelar</button>`
     : `<p class="muted small">Para compartir de verdad: uno genera un código y el otro lo escribe. La página les muestra la carta o el color del otro y aplica los efectos (Patata caliente, Criminal, Médico, Zombi…).</p>
       <div class="row"><button type="button" data-sh="card">Co-revelación</button><button type="button" data-sh="color" ${game.colorAllowed === false ? "disabled" : ""}>Intercambio de color</button><button type="button" class="ghost" data-sh="give">Dar mi carta (Informante o Juez)</button></div>`}
-    <form class="row" id="shForm"><input type="tel" id="shCode" maxlength="4" inputmode="numeric" placeholder="¿Te dieron un código?" style="flex:1 1 140px"><button type="submit">Aceptar código</button></form>
+    <form class="row" id="shForm"><input type="tel" id="shCode" maxlength="3" inputmode="numeric" placeholder="¿Te dieron un código?" style="flex:1 1 140px"><button type="submit">Aceptar código</button></form>
     <p class="err" id="shErr"></p>
   </section>`;
 }
@@ -1944,10 +1944,12 @@ function playerView() {
     const k = JSON.stringify([me.offer, game.colorAllowed]);
     if (k === shareKeyLast && box.firstChild) return; shareKeyLast = k;
     box.innerHTML = sharePanelHTML(game, me);
-    $$("[data-sh]", box).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { offer: { code: String(1000 + rand(9000)), kind: b.dataset.sh, at: Date.now() } }));
+    // Código de 3 números, distinto de los que otros tengan activos en la partida.
+    $$("[data-sh]", box).forEach(b => b.onclick = () => { const taken = new Set(players.filter(p => p.offer).map(p => p.offer.code)); let c; do { c = String(100 + rand(900)); } while (taken.has(c));
+      api.updatePlayer(ps.code, ps.pid, { offer: { code: c, kind: b.dataset.sh, at: Date.now() } }); });
     const cc = $("#shCancel", box); if (cc) cc.onclick = () => api.updatePlayer(ps.code, ps.pid, { offer: null });
     $("#shForm", box).onsubmit = async e => { e.preventDefault(); const v = $("#shCode", box).value.trim(); $("#shErr", box).textContent = "";
-      if (!/^\d{4}$/.test(v)) { $("#shErr", box).textContent = "El código son 4 números."; return; }
+      if (!/^\d{3}$/.test(v)) { $("#shErr", box).textContent = "El código son 3 números."; return; }
       const err = await completeShare(ps.code, game, players, me, v); if (err) $("#shErr", box).textContent = err; else $("#shCode", box).value = ""; };
   };
   const renderRoom = () => {
