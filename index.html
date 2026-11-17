@@ -1044,7 +1044,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     [/^Lealtad: (\S+) · carta (\S+)$/, (_, a, c) => `Allegiance: ${COLC[a] || a} · ${COL[c] || c} card`],
     [/^Lealtad: (\S+)$/, (_, a) => `Allegiance: ${COLC[a] || a}`],
     [/^Lealtad (\S+)$/, (_, c) => team("Lealtad " + c)],
-    [/^Color (\S+)$/, (_, c) => `${(COL[c] || c)[0].toUpperCase() + (COL[c] || c).slice(1)} color`],
+    [/^Color (azul|rojo|gris|verde|¿¿\?\?)$/, (_, c) => `${(COL[c] || c)[0].toUpperCase() + (COL[c] || c).slice(1)} color`],
     [/^También se agregó: (.+)$/, (_, l) => `Also added: ${list(l)}`],
     [/^También se quitó: (.+)$/, (_, l) => `Also removed: ${list(l)}`],
     [/^(.+?) (azul|rojo|roja|gris|verde) y (.+?) (azul|rojo|roja|gris|verde) no están parejos\.$/, (_, a, ca, b, cb) => `${cn(a + " " + ca)} and ${cn(b + " " + cb)} aren't balanced.`],
@@ -1164,7 +1164,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 23;
+const APP_VERSION = 24;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1469,7 +1469,7 @@ function endQuestions(game, players, me) {
 }
 function computeResult(game, players, manual) {
   const R = endRoles(game, players), A = p => (p && p.endAns) || {};
-  const roomOfP = p => p ? p.room : null, same = (a, b) => a && b && roomOfP(a) === roomOfP(b);
+  const roomOfP = p => p ? p.room : null, same = (a, b) => !!(a && b && roomOfP(a) && roomOfP(a) === roomOfP(b));
   const sniper = holderOf(R.list, "francotirador"), shotP = sniper ? R.list.find(p => p.id === A(sniper).shot) : null;
   const dead = new Set(), lines = [];
   const shotSafe = shotP && ["objetivo", "senuelo"].includes(shotP.card.id);
@@ -1572,13 +1572,14 @@ function computeResult(game, players, manual) {
     if ((p.acq || []).includes("sectario") && cl && dead.has(cl.id) && res[p.id]) res[p.id] = { win: false, why: "Murió el Líder de secta." };
   });
   // Héroe o Villano ganadores: pierden los dos equipos. Illuminati ganador: pierden todos los demás.
-  ["heroe", "villano"].forEach(cid => { const x = holderOf(R.list, cid); if (x && res[x.id] && res[x.id].win) { R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: false, why: `Ganó el ${x.card.name}: los dos equipos pierden.` }; }); lines.push(`¡Ganó el ${x.card.name}!`); } });
+  let overridden = false;
+  ["heroe", "villano"].forEach(cid => { const x = holderOf(R.list, cid); if (x && res[x.id] && res[x.id].win) { overridden = true; R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: false, why: `Ganó el ${x.card.name}: los dos equipos pierden.` }; }); lines.push(`¡Ganó el ${x.card.name}!`); } });
   const ill = holderOf(R.list, "illuminati");
-  if (ill && res[ill.id] && res[ill.id].win) { Object.keys(res).forEach(k => { if (k !== ill.id) res[k] = { win: false, why: "Ganó el Illuminati: todos los demás pierden." }; }); lines.push("¡Ganó el Illuminati!"); }
+  if (ill && res[ill.id] && res[ill.id].win) { overridden = true; Object.keys(res).forEach(k => { if (k !== ill.id) res[k] = { win: false, why: "Ganó el Illuminati: todos los demás pierden." }; }); lines.push("¡Ganó el Illuminati!"); }
   // Empate entre rojos y azules (ambos ganan o ambos pierden): Juez e Informantes deciden.
   const teamRes = t => R.list.filter(p => p.card.team === t && !(p.acq || []).includes("traidor")).map(p => res[p.id] && res[p.id].win);
   const aw = teamRes("a"), rw = teamRes("r"), tie = aw.length && rw.length && aw.every(Boolean) === rw.every(Boolean) && (aw.every(Boolean) || !aw.some(Boolean)) && (rw.every(Boolean) || !rw.some(Boolean));
-  if (tie) {
+  if (tie && !overridden) {
     let w = null; const judge = holderOf(R.list, "juez");
     if (judge) { const t = judge.taken || [], na = t.filter(x => x === "a").length, nr = t.filter(x => x === "r").length; if (na !== nr) w = na > nr ? "a" : "r"; res[judge.id] = { win: true, why: "Hubo empate y usaste tu poder de Juez." }; lines.push(w ? `Empate: el Juez decide a favor del ${w === "a" ? "Equipo Azul" : "Equipo Rojo"}.` : "Empate: el Juez tiene las mismas cartas de cada color; pierden los dos equipos."); if (!w) R.list.forEach(p => { if (p.card.team === "a" || p.card.team === "r") res[p.id] = { win: false, why: "Empate sin desempate." }; }); }
     else { const inf = t => R.list.filter(p => cardBase(p.card.id) === "informante" && p.card.team === t).reduce((n, p) => n + (p.taken || []).length, 0), ia = inf("a"), ir = inf("r"); if (ia !== ir) { w = ia > ir ? "r" : "a"; lines.push(`Empate: pierde el equipo cuyo Informante tiene más cartas. Gana el ${w === "a" ? "Equipo Azul" : "Equipo Rojo"}.`); } }
@@ -1695,7 +1696,7 @@ async function completeShare(code, game, players, me, codeTyped) {
     const okGive = (rb === "juez" || (rb === "informante" && A.card.color !== B.card.color && ["a", "r"].includes(A.card.color))) && (!A.room || A.room === B.room) && !(A.acq || []).includes("sincarta");
     if (!okGive) { await api.updatePlayer(code, A.id, { offer: null, offerFail: { id: rid(6), msg: "" } }); return "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta."; }
     await api.batch(code, null, {
-      [A.id]: { offer: null, acq: [...new Set([...(A.acq || []), "sincarta"])], lastShare: { id, with: B.id, name: B.name, kind: "give", card: B.card, notes: [`Le diste tu carta a ${B.name}.`], at } },
+      [A.id]: { offer: null, acq: [...new Set([...(A.acq || []), "sincarta"])], lastShare: { id, with: B.id, name: B.name, kind: "give", card: null, notes: [`Le diste tu carta a ${B.name}.`], at } },
       [B.id]: { taken: [...(B.taken || []), A.card.color], lastShare: { id, with: A.id, name: A.name, kind: "give", card: A.card, notes: ["Te quedaste con su carta."], at } } });
     return "";
   }
@@ -1710,6 +1711,7 @@ async function completeShare(code, game, players, me, codeTyped) {
 function showShareResult(ls_key, me) {
   const s = me.lastShare; if (!s || ls.get(ls_key) === s.id) return false;
   ls.set(ls_key, s.id);
+  if (!s.card) { toast((s.notes || []).join(" ") || "Listo"); return true; }
   const c = s.card, d = document.createElement("div");
   d.className = "full " + (s.kind === "color" ? c.color : "priv"); d.setAttribute("role", "dialog"); d.tabIndex = 0;
   d.innerHTML = `<div><span class="stamp">${s.kind === "color" ? "Intercambio de color" : s.kind === "reveal" ? "Revelación privada (Bully)" : s.kind === "give" ? "Carta entregada" : "Co-revelación"} con ${esc(s.name)}</span>
@@ -1868,7 +1870,7 @@ function roomState(game, players, room) {
   const tally = {}; voters.forEach(p => { if (p.vote && !(p.acq || []).includes("petrificado") && members.some(m => m.id === p.vote)) tally[p.vote] = (tally[p.vote] || 0) + weight(p); });
   return { room, members, leader, need, tally, picks: game["picks" + room] || null, offer: game["offer" + room] || null, locked: game["lock" + room] === roundTag(game) };
 }
-const hostageCount = (game, st) => Math.max(0, Math.min(hostages(game.timer || newTimer("basic", 0)), st.members.length - 1));
+const hostageCount = (game, st) => Math.max(0, Math.min(hostages(game.timer || newTimer("basic", 0)), st.members.filter(p => p.id !== st.leader && !cantLeave(game, p)).length));
 async function setLeader(code, game, players, room, pid, extraGame) {
   const st = roomState(game, players, room), patches = {};
   st.members.forEach(p => { if (p.vote) patches[p.id] = { vote: null }; });
@@ -1876,20 +1878,26 @@ async function setLeader(code, game, players, room, pid, extraGame) {
   if (L) patches[pid] = { ...(patches[pid] || {}), ledRooms: [...new Set([...(L.ledRooms || []), room])] };
   await api.batch(code, { ["leader" + room]: pid, ["offer" + room]: null, ...(extraGame || {}) }, patches);
 }
+// Si alguien ya juntó los votos necesarios, se vuelve líder (y queda registrada la destitución para Anarquista y Esbirro).
+async function promoteIfMajority(code, game, players, room) {
+  const st = roomState(game, players, room);
+  if (st.locked) return false;
+  const top = Object.entries(st.tally).find(([id, v]) => id !== st.leader && v >= st.need);
+  if (!top) return false;
+  const target = top[0], now = players.map(p => ({ ...p }));
+  if (st.leader) {
+    const r = curRound(game), pt = {};
+    st.members.forEach(p => { pt[p.id] = { sawUsurp: true }; if (p.vote === target) pt[p.id].usurpRounds = [...new Set([...(p.usurpRounds || []), r])]; });
+    await api.batch(code, null, pt);
+    now.forEach(p => { if (pt[p.id]) Object.assign(p, pt[p.id]); });
+  }
+  await setLeader(code, game, now, room, target);
+  return true;
+}
 async function castVote(code, game, players, me, target) {
   await api.updatePlayer(code, me.id, { vote: target });
   const now = players.map(p => p.id === me.id ? { ...p, vote: target } : p);
-  const st = roomState(game, now, me.room);
-  if (target && target !== st.leader && !st.locked && (st.tally[target] || 0) >= st.need) {
-    // Destitución: queda registrada para Anarquista y Esbirro.
-    if (st.leader) {
-      const r = curRound(game), pt = {};
-      st.members.forEach(p => { pt[p.id] = { sawUsurp: true }; if (p.vote === target) pt[p.id].usurpRounds = [...new Set([...(p.usurpRounds || []), r])]; });
-      await api.batch(code, null, pt);
-      now.forEach(p => { if (pt[p.id]) Object.assign(p, pt[p.id]); });
-    }
-    await setLeader(code, game, now, me.room, target); toast("Cambio de líder");
-  }
+  if (await promoteIfMajority(code, game, now, me.room)) toast("Cambio de líder");
 }
 // Los rehenes cambian de cuarto cuando los dos líderes ya anunciaron. Es idempotente: pone el cuarto destino, no lo alterna.
 async function doExchange(code, game, players) {
@@ -1947,7 +1955,7 @@ function roomPanelHTML(game, players, me) {
 function bindRoomPanel(code, game, players, me) {
   $$("[data-nom]").forEach(b => b.onclick = () => { setLeader(code, game, players, me.room, b.dataset.nom); });
   $$("[data-vote]").forEach(b => b.onclick = () => castVote(code, game, players, me, b.dataset.vote || null));
-  $$("[data-give]").forEach(b => b.onclick = () => { api.updateGame(code, { ["offer" + me.room]: b.dataset.give }); toast("Le ofreciste el liderazgo"); });
+  $$("[data-give]").forEach(b => b.onclick = () => { api.updateGame(code, { ["offer" + me.room]: b.dataset.give, ["offerAt" + me.room]: Date.now() }); toast("Le ofreciste el liderazgo"); });
   const lp = $("#lockPicks"); if (lp) lp.onclick = () => {
     const st = roomState(game, players, me.room), forced = st.members.filter(p => p.id !== me.id && mustLeave(game, p));
     const n = Math.max(hostageCount(game, st), forced.length);
@@ -1977,7 +1985,8 @@ function playerView() {
       const r = me.interAns; ls.set("rs-interans:" + ps.pid, r.id);
       modal(`Respuesta de ${esc(r.name)}`, `${esc(r.q)}<br><br><b class="bigans">${r.a === "y" ? "Sí" : r.a === "n" ? "No" : "No sabe"}</b>`, [{ label: "Aceptar", primary: true }]);
     }
-    const k = JSON.stringify([game.timer?.state, game.timer?.endsAt, !!game.arrest, me.timeLost, me.pubOpen, me.card.id, me.room, me.pUsed, me.pGame, me.publicCard, me.ratAway, me.stone, me.kids, me.predict, me.taken, game.timer?.r, game.timer?.n, !!game.buriedCard, game.leader1, game.leader2, players.map(p => [p.id, p.name, p.room, p.round, p.card?.id, p.publicCard, p.pubOpen, p.out])]);
+    const t = game.timer, tlExpired = !!(t && t.state === "run" && t.mins[t.r - 1] * 60 - tLeft(t) > 300);
+    const k = JSON.stringify([betweenRounds(game), tlExpired, game.timer?.state, game.timer?.endsAt, !!game.arrest, me.timeLost, me.pubOpen, me.card.id, me.room, me.pUsed, me.pGame, me.publicCard, me.ratAway, me.stone, me.kids, me.predict, me.taken, game.timer?.r, game.timer?.n, !!game.buriedCard, game.leader1, game.leader2, players.map(p => [p.id, p.name, p.room, p.round, p.card?.id, p.publicCard, p.pubOpen, p.out])]);
     if (k === powerKeyLast) return; powerKeyLast = k;
     box.innerHTML = powerPanelHTML(game, players, me);
     $$("[data-pw]", box).forEach(b => b.onclick = () => {
@@ -2004,10 +2013,9 @@ function playerView() {
   };
   const renderRoom = () => {
     const box = $("#roompanel"); if (!box || !game || !me) return;
-    const k = JSON.stringify([me.room, me.vote, game.leader1, game.leader2, game.picks1, game.picks2, game.offer1, game.offer2, game.timer?.r, game.lock1, game.lock2, players.map(p => [p.id, p.name, p.room, p.vote, p.round, p.card?.id, p.publicCard, p.tackled, p.blasted, p.stone, p.ratAway, (p.acq || []).includes("petrificado")])]);
-    if (k === roomKeyLast) return; roomKeyLast = k;
-    box.innerHTML = roomPanelHTML(game, players, me);
-    bindRoomPanel(ps.code, game, players, me);
+    // Rescates: si los dos líderes ya anunciaron, o alguien juntó los votos a la vez que otro, se completa aquí.
+    if (me.room && game.picks1 && game.picks2 && (game.leader1 === me.id || game.leader2 === me.id)) doExchange(ps.code, game, players);
+    if (me.room) { const st0 = roomState(game, players, me.room); const top = Object.entries(st0.tally).find(([id, v]) => id !== st0.leader && v >= st0.need); if (top && top[0] === me.id && !st0.locked) promoteIfMajority(ps.code, game, players, me.room); }
     // Te enviaron como rehén.
     const prev = ls.get("rs-room:" + ps.pid) || "";
     if (me.room && prev && prev !== roomKey() && prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`) && !$(".modal")) {
@@ -2015,13 +2023,18 @@ function playerView() {
       try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {}
       modal(`¡Ve al Cuarto ${esc(me.room)}!`, "Tu líder te envió como rehén. Ve ahora al otro cuarto.", [{ label: "Aceptar", primary: true }]);
     } else if (me.room && !prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`) && ls.get("rs-seen:" + ps.pid) === `${ps.code}|${ps.pid}|${me.round}|${me.card?.id}`) ls.set("rs-room:" + ps.pid, roomKey());
-    // Te ofrecieron ser líder.
+    // Te ofrecieron ser líder (cada oferta tiene su hora, así una oferta repetida vuelve a aparecer).
     const st = roomState(game, players, me.room || "");
-    if (me.room && st.offer === me.id && offerShown !== st.offer + st.leader && !$(".modal")) {
-      offerShown = st.offer + st.leader;
+    const offKey = `${st.offer}|${game["offerAt" + (me.room || "")] || 0}`;
+    if (me.room && st.offer === me.id && offerShown !== offKey && !$(".modal")) {
+      offerShown = offKey;
       modal("¿Quieres ser líder?", `${esc((players.find(p => p.id === st.leader) || {}).name || "El líder")} te ofrece el liderazgo del Cuarto ${esc(me.room)}.`,
         [{ label: "No, gracias", fn: () => api.updateGame(ps.code, { ["offer" + me.room]: null }) }, { label: "Sí, acepto", primary: true, fn: () => setLeader(ps.code, game, players, me.room, me.id) }]);
     }
+    const k = JSON.stringify([me.room, me.vote, game.leader1, game.leader2, game.picks1, game.picks2, game.offer1, game.offer2, game.timer?.r, game.lock1, game.lock2, players.map(p => [p.id, p.name, p.room, p.vote, p.round, p.card?.id, p.publicCard, p.pubOpen, p.tackled, p.blasted, p.stone, p.ratAway, (p.acq || []).includes("petrificado")])]);
+    if (k === roomKeyLast) return; roomKeyLast = k;
+    box.innerHTML = roomPanelHTML(game, players, me);
+    bindRoomPanel(ps.code, game, players, me);
   };
   const render = () => {
     if (!loaded.g || !loaded.m) return;
@@ -2143,6 +2156,11 @@ function playerView() {
     $$("[data-ans]", ov).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { endAns: { ...(me.endAns || {}), [b.dataset.ans]: b.dataset.v } }));
   };
   unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
+  const pwTimer = setInterval(() => renderPower(), 2000); unsubs.push(() => clearInterval(pwTimer));
+  // Mantener la pantalla encendida mientras se juega (si el celular lo permite).
+  let wake = null; const askWake = async () => { try { if ("wakeLock" in navigator && !document.hidden) wake = await navigator.wakeLock.request("screen"); } catch (e) {} };
+  askWake(); const onVis = () => { if (!document.hidden) askWake(); }; document.addEventListener("visibilitychange", onVis);
+  unsubs.push(() => { document.removeEventListener("visibilitychange", onVis); try { wake && wake.release(); } catch (e) {} });
   unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
   unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
   unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
@@ -2321,6 +2339,8 @@ async function hostSetup(editCode) {
       $("#hpin").oninput = e => pin = e.target.value;
       $("#create").onclick = async () => {
         if (!/^\d{4}$/.test(pin.trim())) { err = "Pon un PIN de 4 números."; return render(); }
+        // De paso, borra las partidas de más de 3 días para que no se acumulen.
+        api.listGames().then(gs => gs.filter(g => g.createdAt && Date.now() - g.createdAt > 3 * 864e5).forEach(g => api.deleteGame(g.code).catch(() => {}))).catch(() => {});
         let code; for (let i = 0; i < 8; i++) { code = newCode(); if (!(await api.getGame(code))) break; }
         await api.createGame(code, { setup: B, hostPin: pin.trim(), round: 0, inPlay: [], buried: 0, createdAt: Date.now() });
         ls.set("rs-builder2", B); ls.set("rs-host", { code });
@@ -2466,6 +2486,7 @@ function hostLobby() {
     const tr = $("#tReset"); if (tr) tr.onclick = () => setT({ state: "idle", endsAt: null, left: T.mins[T.r - 1] * 60 });
     const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(e.target.value, n) });
     if (started && game.picks1 && game.picks2) doExchange(code, game, list);
+    if (started) ROOMS.forEach(r => promoteIfMajority(code, game, list, r));
     // El Borracho despierta solo al empezar la última ronda.
     if (started && drunk && game.sober && game.timer && game.timer.r >= game.timer.n && game.timer.state === "run") api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } });
     // Ciempiés: el enganchado que queda en otro cuarto pasa a desgarrado.
@@ -2500,6 +2521,9 @@ function hostLobby() {
     } else $("#end").onclick = () => { confirmEnd = true; render(); };
   };
   app().innerHTML = `<div class="narrow"><div class="panel wait"><div class="pulse"></div><p>Abriendo la sala…</p></div></div>`;
+  let wakeH = null; const askWakeH = async () => { try { if ("wakeLock" in navigator && !document.hidden) wakeH = await navigator.wakeLock.request("screen"); } catch (e) {} };
+  askWakeH(); const onVisH = () => { if (!document.hidden) askWakeH(); }; document.addEventListener("visibilitychange", onVisH);
+  unsubs.push(() => { document.removeEventListener("visibilitychange", onVisH); try { wakeH && wakeH.release(); } catch (e) {} });
   unsubs.push(api.watchGame(code, g => { game = g; gl = true; render(); setTimer(g); }));
   unsubs.push(api.watchPlayers(code, l => { players = l; render(); }));
 }
