@@ -182,6 +182,11 @@ body.has-timer #lang { top: 66px; }
 .bigans { font-size: 2rem; }
 .seer { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; text-align: left; font-size: 1.05rem; }
 .seer .t-a { color: #8fb0ff; } .seer .t-r { color: #ff8f86; } .seer .t-g { color: #c9cdd6; } .seer .t-v { color: #7ee2a6; } .seer .t-x { color: #c7a8ff; }
+.countdown { text-align: center; padding: 40px 0; display: grid; gap: 10px; }
+.countdown .lbl { font-family: var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.countdown b { font-family: var(--display); font-size: clamp(7rem, 40vw, 12rem); line-height: 1; animation: cdpop 1s ease-out infinite; }
+@keyframes cdpop { from { transform: scale(1.25); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .countdown b { animation: none; } }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -972,7 +977,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "Elige a un jugador": "Choose a player", "Elige a dos jugadores distintos": "Choose two different players", "Intercambiaron cartas": "They traded cards", "Ahora eres el líder": "You're the leader now", "Cambiaron de cuarto": "They switched rooms",
     "Es inmune: atrapa a otro": "They're immune: grab someone else", "Era inmune: sales tú solo": "They were immune: you leave alone", "Los dos salen del juego": "Both of you leave the game",
     "Dar mi carta (Informante o Juez)": "Give my card (Informer or Judge)", "Dar tu carta: solo funciona si quien escribe el código es Informante o Juez.": "Give your card: it only works if whoever types the code is an Informer or Judge.",
-    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
+    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Esperando acción de:": "Waiting for action from:", "Calculando el resultado…": "Calculating the result…", "Revelando el resultado": "Revealing the result", "Revelar ya, sin esperar": "Reveal now, without waiting", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
     "Perdiste tu poder: tardaste más de 5 minutos en terminar una ronda.": "You lost your power: you took more than 5 minutes to end a round.", "Úsalo mientras corre el reloj de una ronda.": "Use it while a round's clock is running.",
     "Ya pasaron más de 5 minutos: perdiste el poder.": "More than 5 minutes have passed: you lost the power.", "¡Se acabó el tiempo! (te revelas a todos)": "Time is up! (you reveal to everyone)",
     "Ya hay un arresto esperando confirmación.": "There's already an arrest waiting for confirmation.", "Solo funciona entre rondas (cuando el reloj llegó a cero y antes de iniciar la siguiente).": "It only works between rounds (when the clock hit zero and before the next one starts).",
@@ -1018,6 +1023,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     [/^Salió el Xenomorfo de (.+): muere todo su cuarto\.$/, "The Xenomorph burst out of $1: their whole room dies."],
     [/^Ganó el (.+): los dos equipos pierden\.$/, (_, c) => `The ${cn(c)} won: both teams lose.`], [/^¡Ganó el (.+)!$/, (_, c) => `The ${cn(c)} won!`],
     [/^Revelación privada \(Bully\) con (.+)$/, "Private reveal (Bully) with $1"],
+    [/^Esperando acción de: (.+)\. En cuanto respondan, a todos les sale la cuenta regresiva y el resultado\.$/, "Waiting for action from: $1. As soon as they answer, everyone gets the countdown and the result."],
     [/^Respuesta de (.+)$/, "Answer from $1"], [/^(.+) sale del juego$/, "$1 leaves the game"],
     [/^¡La Policía secreta \((.+)\) arrestó a (.+) jugando entre rondas!$/, "The Secret Police ($1) arrested $2 playing between rounds!"],
     [/^Tus hijos: (.+)\.$/, (_, l) => `Your children: ${l.replace(" y ", " and ")}.`], [/^Tu predicción: (.+)\.$/, "Your prediction: $1."],
@@ -1164,7 +1170,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 24;
+const APP_VERSION = 25;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1591,6 +1597,16 @@ function computeResult(game, players, manual) {
   R.list.forEach(p => { const a = A(p); if (p.card.id === "jugador" && a.gamble) ann.push(`${p.name} (Jugador) apostó por el ${a.gamble === "a" ? "Equipo Azul" : "Equipo Rojo"}.`); if (p.card.id === "detective" && a.buried) ann.push(`${p.name} (Detective) dijo que la carta enterrada es: ${a.buried}.`); });
   return { winner, lines, ann, dead: [...dead], res, presId: R.pres?.id || null, bombId: R.bomb?.id || null, manual: !!manual };
 }
+// Quién falta por responder antes de revelar.
+const pendingEnd = (game, players) => players.filter(p => p.card && p.round === game.round).filter(p => endQuestions(game, players, p).some(q => (p.endAns || {})[q.k] == null));
+const REVEAL_DELAY = 4000;
+// Cuando ya respondieron todos, cualquier celular abierto calcula el resultado y arranca la cuenta regresiva (el cálculo da lo mismo en todos).
+function autoReveal(code, game, players) {
+  if (game.endPhase !== "pre" || game.result || pendingEnd(game, players).length) return;
+  api.updateGame(code, { endPhase: "done", result: computeResult(game, players), revealAt: Date.now() + REVEAL_DELAY });
+}
+const countdownLeft = game => game.revealAt ? Math.ceil((game.revealAt - Date.now()) / 1000) : 0;
+const countdownHTML = n => `<div class="countdown"><span class="lbl">Revelando el resultado</span><b>${Math.max(1, Math.min(3, n))}</b></div>`;
 function resultHTML(game, players, meId) {
   const r = game.result; if (!r) return "";
   const list = players.filter(p => p.card && p.round === game.round);
@@ -1704,7 +1720,7 @@ async function completeShare(code, game, players, me, codeTyped) {
   if (why) { await api.updatePlayer(code, A.id, { offer: null, offerFail: { id: rid(6), msg: "No se completó el intercambio." } }); return why; }
   const { pa, pb, instant } = applyShare(game, A, B, A.offer.kind);
   let gp = null;
-  if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res }; }
+  if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res, revealAt: Date.now() + REVEAL_DELAY }; }
   await api.batch(code, gp, { [A.id]: pa, [B.id]: pb });
   return "";
 }
@@ -1801,7 +1817,7 @@ async function usePower(code, game, players, me, action) {
     const why = shareBlocked(game, X, Y, "card");
     if (why) { await api.updatePlayer(code, me.id, extraMe); toast("El poder se desperdició: " + why); return; }
     const { pa, pb, instant } = applyShare(game, X, Y, "card");
-    let gp = null; if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res }; }
+    let gp = null; if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res, revealAt: Date.now() + REVEAL_DELAY }; }
     const pt = { [X.id]: pa, [Y.id]: pb }; pt[me.id] = { ...(pt[me.id] || {}), ...extraMe };
     await api.batch(code, gp, pt); toast("Poder usado");
   };
@@ -2136,11 +2152,15 @@ function playerView() {
   const renderEnd = () => {
     let ov = $("#endscreen");
     if (!game || !me || !game.endPhase) { if (ov) ov.remove(); endKeyLast = ""; return; }
+    autoReveal(ps.code, game, players);
     const qs = endQuestions(game, players, me), ans = me.endAns || {};
-    const k = JSON.stringify([game.endPhase, game.result, ans, qs.map(q => q.k), players.map(p => [p.id, p.room, p.card?.id])]);
+    const left = game.endPhase === "done" ? countdownLeft(game) : 0;
+    const waitRoles = game.endPhase === "pre" ? [...new Set(pendingEnd(game, players).filter(p => p.id !== me.id).map(p => p.card.name))] : [];
+    const k = JSON.stringify([game.endPhase, game.result, left > 0 ? left : 0, ans, qs.map(q => q.k), waitRoles, players.map(p => [p.id, p.room, p.card?.id])]);
     if (k === endKeyLast && ov) return; endKeyLast = k;
     if (!ov) { ov = document.createElement("div"); ov.id = "endscreen"; ov.setAttribute("role", "dialog"); document.body.appendChild(ov); try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {} }
     if (game.endPhase === "done") {
+      if (left > 0) { ov.innerHTML = `<div class="endbox">${countdownHTML(left)}</div>`; if (left === 1) { try { navigator.vibrate && navigator.vibrate(400); } catch (e) {} } return; }
       if (endHidden === JSON.stringify(game.result)) { ov.remove(); return; }
       ov.innerHTML = `<div class="endbox">${resultHTML(game, players, me.id)}<button type="button" class="ghost" id="endClose">Cerrar</button></div>`;
       $("#endClose", ov).onclick = () => { endHidden = JSON.stringify(game.result); ov.remove(); };
@@ -2151,10 +2171,11 @@ function playerView() {
       <span class="eyebrow">Fin del juego</span><h1>Reúnanse</h1>
       <p>Júntense todos en un mismo lugar, <b>sin mezclarse</b>: el Cuarto 1 de un lado y el Cuarto 2 del otro.${me.room ? ` Tú vas con el <b>Cuarto ${esc(me.room)}</b>.` : ""}</p>
       ${pending.length ? pending.slice(0, 1).map(q => `<div class="panel endq"><b>${esc(q.q)}</b>${q.note ? `<p class="muted small">${esc(q.note)}</p>` : ""}<div class="names">${q.opts.map(([v, l]) => `<button type="button" data-ans="${esc(q.k)}" data-v="${esc(v)}">${esc(l)}</button>`).join("")}</div><p class="muted small">Solo tú ves esta pregunta.</p></div>`).join("")
-        : `<div class="panel wait"><div class="pulse"></div><p><b>Listo.</b> Esperando a que el anfitrión revele los resultados…</p></div>`}
+        : `<div class="panel wait"><div class="pulse"></div>${waitRoles.length ? `<p><b>Esperando acción de:</b></p><div class="chips">${waitRoles.map(r => `<span class="chip"><span>${esc(r)}</span></span>`).join("")}</div>` : `<p><b>Listo.</b> Calculando el resultado…</p>`}</div>`}
     </div>`;
     $$("[data-ans]", ov).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { endAns: { ...(me.endAns || {}), [b.dataset.ans]: b.dataset.v } }));
   };
+  const endTick = setInterval(() => { if (game && game.endPhase === "done" && game.revealAt && game.revealAt > Date.now() - 1500) renderEnd(); }, 250); unsubs.push(() => clearInterval(endTick));
   unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
   const pwTimer = setInterval(() => renderPower(), 2000); unsubs.push(() => clearInterval(pwTimer));
   // Mantener la pantalla encendida mientras se juega (si el celular lo permite).
@@ -2429,10 +2450,10 @@ function hostLobby() {
         ${!game.endPhase ? `<p class="small">Después del último intercambio de rehenes, toca <b>Iniciar el final</b>: a todos les pide reunirse sin mezclar los cuartos, y a los que deben anunciar algo (Jugador, Detective, Francotirador, Presidente y Doctor, Bomba e Ingeniero…) les pregunta en su celular.</p>
           <button class="primary big" id="endStart">Iniciar el final</button>
           <details><summary class="small">Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)</summary><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div></details>`
-        : game.endPhase === "pre" ? `${pend.length ? `<p class="small">Faltan por responder: <b>${pend.map(p => esc(p.name)).join(", ")}</b></p>` : `<p class="small">Ya respondieron todos.</p>`}
-          <div class="row"><button class="primary big" id="endReveal">Revelar resultados</button><button class="ghost" id="endCancel">Cancelar el final</button></div>
+        : game.endPhase === "pre" ? `${pend.length ? `<p class="small">Esperando acción de: <b>${pend.map(p => `${esc(p.name)} (${esc(p.card.name)})`).join(", ")}</b>. En cuanto respondan, a todos les sale la cuenta regresiva y el resultado.</p>` : `<p class="small">Calculando el resultado…</p>`}
+          <div class="row"><button id="endReveal">Revelar ya, sin esperar</button><button class="ghost" id="endCancel">Cancelar el final</button></div>
           ${R0.pres && R0.bomb ? "" : `<p class="small" style="color:var(--warn)">No encuentro Presidente y Bomba: elige quién ganó.</p><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div>`}`
-        : `${resultHTML(game, list, null)}<button class="ghost" id="endCancel">Ocultar resultados</button>`}
+        : countdownLeft(game) > 0 ? countdownHTML(countdownLeft(game)) : `${resultHTML(game, list, null)}<button class="ghost" id="endCancel">Ocultar resultados</button>`}
       </section>` : ""}
       <section class="panel">
         <div class="panel-head"><h2>Mazo</h2><button id="edit">Cambiar cartas</button></div>
@@ -2475,7 +2496,7 @@ function hostLobby() {
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
       const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false, pUsed: null, pGame: null, publicCard: false, moves: 0, hostageTimes: 0, ledRooms: [], usurpRounds: [], sawUsurp: false, tackled: null, blasted: null, stone: null, ratAway: null, ratLost: false, kids: null, predict: null, taken: [], loveWith: null, hateWith: null, centipede: null, out: false, lastSwap: 0, pubOpen: false, ask: null, interAns: null, timeLost: false });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, lock1: null, lock2: null, lastSwapIn: null, arrest: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, revealAt: null, lock1: null, lock2: null, lastSwapIn: null, arrest: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
@@ -2491,12 +2512,14 @@ function hostLobby() {
     if (started && drunk && game.sober && game.timer && game.timer.r >= game.timer.n && game.timer.state === "run") api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } });
     // Ciempiés: el enganchado que queda en otro cuarto pasa a desgarrado.
     if (started) { const torn = {}; withCard.forEach(p => { if ((p.acq || []).includes("enganchado")) { const c = list.find(q => q.id === p.centipede); if (c && c.room && p.room && c.room !== p.room) torn[p.id] = { acq: [...(p.acq || []).filter(k => k !== "enganchado"), "desgarrado"] }; } }); if (Object.keys(torn).length) api.batch(code, null, torn); }
-    const es = $("#endStart"); if (es) es.onclick = () => api.updateGame(code, { endPhase: "pre", result: null });
-    const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual) });
+    const es = $("#endStart"); if (es) es.onclick = () => api.updateGame(code, { endPhase: "pre", result: null, revealAt: null });
+    const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual), revealAt: Date.now() + REVEAL_DELAY });
+    if (started) autoReveal(code, game, list);
+    if (game.endPhase === "done" && countdownLeft(game) > 0) setTimeout(render, 300);
     const er = $("#endReveal"); if (er) er.onclick = () => pend.length ? modal("¿Revelar ya?", "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».", [{ label: "Esperar" }, { label: "Revelar", primary: true, fn: () => doReveal() }]) : doReveal();
     $$("[data-force]").forEach(b => b.onclick = () => doReveal(b.dataset.force));
     const ay = $("#arrestYes"); if (ay) ay.onclick = () => { const r = computeResult(game, list, null); Object.keys(r.res).forEach(k => r.res[k] = { win: k === game.arrest.by, why: k === game.arrest.by ? "Atrapaste a alguien jugando entre rondas." : "Ganó la Policía secreta: todos los demás pierden." });
-      r.lines = [`¡La Policía secreta (${game.arrest.byName}) arrestó a ${game.arrest.targetName} jugando entre rondas!`]; r.winner = "?"; api.updateGame(code, { endPhase: "done", result: r, arrest: null }); };
+      r.lines = [`¡La Policía secreta (${game.arrest.byName}) arrestó a ${game.arrest.targetName} jugando entre rondas!`]; r.winner = "?"; api.updateGame(code, { endPhase: "done", result: r, arrest: null, revealAt: Date.now() + REVEAL_DELAY }); };
     const an = $("#arrestNo"); if (an) an.onclick = () => api.updateGame(code, { arrest: null });
     const ec = $("#endCancel"); if (ec) ec.onclick = () => api.updateGame(code, { endPhase: null, result: null });
     $$("[data-lead]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.lead); setLeader(code, game, list, p.room, p.id); });
