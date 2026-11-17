@@ -929,7 +929,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "La Bomba explotó en el mismo cuarto que el Presidente.": "The bomb went off in the same room as the President.", "La Bomba explotó en el otro cuarto: el Presidente sobrevivió.": "The bomb went off in the other room: the President survived.",
     "El Presidente no hizo co-revelación con el Doctor: le falló el corazón.": "The President didn't card share with the Doctor: their heart failed.",
     "Final del juego": "End of the game", "Después del último intercambio de rehenes, toca": "After the last hostage exchange, tap", "Iniciar el final": "Start the ending",
-    ": a todos les pide reunirse sin mezclar los cuartos, y a los que deben anunciar algo (Jugador, Detective, Francotirador, Presidente y Doctor, Bomba e Ingeniero…) les pregunta en su celular.": ": everyone is asked to gather without mixing rooms, and those who must announce something (Gambler, Private Investigator, Sniper, President and Doctor, Bomber and Engineer…) are asked on their phone.",
+    ": a todos les pide reunirse sin mezclar los cuartos y a los que deben anunciar algo (Jugador, Detective, Francotirador…) les pregunta en su celular. Lo que depende de co-revelaciones (Presidente y Doctor, Bomba e Ingeniero, MI6…) sale del registro de los códigos.": ": everyone is asked to gather without mixing rooms, and those who must announce something (Gambler, Private Investigator, Sniper…) are asked on their phone. Anything that depends on card shares (President and Doctor, Bomber and Engineer, MI6…) comes from the code records.",
     "Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)": "End now with a winner (Dr. Boom, Tuesday Knight, another version of the game…)", "Ganó el Equipo Azul": "The Blue Team won", "Ganó el Equipo Rojo": "The Red Team won",
     "Faltan por responder:": "Still to answer:", "Ya respondieron todos.": "Everyone has answered.", "Revelar resultados": "Reveal results", "Cancelar el final": "Cancel the ending",
     "No encuentro Presidente y Bomba: elige quién ganó.": "I can't find a President and a Bomber: choose who won.", "Ocultar resultados": "Hide results", "¿Revelar ya?": "Reveal now?",
@@ -1170,7 +1170,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 25;
+const APP_VERSION = 26;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1459,14 +1459,7 @@ function endQuestions(game, players, me) {
   if (id === "jugador") qs.push({ k: "gamble", q: "Antes de revelar: ¿qué equipo crees que ganó?", opts: [["a", "Equipo Azul"], ["r", "Equipo Rojo"]] });
   if (id === "detective") qs.push({ k: "buried", q: "¿Cuál es la carta enterrada?", opts: [...new Set((game.inPlay || []).map(x => x.name))].map(n => [n, n]) });
   if (id === "francotirador") qs.push({ k: "shot", q: "¿A quién le disparas?", opts: others });
-  const docOk = sharedAs(R.pres, R.doc), engOk = sharedAs(R.bomb, R.eng);
-  if (R.pres && R.doc && !docOk && me.id === R.pres.id) qs.push({ k: "metDoc", q: `¿Hiciste co-revelación (carta completa) con ${R.doc.card.id === "doctor" ? "el Doctor" : "la Enfermera"}?`, opts: [["y", "Sí"], ["n", "No"]] });
-  if (R.pres && R.doc && !docOk && me.id === R.doc.id) qs.push({ k: "metPres", q: "¿Hiciste co-revelación (carta completa) con el Presidente?", opts: [["y", "Sí"], ["n", "No"]] });
-  if (R.bomb && R.eng && !engOk && me.id === R.bomb.id) qs.push({ k: "metEng", q: `¿Hiciste co-revelación (carta completa) con ${R.eng.card.id === "ingeniero" ? "el Ingeniero" : "el Mecánico"}?`, opts: [["y", "Sí"], ["n", "No"]] });
-  if (R.bomb && R.eng && !engOk && me.id === R.eng.id) qs.push({ k: "metBomb", q: "¿Hiciste co-revelación (carta completa) con la Bomba?", opts: [["y", "Sí"], ["n", "No"]] });
-  if (id === "mi6" && !(sharedCard(me, R.pres) && sharedCard(me, R.bomb))) qs.push({ k: "mi6", q: "¿Hiciste co-revelación con el Presidente y también con la Bomba?", opts: [["y", "Sí, con los dos"], ["n", "No"]] });
-  if (id === "tirano-nuclear" && !(sharedCard(me, R.pres) && sharedCard(me, R.bomb))) qs.push({ k: "tyrant", q: "¿El Presidente y la Bomba hicieron co-revelación contigo (los dos)?", opts: [["y", "Sí, los dos"], ["n", "No"]] });
-  if ((id === "clon" || id === "robot") && !(me.shares || []).length) qs.push({ k: "first", q: "¿Con quién fue tu primera co-revelación o intercambio de color?", opts: [["", "Con nadie"], ...others] });
+  // Presidente/Doctor, Bomba/Ingeniero, MI6, Tirano nuclear, Clon y Robot ya no se preguntan: se usa el registro de co-revelaciones con código.
   // Enamorado/odio con pareja conocida (Cupido/Eris desde la página) se calculan solos.
   const knownLove = k => (k === "enamorado" && me.loveWith) || (k === "odio" && me.hateWith);
   const selfCond = (me.acq || []).some(k => SELF_COND.includes(k) && !knownLove(k));
@@ -2447,7 +2440,7 @@ function hostLobby() {
         <div class="row"><button class="primary" id="arrestYes">Sí, alguien lo confirma</button><button id="arrestNo">No, nadie lo confirma</button></div></section>` : ""}
       ${started ? `<section class="panel endpanel">
         <div class="panel-head"><h2>Final del juego</h2></div>
-        ${!game.endPhase ? `<p class="small">Después del último intercambio de rehenes, toca <b>Iniciar el final</b>: a todos les pide reunirse sin mezclar los cuartos, y a los que deben anunciar algo (Jugador, Detective, Francotirador, Presidente y Doctor, Bomba e Ingeniero…) les pregunta en su celular.</p>
+        ${!game.endPhase ? `<p class="small">Después del último intercambio de rehenes, toca <b>Iniciar el final</b>: a todos les pide reunirse sin mezclar los cuartos y a los que deben anunciar algo (Jugador, Detective, Francotirador…) les pregunta en su celular. Lo que depende de co-revelaciones (Presidente y Doctor, Bomba e Ingeniero, MI6…) sale del registro de los códigos.</p>
           <button class="primary big" id="endStart">Iniciar el final</button>
           <details><summary class="small">Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)</summary><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div></details>`
         : game.endPhase === "pre" ? `${pend.length ? `<p class="small">Esperando acción de: <b>${pend.map(p => `${esc(p.name)} (${esc(p.card.name)})`).join(", ")}</b>. En cuanto respondan, a todos les sale la cuenta regresiva y el resultado.</p>` : `<p class="small">Calculando el resultado…</p>`}
