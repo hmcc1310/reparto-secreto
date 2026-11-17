@@ -179,6 +179,9 @@ body.has-timer #lang { top: 66px; }
 .endres .me b { font-size: 1.3rem; }
 .res { font-weight: 700; font-size: .85rem; } .res.w { color: var(--ok); } .res.l { color: var(--red); }
 .sharecode { font-family: var(--mono); font-size: 2.6rem; font-weight: 700; letter-spacing: .3em; text-align: center; padding: 8px; border: 2px dashed var(--line); border-radius: var(--r); }
+.bigans { font-size: 2rem; }
+.seer { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; text-align: left; font-size: 1.05rem; }
+.seer .t-a { color: #8fb0ff; } .seer .t-r { color: #ff8f86; } .seer .t-g { color: #c9cdd6; } .seer .t-v { color: #7ee2a6; } .seer .t-x { color: #c7a8ff; }
 .names { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
 .names button { padding: 12px 10px; font-weight: 600; overflow-wrap: anywhere; }
 .sumbar { position: sticky; bottom: 10px; z-index: 5; background: var(--surface); border: 1px solid var(--fg); border-radius: var(--r); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
@@ -191,6 +194,7 @@ body.has-timer #lang { top: 66px; }
 .sum-body { display: grid; gap: 8px; padding: 0 16px 14px; max-height: 50vh; overflow: auto; }
 .sum-body .chip button { border: 0; background: transparent; color: var(--muted); padding: 0 0 0 4px; }
 .reveal button { padding: 12px 6px; font-weight: 600; font-size: .9rem; }
+.reveal .pubbtn { grid-column: 1 / -1; }
 .inplay, .conds { width: 100%; text-align: left; display: grid; gap: 10px; }
 .inplay ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .inplay li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
@@ -968,7 +972,19 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "Elige a un jugador": "Choose a player", "Elige a dos jugadores distintos": "Choose two different players", "Intercambiaron cartas": "They traded cards", "Ahora eres el líder": "You're the leader now", "Cambiaron de cuarto": "They switched rooms",
     "Es inmune: atrapa a otro": "They're immune: grab someone else", "Era inmune: sales tú solo": "They were immune: you leave alone", "Los dos salen del juego": "Both of you leave the game",
     "Dar mi carta (Informante o Juez)": "Give my card (Informer or Judge)", "Dar tu carta: solo funciona si quien escribe el código es Informante o Juez.": "Give your card: it only works if whoever types the code is an Informer or Judge.",
-    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "El Ninja te sacó del juego (o lo usaste tú). No estás en ningún cuarto, pero al final sigues ganando o perdiendo según tu objetivo.": "The Ninja took you out of the game (or you used it). You're not in any room, but at the end you still win or lose according to your goal.",
+    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
+    "Perdiste tu poder: tardaste más de 5 minutos en terminar una ronda.": "You lost your power: you took more than 5 minutes to end a round.", "Úsalo mientras corre el reloj de una ronda.": "Use it while a round's clock is running.",
+    "Ya pasaron más de 5 minutos: perdiste el poder.": "More than 5 minutes have passed: you lost the power.", "¡Se acabó el tiempo! (te revelas a todos)": "Time is up! (you reveal to everyone)",
+    "Ya hay un arresto esperando confirmación.": "There's already an arrest waiting for confirmation.", "Solo funciona entre rondas (cuando el reloj llegó a cero y antes de iniciar la siguiente).": "It only works between rounds (when the clock hit zero and before the next one starts).",
+    "¿A quién atrapaste jugando entre rondas?": "Who did you catch playing between rounds?", "¡Policía secreta! ¡Estás arrestado!": "Secret Police! You're under arrest!", "Arresto enviado: el anfitrión pide confirmación": "Arrest sent: the host asks for confirmation",
+    "Solo antes de que empiece la primera ronda.": "Only before the first round starts.", "Ver las cartas de todos": "See everyone's cards", "🔒 Vidente · solo para ti": "🔒 Seer · only for you",
+    "Ya hiciste tu pregunta en esta ronda.": "You already asked your question this round.", "Preguntarle a:": "Ask:", "Tu pregunta de sí o no": "Your yes/no question", "Ej. ¿Eres del Equipo Rojo?": "E.g. Are you on the Red Team?",
+    "Usar poder de Interrogador": "Use Interrogator power", "Escribe tu pregunta": "Type your question", "Pregunta enviada": "Question sent", "Tu carta ya se ve en el panel del cuarto.": "Your card already shows in the room panel.",
+    "Revelarme a todo el cuarto": "Reveal myself to the whole room", "Se activa cuando alguien del Equipo Azul de tu cuarto se revela a todos.": "It activates when someone from the Blue Team in your room reveals to everyone.",
+    "Darle tu carta (sale del juego):": "Give them your card (they leave the game):", "Usar poder": "Use power", "El Interrogador te pregunta": "The Interrogator asks you",
+    "usa su poder de Interrogador. Debes responder con la verdad:": "uses their Interrogator power. You must answer truthfully:", "No sé": "I don't know", "No sabe": "Doesn't know",
+    "Policía secreta": "Secret Police", "arrestó a": "arrested", "por jugar entre rondas. Si otro jugador confirma que sí estaba jugando, gana la Policía secreta y todos los demás pierden.": "for playing between rounds. If another player confirms they were playing, the Secret Police win and everyone else loses.",
+    "Sí, alguien lo confirma": "Yes, someone confirms it", "No, nadie lo confirma": "No, nobody confirms it", "Atrapaste a alguien jugando entre rondas.": "You caught someone playing between rounds.", "Ganó la Policía secreta: todos los demás pierden.": "The Secret Police won: everyone else loses.", "El Ninja te sacó del juego (o lo usaste tú). No estás en ningún cuarto, pero al final sigues ganando o perdiendo según tu objetivo.": "The Ninja took you out of the game (or you used it). You're not in any room, but at the end you still win or lose according to your goal.",
     "Esta ronda nadie puede quitar al líder (Usurpador).": "This round nobody can remove the leader (Usurper).", "se queda esta ronda": "stays this round", "Gárgola: no sale": "Gargoyle: won't leave", "debe salir como rehén": "must leave as a hostage", "Rata de visita": "Rat visiting",
     "Al empezar la última ronda (se despierta solo al iniciar el reloj de esa ronda):": "When the last round starts (wakes up by itself when that round's clock starts):",
     "Eras la Rata y no regresaste a tu cuarto a tiempo.": "You were the Rat and didn't get back to your room in time.", "Enamorado: según si terminaste en el mismo cuarto que tu pareja.": "In love: based on whether you ended in the same room as your partner.",
@@ -1002,6 +1018,8 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     [/^Salió el Xenomorfo de (.+): muere todo su cuarto\.$/, "The Xenomorph burst out of $1: their whole room dies."],
     [/^Ganó el (.+): los dos equipos pierden\.$/, (_, c) => `The ${cn(c)} won: both teams lose.`], [/^¡Ganó el (.+)!$/, (_, c) => `The ${cn(c)} won!`],
     [/^Revelación privada \(Bully\) con (.+)$/, "Private reveal (Bully) with $1"],
+    [/^Respuesta de (.+)$/, "Answer from $1"], [/^(.+) sale del juego$/, "$1 leaves the game"],
+    [/^¡La Policía secreta \((.+)\) arrestó a (.+) jugando entre rondas!$/, "The Secret Police ($1) arrested $2 playing between rounds!"],
     [/^Tus hijos: (.+)\.$/, (_, l) => `Your children: ${l.replace(" y ", " and ")}.`], [/^Tu predicción: (.+)\.$/, "Your prediction: $1."],
     [/^(.+) no puede salir esta ronda$/, "$1 can't leave this round"], [/^(.+) tiene que salir como rehén$/, "$1 must leave as a hostage"], [/^(.+) → tu cuarto$/, "$1 → your room"],
     [/^El poder se desperdició: (.+)$/, (_, w) => `The power was wasted: ${tr(w)}`], [/^Le diste tu carta a (.+)\.$/, "You gave your card to $1."], [/^Carta entregada con (.+)$/, "Card given to/by $1"],
@@ -1146,7 +1164,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 22;
+const APP_VERSION = 23;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1758,6 +1776,14 @@ function powerPanelHTML(game, players, me) {
     case "padre": case "madre": body = me.kids ? used(`Tus hijos: ${me.kids.map(id => esc((players.find(p => p.id === id) || {}).name || "?")).join(" y ")}.`) : I.r > 1 ? used("Tenías que elegir a tus hijos en la primera ronda.") : `${pickSel("pwA", I.mine, "Primer hijo:")}${pickSel("pwB", I.mine, "Segundo hijo:")}<button type="button" class="primary" data-pw="kids">«Ustedes son mis hijos»</button>`; break;
     case "telepata": body = me.predict ? used(`Tu predicción: ${esc((players.find(p => p.id === me.predict) || {}).name || "?")}.`) : !I.last ? used("Tu predicción se hace en la última ronda.") : `${pickSel("pwA", I.theirs, "¿Quién será el rehén que entre a tu cuarto?")}<button type="button" class="primary" data-pw="predict">Revelarme y predecir</button>`; break;
     case "informante": case "juez": body = `<p class="small">Cartas que te han dado: <b>${(me.taken || []).length}</b>${(me.taken || []).length ? ` (${(me.taken || []).filter(t => t === "a").length} azules, ${(me.taken || []).filter(t => t === "r").length} rojas)` : ""}.</p>${used("Para darte su carta, la otra persona usa «Dar mi carta» en «Compartir con alguien» y tú escribes su código.")}`; break;
+    case "senor-del-tiempo": { const t = game.timer, el = t ? t.mins[t.r - 1] * 60 - tLeft(t) : 0;
+      body = me.timeLost ? used("Perdiste tu poder: tardaste más de 5 minutos en terminar una ronda.") : !t || t.state !== "run" || tOver(t) ? used("Úsalo mientras corre el reloj de una ronda.") : el > 300 ? used("Ya pasaron más de 5 minutos: perdiste el poder.") : `<button type="button" class="primary" data-pw="timeup">¡Se acabó el tiempo! (te revelas a todos)</button>`; } break;
+    case "policia-secreta": body = game.arrest ? used("Ya hay un arresto esperando confirmación.") : !betweenRounds(game) ? used("Solo funciona entre rondas (cuando el reloj llegó a cero y antes de iniciar la siguiente).") : `${pickSel("pwA", I.mine.concat(I.theirs), "¿A quién atrapaste jugando entre rondas?")}<button type="button" class="primary" data-pw="arrest">¡Policía secreta! ¡Estás arrestado!</button>`; break;
+    case "vidente": body = curRound(game) > 1 || (game.timer && game.timer.state !== "idle") ? used("Solo antes de que empiece la primera ronda.") : `<button type="button" class="primary" data-pw="seer">Ver las cartas de todos</button>`; break;
+    case "interrogador": body = I.usedRound ? used("Ya hiciste tu pregunta en esta ronda.") : `${pickSel("pwA", I.mine, "Preguntarle a:")}<label class="small">Tu pregunta de sí o no<input type="text" id="pwQ" maxlength="120" placeholder="Ej. ¿Eres del Equipo Rojo?"></label><button type="button" class="primary" data-pw="ask">Usar poder de Interrogador</button>`; break;
+    case "exhibicionista": body = isPublic(me) ? used("Tu carta ya se ve en el panel del cuarto.") : `<button type="button" class="primary" data-pw="flash">Revelarme a todo el cuarto</button>`; break;
+    case "xenocazador": { const tg = I.mine.filter(p => isPublic(p) && p.card.team === "a" && !rulesFor(p.card, p).immune);
+      body = I.usedGame ? used("Ya usaste tu poder.") : !tg.length ? used("Se activa cuando alguien del Equipo Azul de tu cuarto se revela a todos.") : `${pickSel("pwA", tg, "Darle tu carta (sale del juego):")}<button type="button" class="primary" data-pw="xeno">Usar poder</button>`; } break;
     default: return "";
   }
   return `<section class="panel powerpanel"><div class="panel-head"><h2>Mi poder</h2><span class="count">${esc(me.card.name)}</span></div>${body}</section>`;
@@ -1778,6 +1804,15 @@ async function usePower(code, game, players, me, action) {
     await api.batch(code, gp, pt); toast("Poder usado");
   };
   switch (action) {
+    case "timeup": await api.batch(code, { timer: { ...game.timer, state: "run", endsAt: Date.now() } }, { [me.id]: { publicCard: true } }); break;
+    case "arrest": if (need1()) { await api.updateGame(code, { arrest: { by: me.id, byName: me.name, target: a.id, targetName: a.name, at: Date.now() } }); toast("Arresto enviado: el anfitrión pide confirmación"); } break;
+    case "seer": { const list = players.filter(p => p.card && p.round === game.round && p.id !== me.id); const d = document.createElement("div"); d.className = "full priv"; d.tabIndex = 0;
+      d.innerHTML = `<div><span class="stamp">🔒 Vidente · solo para ti</span><ul class="seer">${list.map(p => `<li><b>${esc(p.name)}</b>: <span class="t-${p.card.color}">${esc(p.card.name)}</span></li>`).join("")}</ul><small>Toca para ocultar</small></div>`;
+      const op = Date.now(); d.onclick = () => { if (Date.now() - op > 600) d.remove(); }; $$(".full").forEach(x => x.remove()); document.body.appendChild(d); } break;
+    case "ask": if (need1()) { const q = ($("#pwQ").value || "").trim(); if (!q) { toast("Escribe tu pregunta"); break; }
+      await api.batch(code, null, { [a.id]: { ask: { id: rid(6), from: me.id, fromName: me.name, q } }, [me.id]: { pUsed: tag } }); toast("Pregunta enviada"); } break;
+    case "flash": await api.updatePlayer(code, me.id, { publicCard: true }); break;
+    case "xeno": if (need1()) { const gp = {}; clearLeader(a, gp); await api.batch(code, Object.keys(gp).length ? gp : null, { [a.id]: { room: null, out: true }, [me.id]: { pGame: game.round, acq: [...new Set([...(me.acq || []), "sincarta"])] } }); toast(`${a.name} sale del juego`); } break;
     case "agent": if (need1()) await force(me, a, { pUsed: tag }); break;
     case "enforce": if (need2()) await force(a, b2, { pUsed: tag }); break;
     case "mad": if (need2()) { await api.batch(code, null, { [a.id]: { card: b2.card, acq: [], cured: [], paraUsed: false }, [b2.id]: { card: a.card, acq: [], cured: [], paraUsed: false }, [me.id]: { pGame: game.round } }); toast("Intercambiaron cartas"); } break;
@@ -1818,13 +1853,14 @@ const otherRoom = r => r === "1" ? "2" : "1";
 const inGame = (game, p) => p.card && p.round === game.round && p.room;
 const curRound = game => (game.timer && game.timer.r) || 1;
 const roundTag = game => `${game.round}:${curRound(game)}`;
+const betweenRounds = game => { const t = game.timer; return !!t && ((t.state === "run" && tLeft(t) === 0) || (t.state === "idle" && t.r > 1)); };
 const isLastRound = game => !!game.timer && game.timer.r >= game.timer.n;
 const cardBase = id => String(id || "").replace(/-(a|r)$/, "");
 const movePatch = (p, to) => ({ room: to, vote: null, moves: (p.moves || 0) + 1 });
 function roomState(game, players, room) {
   const members = players.filter(p => inGame(game, p) && p.room === room).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
   let leader = game["leader" + room] || null; if (!members.some(p => p.id === leader)) leader = null;
-  const voters = members.filter(p => !p.ratAway);
+  const voters = members.filter(p => !p.ratAway && cardBase(p.card.id) !== "embajador");
   const need = Math.floor(voters.length / 2) + 1;
   // Alcalde revelado: su voto vale dos si el cuarto es par y el otro Alcalde no se reveló también.
   const mayors = members.filter(p => cardBase(p.card.id) === "alcalde" && p.publicCard);
@@ -1872,7 +1908,9 @@ async function lockPicks(code, game, players, room, ids) {
 }
 // Quién no puede salir (Guardia, Gárgola, Rata) y quién debe salir (Pirata, Recluta) esta ronda.
 const tagNow = (game, p, k) => p[k] === roundTag(game);
-const cantLeave = (game, p) => tagNow(game, p, "tackled") || tagNow(game, p, "stone") || !!p.ratAway;
+const isAmb = p => cardBase(p.card && p.card.id) === "embajador";
+const isPublic = p => !!(p.publicCard || p.pubOpen || isAmb(p));
+const cantLeave = (game, p) => tagNow(game, p, "tackled") || tagNow(game, p, "stone") || !!p.ratAway || isAmb(p);
 const mustLeave = (game, p) => tagNow(game, p, "blasted") && !cantLeave(game, p);
 // Panel "Tu cuarto" del jugador.
 function roomPanelHTML(game, players, me) {
@@ -1883,11 +1921,12 @@ function roomPanelHTML(game, players, me) {
   const forced = st.members.filter(p => p.id !== me.id && mustLeave(game, p));
   const n = Math.max(hostageCount(game, st), forced.length);
   const nameOf = id => (players.find(p => p.id === id) || {}).name || "?";
-  const tags = p => [p.publicCard ? `🃏 ${esc(p.card.name)}` : "", tagNow(game, p, "tackled") ? "se queda esta ronda" : "", tagNow(game, p, "stone") ? "Gárgola: no sale" : "", mustLeave(game, p) ? "debe salir como rehén" : "", p.ratAway ? "Rata de visita" : ""].filter(Boolean);
+  const tags = p => [isPublic(p) ? `🃏 ${esc(p.card.name)}` : "", tagNow(game, p, "tackled") ? "se queda esta ronda" : "", tagNow(game, p, "stone") ? "Gárgola: no sale" : "", mustLeave(game, p) ? "debe salir como rehén" : "", p.ratAway ? "Rata de visita" : ""].filter(Boolean);
   const row = p => {
     const v = st.tally[p.id] || 0, lead = p.id === st.leader, tg = tags(p);
     let btn = "";
-    if (!st.leader && p.id !== me.id) btn = `<button type="button" data-nom="${esc(p.id)}">Nombrar líder</button>`;
+    if (isAmb(p) || isAmb(me)) btn = "";
+    else if (!st.leader && p.id !== me.id) btn = `<button type="button" data-nom="${esc(p.id)}">Nombrar líder</button>`;
     else if (st.leader && !lead) btn = me.vote === p.id ? `<button type="button" class="primary" data-vote="">Quitar mi voto</button>` : `<button type="button" data-vote="${esc(p.id)}">Votar</button>`;
     if (isLeader && p.id !== me.id) btn += ` <button type="button" class="ghost" data-give="${esc(p.id)}">Ceder</button>`;
     return `<li><span class="dot"></span><div style="min-width:0"><div class="nm">${lead ? "👑 " : ""}${esc(p.name)}${p.id === me.id ? " (tú)" : ""}</div>${v && !lead ? `<div class="rl">${v} de ${st.need} votos para ser líder</div>` : ""}${tg.length ? `<div class="rl">${tg.join(" · ")}</div>` : ""}</div><div class="row">${btn}</div></li>`;
@@ -1927,11 +1966,22 @@ function playerView() {
   let powerKeyLast = "";
   const renderPower = () => {
     const box = $("#powerpanel"); if (!box || !game || !me || !(me.card && me.round === game.round)) return;
-    const k = JSON.stringify([me.card.id, me.room, me.pUsed, me.pGame, me.publicCard, me.ratAway, me.stone, me.kids, me.predict, me.taken, game.timer?.r, game.timer?.n, !!game.buriedCard, game.leader1, game.leader2, players.map(p => [p.id, p.name, p.room, p.round])]);
+    // Interrogador: pregunta recibida y respuesta de vuelta.
+    if (me.ask && ls.get("rs-ask:" + ps.pid) !== me.ask.id && !$(".modal")) {
+      const q = me.ask; ls.set("rs-ask:" + ps.pid, q.id);
+      const ans = a => api.batch(ps.code, null, { [q.from]: { interAns: { id: q.id, name: me.name, q: q.q, a } }, [ps.pid]: { ask: null } });
+      modal("El Interrogador te pregunta", `<b>${esc(q.fromName)}</b> usa su poder de Interrogador. Debes responder con la verdad:<br><br><b>${esc(q.q)}</b>`,
+        [{ label: "No sé", fn: () => ans("?") }, { label: "No", fn: () => ans("n") }, { label: "Sí", primary: true, fn: () => ans("y") }]);
+    }
+    if (me.interAns && ls.get("rs-interans:" + ps.pid) !== me.interAns.id && !$(".modal")) {
+      const r = me.interAns; ls.set("rs-interans:" + ps.pid, r.id);
+      modal(`Respuesta de ${esc(r.name)}`, `${esc(r.q)}<br><br><b class="bigans">${r.a === "y" ? "Sí" : r.a === "n" ? "No" : "No sabe"}</b>`, [{ label: "Aceptar", primary: true }]);
+    }
+    const k = JSON.stringify([game.timer?.state, game.timer?.endsAt, !!game.arrest, me.timeLost, me.pubOpen, me.card.id, me.room, me.pUsed, me.pGame, me.publicCard, me.ratAway, me.stone, me.kids, me.predict, me.taken, game.timer?.r, game.timer?.n, !!game.buriedCard, game.leader1, game.leader2, players.map(p => [p.id, p.name, p.room, p.round, p.card?.id, p.publicCard, p.pubOpen, p.out])]);
     if (k === powerKeyLast) return; powerKeyLast = k;
     box.innerHTML = powerPanelHTML(game, players, me);
     $$("[data-pw]", box).forEach(b => b.onclick = () => {
-      const act = b.dataset.pw, quiet = ["peek", "mayor", "ratback", "kids"].includes(act);
+      const act = b.dataset.pw, quiet = ["peek", "mayor", "ratback", "kids", "seer"].includes(act);
       if (quiet) return usePower(ps.code, game, players, me, act);
       modal("¿Usar tu poder?", "Algunos poderes solo se pueden usar una vez. ¿Seguro?", [{ label: "Cancelar" }, { label: "Sí, usar", primary: true, fn: () => usePower(ps.code, game, players, me, act) }]);
     });
@@ -1978,7 +2028,7 @@ function playerView() {
     if (!game) { ls.set("rs-player", null); return go(home, "Esa partida ya no existe."); }
     if (!me) { ls.set("rs-player", null); return go(home, "El anfitrión te quitó de la partida. Puedes volver a entrar con el código."); }
     const hasCard = me.card && me.round === game.round;
-    const key = JSON.stringify([hasCard, me.card, me.round, me.acq, me.cured, me.paraUsed, game.round, game.inPlay, game.buried, !!game.sober, game.colorAllowed, hasCard ? 0 : players.map(p => p.name)]);
+    const key = JSON.stringify([hasCard, me.pubOpen, me.card, me.round, me.acq, me.cured, me.paraUsed, game.round, game.inPlay, game.buried, !!game.sober, game.colorAllowed, hasCard ? 0 : players.map(p => p.name)]);
     if (key === lastKey) return; lastKey = key;
     if (!hasCard) {
       app().innerHTML = `<div class="narrow">
@@ -2009,6 +2059,7 @@ function playerView() {
           <button type="button" data-m="color" ${showColor ? "" : "disabled"}>Color</button>
           <button type="button" data-m="role">Solo rol</button>
           <button type="button" data-m="full">Carta completa</button>
+          <button type="button" class="pubbtn" data-m="public">${me.pubOpen ? "Dejar de revelar a todos" : "Revelar a todo el cuarto"}</button>
         </div>
         ${showColor ? "" : `<p class="muted small">En esta partida no se puede mostrar solo el color: el reglamento lo permite desde 11 jugadores. El anfitrión puede cambiarlo en las reglas de la partida.</p>`}
       </div>
@@ -2048,6 +2099,7 @@ function playerView() {
       const m = b.dataset.m;
       if (m === "color" && !showColor) return;
       const now = rulesFor(c, me);
+      if (m === "public") { if (me.pubOpen) { api.updatePlayer(ps.code, ps.pid, { pubOpen: false }); return; } if (!now.can.full) return; api.updatePlayer(ps.code, ps.pid, { pubOpen: true }); toast("Tu carta ya se ve en el panel del cuarto"); return; }
       if (!now.can[m]) return;
       fullScreen(m, c);
       if (m === "full" && now.set.has("paranoico") && !me.paraUsed) await api.updatePlayer(ps.code, ps.pid, { paraUsed: true });
@@ -2349,6 +2401,9 @@ function hostLobby() {
         ${n ? `<ul class="plist">${list.map(p => { const has = p.card && p.round === game.round; return `<li><span class="dot ${reveal && has ? p.card.color : ""}"></span><div style="min-width:0"><div class="nm">${esc(p.name)}</div>${started ? `<div class="rl">${has ? (p.room ? `Cuarto ${p.room} · ` : "") + (reveal ? esc(p.card.name) : "Tiene carta") + (p.peeks ? ` · volvió a ver su carta ${p.peeks} ${p.peeks > 1 ? "veces" : "vez"}` : "") : "Sin carta, entra en el próximo reparto"}</div>` : ""}</div><button class="x2" data-kick="${esc(p.id)}" aria-label="Quitar a ${esc(p.name)}">×</button></li>`; }).join("")}</ul>` : `<div class="wait"><div class="pulse"></div><p class="muted">Todavía no entra nadie. Comparte el código.</p></div>`}
         ${started && reveal && (game.buriedCard || game.sober) ? `<p class="small muted">${game.buriedCard ? `Carta enterrada: <b style="color:var(--fg)">${esc(game.buriedCard.name)}</b>. ` : ""}${game.sober ? `Carta sobria del Borracho: <b style="color:var(--fg)">${esc(game.sober.name)}</b>.` : ""}</p>` : ""}
       </section>
+      ${started && game.arrest ? `<section class="panel"><div class="panel-head"><h2>Policía secreta</h2></div>
+        <p class="small"><b>${esc(game.arrest.byName)}</b> arrestó a <b>${esc(game.arrest.targetName)}</b> por jugar entre rondas. Si otro jugador confirma que sí estaba jugando, gana la Policía secreta y todos los demás pierden.</p>
+        <div class="row"><button class="primary" id="arrestYes">Sí, alguien lo confirma</button><button id="arrestNo">No, nadie lo confirma</button></div></section>` : ""}
       ${started ? `<section class="panel endpanel">
         <div class="panel-head"><h2>Final del juego</h2></div>
         ${!game.endPhase ? `<p class="small">Después del último intercambio de rehenes, toca <b>Iniciar el final</b>: a todos les pide reunirse sin mezclar los cuartos, y a los que deben anunciar algo (Jugador, Detective, Francotirador, Presidente y Doctor, Bomba e Ingeniero…) les pregunta en su celular.</p>
@@ -2398,9 +2453,9 @@ function hostLobby() {
       if (pool.length !== ids.length) { toast("No hay suficientes cartas que se puedan apartar"); return; }
       const order = shuffle(ids), half = Math.ceil(ids.length / 2);
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
-      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false, pUsed: null, pGame: null, publicCard: false, moves: 0, hostageTimes: 0, ledRooms: [], usurpRounds: [], sawUsurp: false, tackled: null, blasted: null, stone: null, ratAway: null, ratLost: false, kids: null, predict: null, taken: [], loveWith: null, hateWith: null, centipede: null, out: false, lastSwap: 0 });
+      const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false, pUsed: null, pGame: null, publicCard: false, moves: 0, hostageTimes: 0, ledRooms: [], usurpRounds: [], sawUsurp: false, tackled: null, blasted: null, stone: null, ratAway: null, ratLost: false, kids: null, predict: null, taken: [], loveWith: null, hateWith: null, centipede: null, out: false, lastSwap: 0, pubOpen: false, ask: null, interAns: null, timeLost: false });
       const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
-      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, lock1: null, lock2: null, lastSwapIn: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
+      await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, lock1: null, lock2: null, lastSwapIn: null, arrest: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
     const setT = patch => api.updateGame(code, { timer: Object.assign({}, T, patch) });
@@ -2419,6 +2474,9 @@ function hostLobby() {
     const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual) });
     const er = $("#endReveal"); if (er) er.onclick = () => pend.length ? modal("¿Revelar ya?", "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».", [{ label: "Esperar" }, { label: "Revelar", primary: true, fn: () => doReveal() }]) : doReveal();
     $$("[data-force]").forEach(b => b.onclick = () => doReveal(b.dataset.force));
+    const ay = $("#arrestYes"); if (ay) ay.onclick = () => { const r = computeResult(game, list, null); Object.keys(r.res).forEach(k => r.res[k] = { win: k === game.arrest.by, why: k === game.arrest.by ? "Atrapaste a alguien jugando entre rondas." : "Ganó la Policía secreta: todos los demás pierden." });
+      r.lines = [`¡La Policía secreta (${game.arrest.byName}) arrestó a ${game.arrest.targetName} jugando entre rondas!`]; r.winner = "?"; api.updateGame(code, { endPhase: "done", result: r, arrest: null }); };
+    const an = $("#arrestNo"); if (an) an.onclick = () => api.updateGame(code, { arrest: null });
     const ec = $("#endCancel"); if (ec) ec.onclick = () => api.updateGame(code, { endPhase: null, result: null });
     $$("[data-lead]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.lead); setLeader(code, game, list, p.room, p.id); });
     $$("[data-move]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.move); const to = otherRoom(p.room);
