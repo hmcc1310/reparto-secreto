@@ -985,7 +985,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "Elige a un jugador": "Choose a player", "Elige a dos jugadores distintos": "Choose two different players", "Intercambiaron cartas": "They traded cards", "Ahora eres el líder": "You're the leader now", "Cambiaron de cuarto": "They switched rooms",
     "Es inmune: atrapa a otro": "They're immune: grab someone else", "Era inmune: sales tú solo": "They were immune: you leave alone", "Los dos salen del juego": "Both of you leave the game",
     "Dar mi carta (Informante o Juez)": "Give my card (Informer or Judge)", "Dar tu carta: solo funciona si quien escribe el código es Informante o Juez.": "Give your card: it only works if whoever types the code is an Informer or Judge.",
-    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Toca una carta para ver qué hace.": "Tap a card to see what it does.", "👑 Nuevo líder": "👑 New leader", "ahora es líder del Cuarto 1.": "is now leader of Room 1.", "ahora es líder del Cuarto 2.": "is now leader of Room 2.", "Esperando acción de:": "Waiting for action from:", "Calculando el resultado…": "Calculating the result…", "Revelando el resultado": "Revealing the result", "Revelar ya, sin esperar": "Reveal now, without waiting", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
+    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Toca una carta para ver qué hace.": "Tap a card to see what it does.", "👑 Nuevo líder": "👑 New leader", "ahora es líder del Cuarto 1.": "is now leader of Room 1.", "ahora es líder del Cuarto 2.": "is now leader of Room 2.", "Esperando acción de:": "Waiting for action from:", "En cuanto respondan, a todos les sale la cuenta regresiva y el resultado.": "As soon as they answer, everyone gets the countdown and the result.", "Calculando el resultado…": "Calculating the result…", "Revelando el resultado": "Revealing the result", "Revelar ya, sin esperar": "Reveal now, without waiting", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
     "Perdiste tu poder: tardaste más de 5 minutos en terminar una ronda.": "You lost your power: you took more than 5 minutes to end a round.", "Úsalo mientras corre el reloj de una ronda.": "Use it while a round's clock is running.",
     "Ya pasaron más de 5 minutos: perdiste el poder.": "More than 5 minutes have passed: you lost the power.", "¡Se acabó el tiempo! (te revelas a todos)": "Time is up! (you reveal to everyone)",
     "Ya hay un arresto esperando confirmación.": "There's already an arrest waiting for confirmation.", "Solo funciona entre rondas (cuando el reloj llegó a cero y antes de iniciar la siguiente).": "It only works between rounds (when the clock hit zero and before the next one starts).",
@@ -1184,7 +1184,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 28;
+const APP_VERSION = 29;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1626,7 +1626,16 @@ function autoReveal(code, game, players) {
   if (game.endPhase !== "pre" || game.result || pendingEnd(game, players).length) return;
   api.updateGame(code, { endPhase: "done", result: computeResult(game, players), revealAt: Date.now() + REVEAL_DELAY });
 }
-const countdownLeft = game => game.revealAt ? Math.ceil((game.revealAt - Date.now()) / 1000) : 0;
+// La cuenta 3-2-1 empieza cuando cada celular ve el resultado (no depende de que los relojes coincidan).
+// endKey identifica cada final; si varios celulares escriben el resultado a la vez, la cuenta no se reinicia.
+const seenDone = {};
+const countdownLeft = game => {
+  if (game.endPhase !== "done" || !game.result) return 0;
+  if (game.revealAt && Date.now() - game.revealAt > 120000) return 0; // se abrió mucho después: directo al resultado
+  const k = `${game.round}|${game.endKey || game.revealAt || ""}`;
+  if (!seenDone[k]) seenDone[k] = Date.now();
+  return 3 - Math.floor((Date.now() - seenDone[k]) / 1000);
+};
 const countdownHTML = n => `<div class="countdown"><span class="lbl">Revelando el resultado</span><b>${Math.max(1, Math.min(3, n))}</b></div>`;
 function resultHTML(game, players, meId) {
   const r = game.result; if (!r) return "";
@@ -1741,7 +1750,7 @@ async function completeShare(code, game, players, me, codeTyped) {
   if (why) { await api.updatePlayer(code, A.id, { offer: null, offerFail: { id: rid(6), msg: "No se completó el intercambio." } }); return why; }
   const { pa, pb, instant } = applyShare(game, A, B, A.offer.kind);
   let gp = null;
-  if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res, revealAt: Date.now() + REVEAL_DELAY }; }
+  if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res, revealAt: Date.now() + REVEAL_DELAY, endKey: rid(6) }; }
   await api.batch(code, gp, { [A.id]: pa, [B.id]: pb });
   return "";
 }
@@ -1838,7 +1847,7 @@ async function usePower(code, game, players, me, action) {
     const why = shareBlocked(game, X, Y, "card");
     if (why) { await api.updatePlayer(code, me.id, extraMe); toast("El poder se desperdició: " + why); return; }
     const { pa, pb, instant } = applyShare(game, X, Y, "card");
-    let gp = null; if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res, revealAt: Date.now() + REVEAL_DELAY }; }
+    let gp = null; if (instant) { const res = computeResult(game, players, instant.w); res.lines.unshift(instant.line); gp = { endPhase: "done", result: res, revealAt: Date.now() + REVEAL_DELAY, endKey: rid(6) }; }
     const pt = { [X.id]: pa, [Y.id]: pb }; pt[me.id] = { ...(pt[me.id] || {}), ...extraMe };
     await api.batch(code, gp, pt); toast("Poder usado");
   };
@@ -2004,7 +2013,9 @@ function bindRoomPanel(code, game, players, me) {
 }
 function playerView() {
   const ps = ls.get("rs-player"); if (!ps) return go(home);
-  let game, me, players = [], lastKey = "", loaded = { g: false, m: false };
+  let game, me, players = [], lastKey = "", loaded = { g: false, m: false, p: false };
+  // ¿Ya llegó la lista de jugadores (y me incluye)? Antes de eso no se decide nada de cuartos ni del final.
+  const playersReady = () => loaded.p && !!me && players.some(p => p.id === me.id);
   let roomKeyLast = "", offerShown = "";
   const roomKey = () => `${ps.code}|${ps.pid}|${me.round}|${me.room || ""}`;
   // El panel del cuarto se dibuja aparte para no cerrar lo demás cada vez que alguien vota.
@@ -2049,7 +2060,7 @@ function playerView() {
       const err = await completeShare(ps.code, game, players, me, v); if (err) $("#shErr", box).textContent = err; else $("#shCode", box).value = ""; };
   };
   const renderRoom = () => {
-    const box = $("#roompanel"); if (!box || !game || !me) return;
+    const box = $("#roompanel"); if (!box || !game || !me || !playersReady()) return;
     // Rescates: si los dos líderes ya anunciaron, o alguien juntó los votos a la vez que otro, se completa aquí.
     if (me.room && game.picks1 && game.picks2 && (game.leader1 === me.id || game.leader2 === me.id)) doExchange(ps.code, game, players);
     if (me.room) { const st0 = roomState(game, players, me.room); const top = Object.entries(st0.tally).find(([id, v]) => id !== st0.leader && v >= st0.need); if (top && top[0] === me.id && !st0.locked) promoteIfMajority(ps.code, game, players, me.room); }
@@ -2071,7 +2082,7 @@ function playerView() {
       const lk = `${ps.code}|${me.round}|${me.room}|${stL.leader || ""}`, lprev = ls.get("rs-leader:" + ps.pid);
       if (stL.leader && lprev !== lk && !$(".modal") && !$(".full")) {
         ls.set("rs-leader:" + ps.pid, lk);
-        if (lprev && lprev.startsWith(`${ps.code}|${me.round}|`)) {
+        if (lprev && lprev.startsWith(`${ps.code}|${me.round}|${me.room}|`)) {
           try { navigator.vibrate && navigator.vibrate(200); } catch (e) {}
           modal("👑 Nuevo líder", L.id === me.id ? `¡Ahora eres el líder del Cuarto ${esc(me.room)}!` : `<b>${esc(L.name)}</b> ahora es líder del Cuarto ${esc(me.room)}.`, [{ label: "Aceptar", primary: true }]);
         }
@@ -2190,7 +2201,7 @@ function playerView() {
   const renderEnd = () => {
     let ov = $("#endscreen");
     if (!game || !me || !game.endPhase) { if (ov) ov.remove(); endKeyLast = ""; return; }
-    autoReveal(ps.code, game, players);
+    if (playersReady()) autoReveal(ps.code, game, players);
     const qs = endQuestions(game, players, me), ans = me.endAns || {};
     const left = game.endPhase === "done" ? countdownLeft(game) : 0;
     const waitRoles = game.endPhase === "pre" ? [...new Set(pendingEnd(game, players).filter(p => p.id !== me.id).map(p => p.card.name))] : [];
@@ -2213,7 +2224,7 @@ function playerView() {
     </div>`;
     $$("[data-ans]", ov).forEach(b => b.onclick = () => api.updatePlayer(ps.code, ps.pid, { endAns: { ...(me.endAns || {}), [b.dataset.ans]: b.dataset.v } }));
   };
-  const endTick = setInterval(() => { if (game && game.endPhase === "done" && game.revealAt && game.revealAt > Date.now() - 1500) renderEnd(); }, 250); unsubs.push(() => clearInterval(endTick));
+  const endTick = setInterval(() => { if (game && game.endPhase === "done" && countdownLeft(game) > -2) renderEnd(); }, 250); unsubs.push(() => clearInterval(endTick));
   unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
   unsubs.push(() => { const lb = $("#leaderbar"); if (lb) lb.remove(); document.body.classList.remove("has-leaderbar"); });
   // Al cerrar un aviso, se revisa si hay otro esperando (oferta de liderazgo, rehén, pregunta…).
@@ -2226,7 +2237,7 @@ function playerView() {
   unsubs.push(() => { document.removeEventListener("visibilitychange", onVis); try { wake && wake.release(); } catch (e) {} });
   unsubs.push(api.watchGame(ps.code, g => { game = g; loaded.g = true; setTimer(g); render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
   unsubs.push(api.watchPlayer(ps.code, ps.pid, p => { me = p; loaded.m = true; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
-  unsubs.push(api.watchPlayers(ps.code, list => { players = list; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
+  unsubs.push(api.watchPlayers(ps.code, list => { players = list; loaded.p = true; render(); renderRoom(); renderShare(); renderPower(); renderEnd(); }));
 }
 
 // ---------- mazo ----------
@@ -2420,7 +2431,7 @@ async function hostSetup(editCode) {
 function hostLobby() {
   const hs = ls.get("rs-host"); if (!hs) return go(home);
   const code = hs.code;
-  let game, players = [], gl = false, reveal = false, confirmEnd = false, swapA = "", swapB = "";
+  let game, players = [], gl = false, plLoaded = false, reveal = false, confirmEnd = false, swapA = "", swapB = "";
   const render = () => {
     if (!gl) return;
     if (!game) { ls.set("rs-host", null); return go(home, "Esa partida ya no existe."); }
@@ -2492,7 +2503,7 @@ function hostLobby() {
         ${!game.endPhase ? `<p class="small">Después del último intercambio de rehenes, toca <b>Iniciar el final</b>: a todos les pide reunirse sin mezclar los cuartos y a los que deben anunciar algo (Jugador, Detective, Francotirador…) les pregunta en su celular. Lo que depende de co-revelaciones (Presidente y Doctor, Bomba e Ingeniero, MI6…) sale del registro de los códigos.</p>
           <button class="primary big" id="endStart">Iniciar el final</button>
           <details><summary class="small">Terminar ya con un ganador (Dr. Boom, Caballero Martes, otra versión del juego…)</summary><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div></details>`
-        : game.endPhase === "pre" ? `${pend.length ? `<p class="small">Esperando acción de: <b>${pend.map(p => `${esc(p.name)} (${esc(p.card.name)})`).join(", ")}</b>. En cuanto respondan, a todos les sale la cuenta regresiva y el resultado.</p>` : `<p class="small">Calculando el resultado…</p>`}
+        : game.endPhase === "pre" ? `${pend.length ? `<p class="small">Esperando acción de:</p><div class="chips">${pend.map(p => `<span class="chip"><span data-notr>${esc(p.name)}</span><span>${esc(p.card.name)}</span></span>`).join("")}</div><p class="muted small">En cuanto respondan, a todos les sale la cuenta regresiva y el resultado.</p>` : `<p class="small">Calculando el resultado…</p>`}
           <div class="row"><button id="endReveal">Revelar ya, sin esperar</button><button class="ghost" id="endCancel">Cancelar el final</button></div>
           ${R0.pres && R0.bomb ? "" : `<p class="small" style="color:var(--warn)">No encuentro Presidente y Bomba: elige quién ganó.</p><div class="row"><button type="button" data-force="a">Ganó el Equipo Azul</button><button type="button" data-force="r">Ganó el Equipo Rojo</button></div>`}`
         : countdownLeft(game) > 0 ? countdownHTML(countdownLeft(game)) : `${resultHTML(game, list, null)}<button class="ghost" id="endCancel">Ocultar resultados</button>`}
@@ -2548,20 +2559,20 @@ function hostLobby() {
     const tn = $("#tNext"); if (tn) tn.onclick = hostNext;
     const tr = $("#tReset"); if (tr) tr.onclick = () => setT({ state: "idle", endsAt: null, left: T.mins[T.r - 1] * 60 });
     const tm = $("#tMode"); if (tm) tm.onchange = e => api.updateGame(code, { timer: newTimer(e.target.value, n) });
-    if (started && game.picks1 && game.picks2) doExchange(code, game, list);
-    if (started) ROOMS.forEach(r => promoteIfMajority(code, game, list, r));
+    if (started && plLoaded && game.picks1 && game.picks2) doExchange(code, game, list);
+    if (started && plLoaded) ROOMS.forEach(r => promoteIfMajority(code, game, list, r));
     // El Borracho despierta solo al empezar la última ronda.
     if (started && drunk && game.sober && game.timer && game.timer.r >= game.timer.n && game.timer.state === "run") api.batch(code, { sober: null }, { [drunk.id]: { card: game.sober, acq: [], cured: [], paraUsed: false } });
     // Ciempiés: el enganchado que queda en otro cuarto pasa a desgarrado.
     if (started) { const torn = {}; withCard.forEach(p => { if ((p.acq || []).includes("enganchado")) { const c = list.find(q => q.id === p.centipede); if (c && c.room && p.room && c.room !== p.room) torn[p.id] = { acq: [...(p.acq || []).filter(k => k !== "enganchado"), "desgarrado"] }; } }); if (Object.keys(torn).length) api.batch(code, null, torn); }
-    const es = $("#endStart"); if (es) es.onclick = () => api.updateGame(code, { endPhase: "pre", result: null, revealAt: null });
-    const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual), revealAt: Date.now() + REVEAL_DELAY });
-    if (started) autoReveal(code, game, list);
+    const es = $("#endStart"); if (es) es.onclick = () => api.updateGame(code, { endPhase: "pre", result: null, revealAt: null, endKey: rid(6) });
+    const doReveal = manual => api.updateGame(code, { endPhase: "done", result: computeResult(game, list, manual), revealAt: Date.now() + REVEAL_DELAY, endKey: game.endPhase === "pre" && game.endKey ? game.endKey : rid(6) });
+    if (started && plLoaded) autoReveal(code, game, list);
     if (game.endPhase === "done" && countdownLeft(game) > 0) setTimeout(render, 300);
     const er = $("#endReveal"); if (er) er.onclick = () => pend.length ? modal("¿Revelar ya?", "Todavía faltan respuestas. Si revelas ahora, esas respuestas cuentan como «no».", [{ label: "Esperar" }, { label: "Revelar", primary: true, fn: () => doReveal() }]) : doReveal();
     $$("[data-force]").forEach(b => b.onclick = () => doReveal(b.dataset.force));
     const ay = $("#arrestYes"); if (ay) ay.onclick = () => { const r = computeResult(game, list, null); Object.keys(r.res).forEach(k => r.res[k] = { win: k === game.arrest.by, why: k === game.arrest.by ? "Atrapaste a alguien jugando entre rondas." : "Ganó la Policía secreta: todos los demás pierden." });
-      r.lines = [`¡La Policía secreta (${game.arrest.byName}) arrestó a ${game.arrest.targetName} jugando entre rondas!`]; r.winner = "?"; api.updateGame(code, { endPhase: "done", result: r, arrest: null, revealAt: Date.now() + REVEAL_DELAY }); };
+      r.lines = [`¡La Policía secreta (${game.arrest.byName}) arrestó a ${game.arrest.targetName} jugando entre rondas!`]; r.winner = "?"; api.updateGame(code, { endPhase: "done", result: r, arrest: null, revealAt: Date.now() + REVEAL_DELAY, endKey: rid(6) }); };
     const an = $("#arrestNo"); if (an) an.onclick = () => api.updateGame(code, { arrest: null });
     const ec = $("#endCancel"); if (ec) ec.onclick = () => api.updateGame(code, { endPhase: null, result: null });
     $$("[data-lead]").forEach(b => b.onclick = () => { const p = list.find(x => x.id === b.dataset.lead); setLeader(code, game, list, p.room, p.id); });
@@ -2590,7 +2601,7 @@ function hostLobby() {
   askWakeH(); const onVisH = () => { if (!document.hidden) askWakeH(); }; document.addEventListener("visibilitychange", onVisH);
   unsubs.push(() => { document.removeEventListener("visibilitychange", onVisH); try { wakeH && wakeH.release(); } catch (e) {} });
   unsubs.push(api.watchGame(code, g => { game = g; gl = true; render(); setTimer(g); }));
-  unsubs.push(api.watchPlayers(code, l => { players = l; render(); }));
+  unsubs.push(api.watchPlayers(code, l => { players = l; plLoaded = true; render(); }));
 }
 
 // ---------- arranque ----------
