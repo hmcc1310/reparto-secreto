@@ -204,6 +204,14 @@ body.has-timer #lang { top: 66px; }
 .inplay ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .inplay li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
 .inplay li .n { margin-left: auto; font-family: var(--mono); color: var(--muted); }
+.inplay li.rdet { display: block; padding: 0; }
+.inplay li.rdet summary { display: flex; align-items: center; gap: 8px; padding: 6px 10px; cursor: pointer; list-style: none; }
+.inplay li.rdet summary::-webkit-details-marker { display: none; }
+.inplay li.rdet summary::after { content: "▾"; color: var(--muted); font-size: .8rem; }
+.inplay li.rdet details[open] summary::after { content: "▴"; }
+.inplay li.rdet p { margin: 0; padding: 0 12px 10px 28px; font-size: .88rem; color: var(--muted); }
+#leaderbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(12px, env(safe-area-inset-bottom)); z-index: 42; background: var(--neutral); color: #fff; border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: .9rem; box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
+body.has-leaderbar { padding-bottom: 72px; }
 .conds .chip button { border: 0; background: transparent; color: var(--muted); padding: 0 0 0 4px; }
 .full { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; color: #fff; text-align: center; cursor: pointer; background: var(--tc, var(--neutral));
   padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
@@ -977,7 +985,7 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     "Elige a un jugador": "Choose a player", "Elige a dos jugadores distintos": "Choose two different players", "Intercambiaron cartas": "They traded cards", "Ahora eres el líder": "You're the leader now", "Cambiaron de cuarto": "They switched rooms",
     "Es inmune: atrapa a otro": "They're immune: grab someone else", "Era inmune: sales tú solo": "They were immune: you leave alone", "Los dos salen del juego": "Both of you leave the game",
     "Dar mi carta (Informante o Juez)": "Give my card (Informer or Judge)", "Dar tu carta: solo funciona si quien escribe el código es Informante o Juez.": "Give your card: it only works if whoever types the code is an Informer or Judge.",
-    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Esperando acción de:": "Waiting for action from:", "Calculando el resultado…": "Calculating the result…", "Revelando el resultado": "Revealing the result", "Revelar ya, sin esperar": "Reveal now, without waiting", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
+    "No se pudo: solo el Juez, o el Informante del color contrario, puede recibir esa carta.": "It didn't work: only the Judge, or the Informer of the opposite color, can receive that card.", "Te quedaste con su carta.": "You kept their card.", "Saliste del juego": "You left the game", "Toca una carta para ver qué hace.": "Tap a card to see what it does.", "👑 Nuevo líder": "👑 New leader", "ahora es líder del Cuarto 1.": "is now leader of Room 1.", "ahora es líder del Cuarto 2.": "is now leader of Room 2.", "Esperando acción de:": "Waiting for action from:", "Calculando el resultado…": "Calculating the result…", "Revelando el resultado": "Revealing the result", "Revelar ya, sin esperar": "Reveal now, without waiting", "Revelar a todo el cuarto": "Reveal to the whole room", "Dejar de revelar a todos": "Stop revealing to everyone", "Tu carta ya se ve en el panel del cuarto": "Your card now shows in the room panel",
     "Perdiste tu poder: tardaste más de 5 minutos en terminar una ronda.": "You lost your power: you took more than 5 minutes to end a round.", "Úsalo mientras corre el reloj de una ronda.": "Use it while a round's clock is running.",
     "Ya pasaron más de 5 minutos: perdiste el poder.": "More than 5 minutes have passed: you lost the power.", "¡Se acabó el tiempo! (te revelas a todos)": "Time is up! (you reveal to everyone)",
     "Ya hay un arresto esperando confirmación.": "There's already an arrest waiting for confirmation.", "Solo funciona entre rondas (cuando el reloj llegó a cero y antes de iniciar la siguiente).": "It only works between rounds (when the clock hit zero and before the next one starts).",
@@ -1028,6 +1036,8 @@ Object.entries(MORE_COND).forEach(([k, c]) => { EN_COND[k] = c.en; });
     [/^MI6: sí hizo co-revelación con el Presidente y con la Bomba ✓$/, "MI6: card shared with both the President and the Bomber ✓"], [/^MI6: no hizo co-revelación con los dos ✗$/, "MI6: did not card share with both ✗"],
     [/^Tirano nuclear: el Presidente y la Bomba sí hicieron co-revelación con él ✗$/, "Nuclear Tyrant: both the President and the Bomber card shared with them ✗"], [/^Tirano nuclear: no hicieron co-revelación con él los dos ✓$/, "Nuclear Tyrant: the President and the Bomber did not both card share with them ✓"],
     [/^(Clon|Robot): su primera co-revelación fue con (.+)$/, (_, c, n) => `${cn(c)}: their first share was with ${n}`], [/^(Clon|Robot): no compartió con nadie$/, (_, c) => `${cn(c)}: didn't share with anyone`],
+    [/^Cuarto (\d) · 👑 Líder: (.+)$/, (_, r, n) => `Room ${r} · 👑 Leader: ${n.replace(/ \(tú\)$/, " (you)")}`], [/^Cuarto (\d) · Sin líder todavía$/, "Room $1 · No leader yet"],
+    [/^¡Ahora eres el líder del Cuarto (\d)!$/, "You're now the leader of Room $1!"],
     [/^Respuesta de (.+)$/, "Answer from $1"], [/^(.+) sale del juego$/, "$1 leaves the game"],
     [/^¡La Policía secreta \((.+)\) arrestó a (.+) jugando entre rondas!$/, "The Secret Police ($1) arrested $2 playing between rounds!"],
     [/^Tus hijos: (.+)\.$/, (_, l) => `Your children: ${l.replace(" y ", " and ")}.`], [/^Tu predicción: (.+)\.$/, "Your prediction: $1."],
@@ -1174,7 +1184,7 @@ async function isBoss(pin) {
   try { const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("reparto:" + pin)); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, "0")).join("") === BOSS_HASH; } catch (e) { return false; }
 }
 // ---------- aviso de versión nueva ----------
-const APP_VERSION = 27;
+const APP_VERSION = 28;
 async function checkVersion() {
   try {
     const t = await (await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" })).text();
@@ -1427,7 +1437,7 @@ function modal(title, body, buttons) {
   const d = document.createElement("div");
   d.className = "modal"; d.setAttribute("role", "alertdialog"); d.setAttribute("aria-modal", "true");
   d.innerHTML = `<div class="box"><h2>${title}</h2><p>${body}</p><div class="row">${buttons.map((b, i) => `<button type="button" data-b="${i}" class="${b.primary ? "primary big" : ""}">${b.label}</button>`).join("")}</div></div>`;
-  $$("[data-b]", d).forEach(el => el.onclick = () => { d.remove(); const f = buttons[+el.dataset.b].fn; if (f) f(); });
+  $$("[data-b]", d).forEach(el => el.onclick = () => { d.remove(); const f = buttons[+el.dataset.b].fn; if (f) f(); setTimeout(() => window.dispatchEvent(new Event("rs-modal-closed")), 50); });
   document.body.appendChild(d); const pb = $(".primary", d); if (pb) pb.focus();
   return d;
 }
@@ -1435,8 +1445,13 @@ function inPlayHTML(g) {
   const by = {}; TEAM_ORDER.forEach(t => by[t] = []);
   (g.inPlay || []).forEach(x => (by[x.color] || by.g).push(x));
   const total = (g.inPlay || []).reduce((s, x) => s + x.n, 0);
-  const list = t => by[t].length ? `<div class="team-label"><span class="dot ${t}"></span>Color ${COLOR[t].toLowerCase()}</div><ul>${by[t].map(r => `<li><span class="dot ${t}"></span>${esc(r.name)}<span class="n">×${r.n}</span></li>`).join("")}</ul>` : "";
+  // Cada carta se puede tocar para ver de qué trata.
+  const pool = CATALOG.concat((g.setup && g.setup.custom) || []);
+  const noteOf = r => ((r.id && pool.find(c => c.id === r.id)) || pool.find(c => c.name === r.name && c.color === r.color) || {}).note || "";
+  const item = (r, t) => { const note = noteOf(r); return note ? `<li class="rdet"><details><summary><span class="dot ${t}"></span><span>${esc(r.name)}</span><span class="n">×${r.n}</span></summary><p>${esc(note)}</p></details></li>` : `<li><span class="dot ${t}"></span>${esc(r.name)}<span class="n">×${r.n}</span></li>`; };
+  const list = t => by[t].length ? `<div class="team-label"><span class="dot ${t}"></span>Color ${COLOR[t].toLowerCase()}</div><ul>${by[t].map(r => item(r, t)).join("")}</ul>` : "";
   return `<section class="inplay"><div class="panel-head"><h2>Cartas en esta partida</h2><span class="count">${total}</span></div>
+    <p class="muted small">Toca una carta para ver qué hace.</p>
     ${TEAM_ORDER.map(list).join("")}
     ${g.buried ? `<p class="muted small">Hay ${g.buried} carta enterrada: está en la lista pero nadie la tiene.</p>` : ""}
     ${g.sober ? `<p class="muted small">Una carta está apartada para el Borracho.</p>` : ""}</section>`;
@@ -2045,6 +2060,23 @@ function playerView() {
       try { navigator.vibrate && navigator.vibrate([300, 120, 300]); } catch (e) {}
       modal(`¡Ve al Cuarto ${esc(me.room)}!`, "Tu líder te envió como rehén. Ve ahora al otro cuarto.", [{ label: "Aceptar", primary: true }]);
     } else if (me.room && !prev.startsWith(`${ps.code}|${ps.pid}|${me.round}|`) && ls.get("rs-seen:" + ps.pid) === `${ps.code}|${ps.pid}|${me.round}|${me.card?.id}`) ls.set("rs-room:" + ps.pid, roomKey());
+    // Barra fija abajo con el líder de tu cuarto.
+    let lb = $("#leaderbar");
+    if (me.room && me.card && me.round === game.round && !me.out) {
+      const stL = roomState(game, players, me.room), L = players.find(p => p.id === stL.leader);
+      if (!lb) { lb = document.createElement("div"); lb.id = "leaderbar"; lb.setAttribute("role", "status"); document.body.appendChild(lb); }
+      lb.textContent = L ? `Cuarto ${me.room} · 👑 Líder: ${L.name}${L.id === me.id ? " (tú)" : ""}` : `Cuarto ${me.room} · Sin líder todavía`;
+      document.body.classList.add("has-leaderbar");
+      // Aviso solo a los de este cuarto cuando hay un líder nuevo.
+      const lk = `${ps.code}|${me.round}|${me.room}|${stL.leader || ""}`, lprev = ls.get("rs-leader:" + ps.pid);
+      if (stL.leader && lprev !== lk && !$(".modal") && !$(".full")) {
+        ls.set("rs-leader:" + ps.pid, lk);
+        if (lprev && lprev.startsWith(`${ps.code}|${me.round}|`)) {
+          try { navigator.vibrate && navigator.vibrate(200); } catch (e) {}
+          modal("👑 Nuevo líder", L.id === me.id ? `¡Ahora eres el líder del Cuarto ${esc(me.room)}!` : `<b>${esc(L.name)}</b> ahora es líder del Cuarto ${esc(me.room)}.`, [{ label: "Aceptar", primary: true }]);
+        }
+      } else if (!stL.leader && lprev !== lk) ls.set("rs-leader:" + ps.pid, lk);
+    } else if (lb) { lb.remove(); document.body.classList.remove("has-leaderbar"); }
     // Te ofrecieron ser líder (cada oferta tiene su hora, así una oferta repetida vuelve a aparecer).
     const st = roomState(game, players, me.room || "");
     const offKey = `${st.offer}|${game["offerAt" + (me.room || "")] || 0}`;
@@ -2183,6 +2215,10 @@ function playerView() {
   };
   const endTick = setInterval(() => { if (game && game.endPhase === "done" && game.revealAt && game.revealAt > Date.now() - 1500) renderEnd(); }, 250); unsubs.push(() => clearInterval(endTick));
   unsubs.push(() => { const ov = $("#endscreen"); if (ov) ov.remove(); });
+  unsubs.push(() => { const lb = $("#leaderbar"); if (lb) lb.remove(); document.body.classList.remove("has-leaderbar"); });
+  // Al cerrar un aviso, se revisa si hay otro esperando (oferta de liderazgo, rehén, pregunta…).
+  const onModalClosed = () => { roomKeyLast = ""; renderRoom(); renderShare(); renderPower(); renderEnd(); };
+  window.addEventListener("rs-modal-closed", onModalClosed); unsubs.push(() => window.removeEventListener("rs-modal-closed", onModalClosed));
   const pwTimer = setInterval(() => renderPower(), 2000); unsubs.push(() => clearInterval(pwTimer));
   // Mantener la pantalla encendida mientras se juega (si el celular lo permite).
   let wake = null; const askWake = async () => { try { if ("wakeLock" in navigator && !document.hidden) wake = await navigator.wakeLock.request("screen"); } catch (e) {} };
@@ -2501,7 +2537,7 @@ function hostLobby() {
       const order = shuffle(ids), half = Math.ceil(ids.length / 2);
       const roomFor = id => order.indexOf(id) < half ? "1" : "2";
       const patches = {}; ids.forEach((id, i) => patches[id] = { card: cardOf(pool[i]), round: (game.round || 0) + 1, acq: [], cured: [], paraUsed: false, peeks: 0, room: roomFor(id), vote: null, endAns: null, offer: null, shares: [], lastShare: null, piper: null, xenoUsed: false, pUsed: null, pGame: null, publicCard: false, moves: 0, hostageTimes: 0, ledRooms: [], usurpRounds: [], sawUsurp: false, tackled: null, blasted: null, stone: null, ratAway: null, ratLost: false, kids: null, predict: null, taken: [], loveWith: null, hateWith: null, centipede: null, out: false, lastSwap: 0, pubOpen: false, ask: null, interAns: null, timeLost: false });
-      const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { name: r.name, color: r.color, n: 0 }; counts[k].n++; });
+      const counts = {}; full.forEach(r => { const k = r.name + "|" + r.color; counts[k] = counts[k] || { id: r.id, name: r.name, color: r.color, n: 0 }; counts[k].n++; });
       await api.batch(code, { round: (game.round || 0) + 1, inPlay: Object.values(counts), buried: buried ? 1 : 0, buriedCard: buried ? cardOf(buried) : null, sober: sober ? cardOf(sober) : null, colorAllowed, leader1: null, leader2: null, picks1: null, picks2: null, offer1: null, offer2: null, swaps: 0, endPhase: null, result: null, revealAt: null, lock1: null, lock2: null, lastSwapIn: null, arrest: null, timer: newTimer((TIMER_MODES[game.timer?.mode]?.min || 0) > ids.length ? "basic" : game.timer?.mode, ids.length) }, patches);
       toast("Cartas repartidas");
     };
